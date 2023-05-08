@@ -1,6 +1,13 @@
 # strands
 An ecosystem simulator in early development written in Go using [g3n engine](https://github.com/g3n/engine).
 
+### How to use:
+```
+git clone https://github.com/cbeimers113/strands.git
+cd strands
+go install .
+strands
+```
 
 ### Current Features:
 
