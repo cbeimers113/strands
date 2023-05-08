@@ -8,5 +8,4 @@ func OnRightClickCreature(creature Entity) {
 // Perform action on creature entity on left click
 func OnLeftClickCreature(creature Entity) {
 	println("No left click behaviour defined for ", creature.Name())
-
 }

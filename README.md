@@ -6,5 +6,4 @@ Current Features:
     Right click and drag to pan
     Scroll wheel to zoom in and out
     Right click a tile to plant a plant
-
     Plants will slowly grow
