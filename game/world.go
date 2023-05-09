@@ -6,7 +6,6 @@ import (
 	"math/rand"
 
 	"github.com/aquilax/go-perlin"
-	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/light"
@@ -23,7 +22,7 @@ func AddPlant(colour int, tile Entity) (success bool) {
 
 	// Check if there is already a plant here
 	for _, child := range tile.Children() {
-		if TypeOf(child.GetNode()) == Plant {
+		if Type(child.GetNode()) == Plant {
 			success = false
 			break
 		}
@@ -40,7 +39,8 @@ func AddPlant(colour int, tile Entity) (success bool) {
 		}
 
 		plant.SetPosition(0, plant.Scale().Y/2, 0)
-		plant.SetName(CreateTag(Plant, []string{fmt.Sprintf("%x", colour), "0"}))
+		plant.SetName(fmt.Sprintf("e_%d", len(Entities)-1))
+		plant.SetUserData(EntityData{eType: Plant, metadata: []int{colour, 0}})
 		tile.Add(plant)
 		Entities[tile.Name()] = tile.ChildAt(len(tile.Children()) - 1).GetNode()
 	}
@@ -60,7 +60,8 @@ func CreateTile(x, y int, tType string) {
 	}
 
 	tile.SetPosition(float32(x)*TileSize, 0, float32(y)*TileSize)
-	tile.SetName(CreateTag(Tile, []string{tType}))
+	tile.SetName(fmt.Sprintf("e%d", len(Entities)+1))
+	tile.SetUserData(EntityData{eType: Tile, metadata: []int{x, y}})
 	Scene.Add(tile)
 	Entities[tile.Name()] = Scene.ChildAt(len(Scene.Children()) - 1).GetNode()
 }
@@ -70,7 +71,7 @@ func LoadWorld() {
 	// Sun
 	Sun = light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 8.0)
 	Scene.Add(Sun)
-	Entities = make(map[string]*core.Node)
+	Entities = make(map[string]Entity)
 
 	// Tiles
 	pnoise := perlin.NewPerlin(1, 0.1, 2, rand.Int63())
@@ -87,7 +88,7 @@ func LoadWorld() {
 // Update the game world, deltaTime is time since last update in ms
 func Update(deltaTime int) {
 	for _, entity := range Entities {
-		switch TypeOf(entity) {
+		switch Type(entity) {
 		case Plant:
 			GrowPlant(entity)
 		}

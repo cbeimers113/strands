@@ -1,5 +1,9 @@
 package game
 
+// Tile metadata mapping
+const TileX int = 0
+const TileY int = 1
+
 const Water string = "water"
 const Dirt string = "dirt"
 const Grass string = "grass"

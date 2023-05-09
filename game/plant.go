@@ -1,5 +1,6 @@
 package game
 
+// Plant metadata mapping
 const PlantColour int = 0
 const PlantAge int = 1
 
@@ -15,7 +16,7 @@ func OnLeftClickPlant(plant Entity) {
 
 // Grow the plant slowly over time
 func GrowPlant(plant Entity) {
-	age := DatumNum(plant, PlantAge)
+	age := Datum(plant, PlantAge)
 	age++
 
 	// Grow until maturity is reached
@@ -26,5 +27,5 @@ func GrowPlant(plant Entity) {
 		plant.SetPosition(0, plant.Scale().Y/2, 0)
 	}
 
-	SetDatumNum(plant, PlantAge, age)
+	SetDatum(plant, PlantAge, age)
 }
