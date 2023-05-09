@@ -28,7 +28,7 @@ func Type(entity Entity) EntityType {
 }
 
 // Return this entity's metadata entry at the given index
-func GetDatum(entity Entity, index int) int {
+func Datum(entity Entity, index int) int {
 	data, ok := entity.UserData().(EntityData)
 
 	if ok {

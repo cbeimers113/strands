@@ -16,7 +16,7 @@ func OnLeftClickPlant(plant Entity) {
 
 // Grow the plant slowly over time
 func GrowPlant(plant Entity) {
-	age := GetDatum(plant, PlantAge)
+	age := Datum(plant, PlantAge)
 	age++
 
 	// Grow until maturity is reached
