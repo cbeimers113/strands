@@ -46,7 +46,7 @@ func MouseDown(evname string, ev interface{}) {
 	if len(i) != 0 {
 		object = i[0].Object.GetNode()
 
-		switch TypeOf(object) {
+		switch Type(object) {
 		case Tile:
 			switch me.Button {
 			case window.MouseButton1:
@@ -69,7 +69,7 @@ func MouseDown(evname string, ev interface{}) {
 				OnRightClickCreature(object)
 			}
 		default:
-			println("No action defined for ", me.Button, " on ", TypeOf(object))
+			println("No action defined for button ", me.Button, " on ", Type(object))
 		}
 	}
 }
