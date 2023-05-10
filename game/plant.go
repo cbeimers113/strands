@@ -24,7 +24,7 @@ func GrowPlant(plant Entity) {
 		scale := plant.Scale()
 		scale.Y *= 1.001
 		plant.SetScale(scale.X, scale.Y, scale.Z)
-		plant.SetPosition(0, plant.Scale().Y/2, 0)
+		plant.SetPosition(0, plant.Scale().Y, 0)
 	}
 
 	SetDatum(plant, PlantAge, age)
