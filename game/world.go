@@ -48,18 +48,21 @@ func AddPlant(colour int, tile Entity) (success bool) {
 	return
 }
 
-// Spawn a tile of type tType at x, y
+// Spawn a hex tile of type tType at x, y
 func CreateTile(x, y int, tType string) {
-	geom := geometry.NewBox(TileSize, 1, TileSize)
+	geom := CreateHexagon(TileSize)
 	mat := material.NewStandard(math32.NewColorHex(0x111111))
 	tile := graphic.NewMesh(geom, mat)
 	tex, ok := Texture(tType)
+	posX := (float32(x)+(0.5*float32(y%2))) * TileSize * math32.Sin(math32.Pi/3)
+	posZ := float32(y) * TileSize * 0.75
 
 	if ok {
 		mat.AddTexture(tex)
 	}
 
-	tile.SetPosition(float32(x)*TileSize, 0, float32(y)*TileSize)
+	tile.SetPosition(posX, 0, posZ)
+	tile.SetRotationY(math32.Pi / 2)
 	tile.SetName(fmt.Sprintf("e%d", len(Entities)+1))
 	tile.SetUserData(EntityData{eType: Tile, metadata: []int{x, y}})
 	Scene.Add(tile)
