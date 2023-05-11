@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -39,8 +38,8 @@ func AddPlant(colour int, tile Entity) (success bool) {
 		}
 
 		plant.SetPosition(0, plant.Scale().Y/2, 0)
-		plant.SetName(fmt.Sprintf("e_%d", len(Entities)-1))
-		plant.SetUserData(EntityData{eType: Plant, metadata: []int{colour, 0}})
+		plant.SetName(Plant)
+		plant.SetUserData(Strand{colour, 0})
 		tile.Add(plant)
 		Entities[tile.Name()] = tile.ChildAt(len(tile.Children()) - 1).GetNode()
 	}
@@ -63,8 +62,8 @@ func CreateTile(x, y int, tType string) {
 
 	tile.SetPosition(posX, 0, posZ)
 	tile.SetRotationY(math32.Pi / 2)
-	tile.SetName(fmt.Sprintf("e%d", len(Entities)+1))
-	tile.SetUserData(EntityData{eType: Tile, metadata: []int{x, y}})
+	tile.SetName(Tile)
+	tile.SetUserData(Strand{x, y, 0})
 	Scene.Add(tile)
 	Entities[tile.Name()] = Scene.ChildAt(len(Scene.Children()) - 1).GetNode()
 }

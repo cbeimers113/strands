@@ -6,45 +6,35 @@ import (
 
 type EntityType = string
 type Entity = *core.Node
+type Strand []int
 
 const Tile EntityType = "tile"
 const Plant EntityType = "plant"
 const Creature EntityType = "creature"
 
-type EntityData struct {
-	eType    EntityType
-	metadata []int
-}
-
 // Return the type of this entity
 func Type(entity Entity) EntityType {
-	data, ok := entity.UserData().(EntityData)
-
-	if ok {
-		return data.eType
-	}
-
-	return ""
+	return entity.Name()
 }
 
 // Return this entity's metadata entry at the given index
 func Datum(entity Entity, index int) int {
-	data, ok := entity.UserData().(EntityData)
+	data, ok := entity.UserData().(Strand)
 
 	if ok {
-		return data.metadata[index]
+		return data[index]
 	}
 
 	return 0
 }
 
-// Set this entity's metadata entry at the given index
-func SetDatum(entity Entity, index int, val int) {
-	data, ok := entity.UserData().(EntityData)
+// Set this entity's metadata entry at the given index, return whether it could be set
+func SetDatum(entity Entity, index int, val int) (ok bool) {
+	data, ok := entity.UserData().(Strand)
 
-	if ok && index >= 0 && index < len(data.metadata) {
-		metadata := data.metadata
-		metadata[index] = val
-		entity.SetUserData(EntityData{eType: data.eType, metadata: metadata})
+	if ok && index >= 0 && index < len(data) {
+		data[index] = val
 	}
+
+	return
 }
