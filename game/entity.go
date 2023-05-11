@@ -1,6 +1,8 @@
 package game
 
 import (
+	"strings"
+
 	"github.com/g3n/engine/core"
 )
 
@@ -14,7 +16,7 @@ const Creature EntityType = "creature"
 
 // Return the type of this entity
 func Type(entity Entity) EntityType {
-	return entity.Name()
+	return strings.Split(entity.Name(), " ")[0]
 }
 
 // Return this entity's metadata entry at the given index
