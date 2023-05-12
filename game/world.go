@@ -26,6 +26,7 @@ func AddEntityTo(node *core.Node, entity *graphic.Mesh) {
 
 // Remove an entity from the world
 func RemoveEntity(entity Entity) {
+	// Recursively remove children of this entity
 	for _, child := range entity.Children() {
 		RemoveEntity(child.GetNode())
 	}
@@ -70,13 +71,13 @@ func LoadWorld() {
 	pnoise := perlin.NewPerlin(1, 0.1, 2, rand.Int63())
 
 	// Create heightmap
-	var heightmap [Width][Height]float64
-	min  := 1_000_000_000.0
-	max := -min
+	var heightmap [Width][Height]float32
+	var min float32 = 1_000_000_000.0
+	var max float32 = -min
 
 	for y := 0; y < Height; y++ {
 		for x := 0; x < Width; x++ {
-			height := math.Abs(pnoise.Noise2D(float64(x), float64(y)) * 1000) 
+			height := float32(math.Abs(pnoise.Noise2D(float64(x), float64(y)) * 1000)) 
 			heightmap[x][y] = height
 
 			// Record min and max so that the tile types can be mapped to height range
@@ -90,12 +91,15 @@ func LoadWorld() {
 		}
 	}
 
+	// Add tiles to world
+	// The x, y values from the 2d tilemap are mapped to x, z in the game world
+	// The heightmap value at x, y is mapped to y in the game world 
 	for y := 0; y < Height; y++ {
 		for x := 0; x < Width; x++ {
-			// Construct the tile at x, y
-			typeIndex := int(math.Min(float64(len(TileTypes)) * (heightmap[x][y]-min)/(max - min), float64(len(TileTypes) - 1)))
+			// Construct the tile at x, y, use heightmap value at x, y to determine tile type
+			typeIndex := int(math32.Min(float32(len(TileTypes)) * (heightmap[x][y]-min)/(max - min), float32(len(TileTypes) - 1)))
 			tType := TileTypes[typeIndex]
-			AddEntityTo(Scene, NewTile(x, y, tType))
+			AddEntityTo(Scene, NewTile(x, y, heightmap[x][y], tType))
 		}
 	}
 }
