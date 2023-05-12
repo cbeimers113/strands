@@ -24,26 +24,14 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt install xorg-dev libgl1-mesa-dev libopenal1 libopenal-dev libvorbis0a libvorbis-dev libvorbisfile3
+        go install honnef.co/go/tools/cmd/staticcheck@latest
         go mod tidy
         
     - name: Build Strands
       run: go build . 
       
-    # Run vet & lint on the code
-    # - name: Run vet & lint
-    #   run: |
-    #     go vet .
-    #     golint .
-    
-    # Run testing on the code
-    # - name: Run testing
-    #   run: cd test && go test -v
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [build]  # Only run this workflow when "build" workflow succeeds
-    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}  # Only run this workflow if it is main branch on push event
-    steps:
-    - uses: actions/checkout@v3
-
-    
+    - name: Run vet & lint
+      run: |
+        go vet .
+        staticcheck .
+  
