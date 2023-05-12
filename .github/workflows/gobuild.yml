@@ -1,4 +1,4 @@
-# This workflow will build and deploy strands on changes to main
+# This workflow will attempt to build strands on changes to main
 
 name: GoBuild
 
@@ -9,9 +9,6 @@ on:
   pull_request:
     branches:
     - main
-
-env:
-  TAG_NAME: v${{ github.ref }}
 
 jobs:
   build:
