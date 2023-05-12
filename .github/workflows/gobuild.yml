@@ -33,6 +33,10 @@ jobs:
     - name: Build Strands
       run: go build . 
       
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
     - name: Run vet & lint
       run: |
         go vet .
