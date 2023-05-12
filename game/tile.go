@@ -19,7 +19,7 @@ const Grass string = "grass"
 const Stone string = "stone"
 
 // Store list of tile types ordered by spawn height
-var TypeStrata []string = []string{
+var TileTypes []string = []string{
 	Water,
 	Dirt,
 	Grass,
@@ -59,7 +59,7 @@ func NewTile(x, y int, tType string) (tile *graphic.Mesh) {
 
 // Check what index of the tile types strata a type is, return -1 if invalid type
 func TypeIndex(tType string) int {
-	for i, t := range TypeStrata {
+	for i, t := range TileTypes {
 		if t == tType {
 			return i
 		}

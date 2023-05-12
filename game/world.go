@@ -11,6 +11,10 @@ import (
 	"github.com/g3n/engine/math32"
 )
 
+const Width int = 64
+const Height int = 64
+const TileSize float32 = 4
+
 var Sun *light.Ambient
 var Entities map[int]Entity
 
@@ -22,7 +26,7 @@ func AddEntityTo(node *core.Node, entity *graphic.Mesh) {
 
 // Remove an entity from the world
 func RemoveEntity(entity Entity) {
-	for _, child := range entity.Children(){
+	for _, child := range entity.Children() {
 		RemoveEntity(child.GetNode())
 	}
 
@@ -49,9 +53,9 @@ func dropEntity(entity Entity) {
 	// If the entity is in the Entities list, remove it and shift all the entities above it down the list
 	if index >= 0 {
 		for i := index + 1; i < len(Entities); i++ {
-			Entities[i - 1] = Entities[i]
+			Entities[i-1] = Entities[i]
 		}
-		delete(Entities, len(Entities) - 1)
+		delete(Entities, len(Entities)-1)
 	}
 }
 
@@ -64,11 +68,33 @@ func LoadWorld() {
 
 	// Tiles
 	pnoise := perlin.NewPerlin(1, 0.1, 2, rand.Int63())
+
+	// Create heightmap
+	var heightmap [Width][Height]float64
+	min  := 1_000_000_000.0
+	max := -min
+
+	for y := 0; y < Height; y++ {
+		for x := 0; x < Width; x++ {
+			height := math.Abs(pnoise.Noise2D(float64(x), float64(y)) * 1000) 
+			heightmap[x][y] = height
+
+			// Record min and max so that the tile types can be mapped to height range
+			if height < min{
+				min = height
+			}
+
+			if height > max {
+				max = height
+			}
+		}
+	}
+
 	for y := 0; y < Height; y++ {
 		for x := 0; x < Width; x++ {
 			// Construct the tile at x, y
-			noise := int(math.Abs(pnoise.Noise2D(float64(x), float64(y))*100)) % len(TypeStrata)
-			tType := TypeStrata[noise]
+			typeIndex := int(math.Min(float64(len(TileTypes)) * (heightmap[x][y]-min)/(max - min), float64(len(TileTypes) - 1)))
+			tType := TileTypes[typeIndex]
 			AddEntityTo(Scene, NewTile(x, y, tType))
 		}
 	}
