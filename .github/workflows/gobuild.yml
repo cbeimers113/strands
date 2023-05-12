@@ -23,7 +23,7 @@ jobs:
     
     - name: Install Dependencies
       run: |
-        go version
+        apt-get install xorg-dev libgl1-mesa-dev libopenal1 libopenal-dev libvorbis0a libvorbis-dev libvorbisfile3
         go mod tidy
         
     - name: Build Strands
