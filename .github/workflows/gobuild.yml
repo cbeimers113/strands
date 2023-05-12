@@ -13,6 +13,11 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+
+    env:
+      GOPATH: ${{ github.workspace }}
+      GOBIN: ${{ github.workspace }}/bin
+
     steps:
     - uses: actions/checkout@v3
 
@@ -29,5 +34,3 @@ jobs:
 
     - name: Build
       run: go build -v ./...
-      env:
-        GOPATH: /home/runner/work/cbeimers113/go
