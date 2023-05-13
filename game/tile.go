@@ -8,11 +8,6 @@ import (
 	"github.com/g3n/engine/math32"
 )
 
-// Tile metadata mapping
-const TileX int = 0  // Position in the tilemap, not the game world
-const TilyZ int = 1  // These x and z values are used to access the tile's neighbourhood (TODO)
-const TileT int = 2
-
 type TileType = string
 
 const Water TileType = "water"
@@ -28,9 +23,20 @@ var TileTypes []TileType = []TileType{
 	Stone,
 }
 
+// Which data a tile will store
+type TileData struct {
+	MapX int
+	MapZ int
+	// No need for MapY as tiles are not stacked
+	// World (x, y, z) stored in tile.Position()
+	Type TileType
+}
+
 // Perform an action on a tile entity on right click
 func OnRightClickTile(tile Entity) {
-	AddEntityTo(tile, NewPlant(0x00dd05))
+	if !HasPlant(tile) {
+		AddEntityTo(tile, NewPlant(0x00dd05))
+	}
 }
 
 // Perform an action on a tile entity on left click
@@ -54,7 +60,7 @@ func NewTile(mapX, mapZ int, y float32, tType TileType) (tile *graphic.Mesh) {
 	tile.SetPosition(x, y, z)
 	tile.SetRotationY(math32.Pi / 2)
 	tile.SetName(fmt.Sprintf("%s (%s)", Tile, tType))
-	tile.SetUserData(Strand{mapX, mapZ, TypeIndex(tType)})
+	tile.SetUserData(TileData{MapX: mapX, MapZ: mapZ, Type: tType})
 
 	return
 }
@@ -79,4 +85,9 @@ func HasPlant(tile Entity) bool {
 	}
 
 	return false
+}
+
+// Perform per-frame updates to a Tile
+func UpdateTile(tile Entity) {
+
 }

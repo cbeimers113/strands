@@ -18,7 +18,7 @@ const TileSize float32 = 4
 var Sun *light.Ambient
 var Entities map[int]Entity
 
-// Add an entity to the entity list
+// Add an entity to the game
 func AddEntityTo(node *core.Node, entity *graphic.Mesh) {
 	node.Add(entity)
 	Entities[len(Entities)] = node.ChildAt(len(node.Children()) - 1).GetNode()
@@ -91,13 +91,17 @@ func LoadWorld() {
 		}
 	}
 
-	// Add tiles to world
+	// Add tiles to world, keep temporary record of the tilemap to assign tile neighbourhoods
+	var tileMap [Width][Depth]Entity
+
 	for x := 0; x < Width; x++ {
 		for z := 0; z < Depth; z++ {
 			// Map the heightmap value to the TileTypes array to determine tile type
 			y := math32.Min(float32(len(TileTypes))*(heightmap[x][z]-min)/(max-min), float32(len(TileTypes)-1))
 			tType := TileTypes[int(y)]
-			AddEntityTo(Scene, NewTile(x, z, y, tType))
+			tile := NewTile(x, z, y, tType)
+			AddEntityTo(Scene, tile)
+			tileMap[x][z] = tile.GetNode()
 		}
 	}
 }
@@ -107,7 +111,9 @@ func Update(deltaTime int) {
 	for _, entity := range Entities {
 		switch Type(entity) {
 		case Plant:
-			GrowPlant(entity)
+			UpdatePlant(entity)
+		case Tile:
+			UpdateTile(entity)
 		}
 	}
 }

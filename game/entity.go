@@ -6,9 +6,20 @@ import (
 	"github.com/g3n/engine/core"
 )
 
-type EntityType = string
+// Entity data storage model:
+
+// The g3n Node type has a UserData field of type interface{} (the 'any' type)
+// which we can set and get any data we want. Each entity type stores its own struct
+// type (eg Plant entities store PlantData, Tile entities store TileData...)
+// Behind the scenes of the code on this side of the engine, all Entities are
+// pointers to g3n nodes.
+
+// The g3n Node also has a Name field which is used to store the entity type.
+// Entity type is checked when accessing the entity's UserData so that the proper
+// struct fields are used.
+
 type Entity = *core.Node
-type Strand []int
+type EntityType = string
 
 const Tile EntityType = "tile"
 const Plant EntityType = "plant"
@@ -17,26 +28,4 @@ const Creature EntityType = "creature"
 // Return the type of this entity
 func Type(entity Entity) EntityType {
 	return strings.Split(entity.Name(), " ")[0]
-}
-
-// Return this entity's metadata entry at the given index
-func Datum(entity Entity, index int) int {
-	data, ok := entity.UserData().(Strand)
-
-	if ok {
-		return data[index]
-	}
-
-	return 0
-}
-
-// Set this entity's metadata entry at the given index, return whether it could be set
-func SetDatum(entity Entity, index int, val int) (ok bool) {
-	data, ok := entity.UserData().(Strand)
-
-	if ok && index >= 0 && index < len(data) {
-		data[index] = val
-	}
-
-	return
 }

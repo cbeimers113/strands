@@ -52,5 +52,6 @@ func CreateHexagon(width float32) (geom *geometry.Geometry) {
 	geom.SetIndices(indices)
 	geom.AddVBO(gls.NewVBO(vertices).AddAttrib(gls.VertexPosition))
 	geom.AddVBO(gls.NewVBO(uvs).AddAttrib(gls.VertexTexcoord))
+	
 	return
 }
