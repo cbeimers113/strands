@@ -80,5 +80,5 @@ func RegisterControls() {
 	Application.Subscribe(window.OnKeyUp, KeyUp)
 	Application.Subscribe(window.OnKeyRepeat, KeyHold)
 	Application.Subscribe(window.OnMouseDown, MouseDown)
-	camera.NewOrbitControl(Cam).SetTarget(*math32.NewVector3(float32(Width)*TileSize/2, 0, float32(Height)*TileSize/2))
+	camera.NewOrbitControl(Cam).SetTarget(*math32.NewVector3(float32(Width)*TileSize/2, 0, float32(Depth)*TileSize/2))
 }

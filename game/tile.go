@@ -10,7 +10,7 @@ import (
 
 // Tile metadata mapping
 const TileX int = 0  // Position in the tilemap, not the game world
-const TilyY int = 1  // These x and y values are used to access the tile's neighbourhood (TODO)
+const TilyZ int = 1  // These x and z values are used to access the tile's neighbourhood (TODO)
 const TileT int = 2
 
 type TileType = string
@@ -38,23 +38,23 @@ func OnLeftClickTile(tile Entity) {
 	println("No left click behaviour defined for ", tile.Name())
 }
 
-// Spawn a hex tile of type tType at x, z (tile precision) at height y (game world precision)
-func NewTile(x, z int, y float32, tType TileType) (tile *graphic.Mesh) {
+// Spawn a hex tile of type tType at mapX, mapZ (tile precision), y (game world precision)
+func NewTile(mapX, mapZ int, y float32, tType TileType) (tile *graphic.Mesh) {
 	geom := CreateHexagon(TileSize)
 	mat := material.NewStandard(math32.NewColorHex(0x111111))
 	tile = graphic.NewMesh(geom, mat)
 	tex, ok := Texture(tType)
-	posX := (float32(x) + (0.5 * float32(z%2))) * TileSize * math32.Sin(math32.Pi/3)
-	posZ := float32(z) * TileSize * 0.75
+	x := (float32(mapX) + (0.5 * float32(mapZ%2))) * TileSize * math32.Sin(math32.Pi/3)
+	z := float32(mapZ) * TileSize * 0.75
 
 	if ok {
 		mat.AddTexture(tex)
 	}
 
-	tile.SetPosition(posX, 0, posZ)
+	tile.SetPosition(x, y, z)
 	tile.SetRotationY(math32.Pi / 2)
 	tile.SetName(fmt.Sprintf("%s (%s)", Tile, tType))
-	tile.SetUserData(Strand{x, z, TypeIndex(tType)})
+	tile.SetUserData(Strand{mapX, mapZ, TypeIndex(tType)})
 
 	return
 }

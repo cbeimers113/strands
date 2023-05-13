@@ -12,7 +12,7 @@ import (
 )
 
 const Width int = 64
-const Height int = 64
+const Depth int = 64
 const TileSize float32 = 4
 
 var Sun *light.Ambient
@@ -71,17 +71,17 @@ func LoadWorld() {
 	pnoise := perlin.NewPerlin(1, 0.1, 2, rand.Int63())
 
 	// Create heightmap
-	var heightmap [Width][Height]float32
+	var heightmap [Width][Depth]float32
 	var min float32 = 1_000_000_000.0
 	var max float32 = -min
 
-	for y := 0; y < Height; y++ {
-		for x := 0; x < Width; x++ {
-			height := float32(math.Abs(pnoise.Noise2D(float64(x), float64(y)) * 1000)) 
-			heightmap[x][y] = height
+	for x := 0; x < Width; x++ {
+		for z := 0; z < Depth; z++ {
+			height := float32(math.Abs(pnoise.Noise2D(float64(x), float64(z)) * 1000))
+			heightmap[x][z] = height
 
 			// Record min and max so that the tile types can be mapped to height range
-			if height < min{
+			if height < min {
 				min = height
 			}
 
@@ -92,14 +92,12 @@ func LoadWorld() {
 	}
 
 	// Add tiles to world
-	// The x, y values from the 2d tilemap are mapped to x, z in the game world
-	// The heightmap value at x, y is mapped to y in the game world 
-	for y := 0; y < Height; y++ {
-		for x := 0; x < Width; x++ {
-			// Construct the tile at x, y, use heightmap value at x, y to determine tile type
-			typeIndex := int(math32.Min(float32(len(TileTypes)) * (heightmap[x][y]-min)/(max - min), float32(len(TileTypes) - 1)))
-			tType := TileTypes[typeIndex]
-			AddEntityTo(Scene, NewTile(x, y, heightmap[x][y], tType))
+	for x := 0; x < Width; x++ {
+		for z := 0; z < Depth; z++ {
+			// Map the heightmap value to the TileTypes array to determine tile type
+			y := math32.Min(float32(len(TileTypes))*(heightmap[x][z]-min)/(max-min), float32(len(TileTypes)-1))
+			tType := TileTypes[int(y)]
+			AddEntityTo(Scene, NewTile(x, z, y, tType))
 		}
 	}
 }
