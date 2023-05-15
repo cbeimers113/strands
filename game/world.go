@@ -60,20 +60,19 @@ func dropEntity(entity Entity) {
 	}
 }
 
-// Load the world into the scene
-func LoadWorld() {
-	// Sun
-	Sun = light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 8.0)
-	Scene.Add(Sun)
-	Entities = make(map[int]Entity)
+// Check if a given coordinate is within the tilemap boundaries
+func InBounds(x, z int) (inBounds bool) {
+	inBounds = x >= 0 && x < Width && z >= 0 && z < Depth
 
-	// Tiles
-	pnoise := perlin.NewPerlin(1, 0.1, 2, rand.Int63())
+	return
+}
 
-	// Create heightmap
+// Generate a heightmap, return the map and its min and max values
+func makeHeightmap() ([Width][Depth]float32, float32, float32) {
 	var heightmap [Width][Depth]float32
 	var min float32 = 1_000_000_000.0
 	var max float32 = -min
+	pnoise := perlin.NewPerlin(1, 0.1, 2, rand.Int63())
 
 	for x := 0; x < Width; x++ {
 		for z := 0; z < Depth; z++ {
@@ -91,9 +90,13 @@ func LoadWorld() {
 		}
 	}
 
-	// Add tiles to world, keep temporary record of the tilemap to assign tile neighbourhoods
-	var tileMap [Width][Depth]Entity
+	return heightmap, min, max
+}
 
+// Create a tilemap with a given heightmap specification
+func makeTilemap(heightmap [Width][Depth]float32, min, max float32) [Width][Depth]Entity {
+	var tilemap [Width][Depth]Entity
+	
 	for x := 0; x < Width; x++ {
 		for z := 0; z < Depth; z++ {
 			// Map the heightmap value to the TileTypes array to determine tile type
@@ -101,9 +104,64 @@ func LoadWorld() {
 			tType := TileTypes[int(y)]
 			tile := NewTile(x, z, y, tType)
 			AddEntityTo(Scene, tile)
-			tileMap[x][z] = tile.GetNode()
+			tilemap[x][z] = tile.GetNode()
 		}
 	}
+
+	return tilemap
+}
+
+// Give each tile in a tilemap a list of pointers to its neighbours
+func assignTileNeighbourhoods(tilemap [Width][Depth]Entity) {
+	// Base hexmap neighbourhood offsets
+	nbOffsets := [][]int{
+		{1, 0},  // Right
+		{1, -1}, // Top right
+		{1, 1},  // Bottom right
+		{-1, 0}, // Left
+		{0, -1}, // Top left
+		{0, 1},  // Bottom left
+	}
+
+	// Assign each tile's neighbours
+	for x := 0; x < Width; x++ {
+		for z := 0; z < Depth; z++ {
+			var neighbours Neighbourhood
+			tile := tilemap[x][z]
+
+			for i, offs := range nbOffsets {
+				xOffs := x + offs[0]
+				zOffs := z + offs[1]
+
+				// Stagger offsets on the x axis for every other row for "top/bottom" neighbours
+				if z%2 == 0 && i%3 != 0 {
+					xOffs--
+				}
+
+				if InBounds(xOffs, zOffs) {
+					neighbours[i] = tilemap[xOffs][zOffs]
+				}
+			}
+
+			// Load the neighbour pointers into the tile's metadata
+			data, _ := tile.UserData().(TileData)
+			data.Neighbours = neighbours
+			tile.SetUserData(data)
+		}
+	}
+}
+
+// Load the world into the scene
+func LoadWorld() {
+	// Sun TODO: Sun entity type for day/night cycle
+	Sun = light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 8.0)
+	Scene.Add(Sun)
+	Entities = make(map[int]Entity)
+
+	// Tiles
+	heightmap, min, max := makeHeightmap()
+	tilemap := makeTilemap(heightmap, min, max)
+	assignTileNeighbourhoods(tilemap)
 }
 
 // Update the game world, deltaTime is time since last update in ms

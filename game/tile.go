@@ -23,13 +23,17 @@ var TileTypes []TileType = []TileType{
 	Stone,
 }
 
+// Represents the tiles surrounding this one
+type Neighbourhood = [6]Entity
+
 // Which data a tile will store
 type TileData struct {
 	MapX int
 	MapZ int
 	// No need for MapY as tiles are not stacked
 	// World (x, y, z) stored in tile.Position()
-	Type TileType
+	Type       TileType
+	Neighbours Neighbourhood
 }
 
 // Perform an action on a tile entity on right click
