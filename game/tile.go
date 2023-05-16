@@ -50,7 +50,7 @@ func OnLeftClickTile(tile Entity) {
 
 // Spawn a hex tile of type tType at mapX, mapZ (tile precision), y (game world precision)
 func NewTile(mapX, mapZ int, y float32, tType TileType) (tile *graphic.Mesh) {
-	geom := CreateHexagon(TileSize)
+	geom := CreateHexagon(TileSize, y)
 	mat := material.NewStandard(math32.NewColorHex(0x111111))
 	tile = graphic.NewMesh(geom, mat)
 	tex, ok := Texture(tType)
