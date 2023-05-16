@@ -12,9 +12,6 @@ import (
 	"github.com/g3n/engine/window"
 )
 
-const Width int = 15
-const Height int = 15
-const TileSize float32 = 4
 const SimSpeed int = 60 // Simulation update speed in TPS
 
 var Application *app.Application
@@ -38,7 +35,7 @@ func buildApplication() {
 
 	// Configure camera
 	Cam = camera.New(1)
-	Cam.SetPosition(float32(Width)*TileSize/2, TileSize, float32(Height)*TileSize/2)
+	Cam.SetPosition(float32(Width)*TileSize/2, TileSize, float32(Depth)*TileSize/2)
 	Cam.SetRotation(-45, 0, 0)
 	Scene.Add(Cam)
 	RegisterControls()

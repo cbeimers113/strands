@@ -7,9 +7,11 @@ import (
 	"github.com/g3n/engine/math32"
 )
 
-// Plant metadata mapping
-const PlantColour int = 0
-const PlantAge int = 1
+// Which data a Plant will store
+type PlantData struct {
+	Colour int
+	Age    int
+}
 
 // Perform action on plant entity on right click
 func OnRightClickPlant(plant Entity) {
@@ -34,23 +36,24 @@ func NewPlant(colour int) (plant *graphic.Mesh) {
 
 	plant.SetPosition(0, plant.Scale().Y/2, 0)
 	plant.SetName(Plant)
-	plant.SetUserData(Strand{colour, 0})
+	plant.SetUserData(PlantData{Colour: colour, Age: 0})
 
 	return
 }
 
-// Grow the plant slowly over time
-func GrowPlant(plant Entity) {
-	age := Datum(plant, PlantAge)
-	age++
+// Perform per-frame updates to a plant
+func UpdatePlant(plant Entity) {
+	data, _ := plant.UserData().(PlantData)
+	data.Age++
 
 	// Grow until maturity is reached
-	if age < 1000 {
+	if data.Age < 1000 {
 		scale := plant.Scale()
 		scale.Y *= 1.001
 		plant.SetScale(scale.X, scale.Y, scale.Z)
 		plant.SetPosition(0, plant.Scale().Y, 0)
 	}
 
-	SetDatum(plant, PlantAge, age)
+	// Update changes to the plant data
+	plant.SetUserData(data)
 }
