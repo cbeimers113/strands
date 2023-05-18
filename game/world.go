@@ -96,7 +96,7 @@ func makeHeightmap() ([Width][Depth]float32, float32, float32) {
 // Create a tilemap with a given heightmap specification
 func makeTilemap(heightmap [Width][Depth]float32, min, max float32) [Width][Depth]Entity {
 	var tilemap [Width][Depth]Entity
-	
+
 	for x := 0; x < Width; x++ {
 		for z := 0; z < Depth; z++ {
 			// Map the heightmap value to the TileTypes array to determine tile type
@@ -165,7 +165,7 @@ func LoadWorld() {
 }
 
 // Update the game world, deltaTime is time since last update in ms
-func Update(deltaTime int) {
+func UpdateWorld(deltaTime float32) {
 	for _, entity := range Entities {
 		switch Type(entity) {
 		case Plant:

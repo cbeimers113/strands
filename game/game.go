@@ -10,6 +10,7 @@ import (
 	"github.com/g3n/engine/renderer"
 	"github.com/g3n/engine/texture"
 	"github.com/g3n/engine/window"
+	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
 const SimSpeed int = 60 // Simulation update speed in TPS
@@ -17,7 +18,6 @@ const SimSpeed int = 60 // Simulation update speed in TPS
 var Application *app.Application
 var Scene *core.Node
 var Cam *camera.Camera
-var Running bool
 
 // Callback for when the window is resized, update camera to match
 func onResize(evname string, ev interface{}) {
@@ -26,8 +26,8 @@ func onResize(evname string, ev interface{}) {
 	Cam.SetAspect(float32(width) / float32(height))
 }
 
-// Build the application with an empty scene
-func buildApplication() {
+// Run the application
+func Run() {
 	Textures = make(map[string]*texture.Texture2D)
 	Application = app.App()
 	Scene = core.NewNode()
@@ -36,41 +36,38 @@ func buildApplication() {
 	// Configure camera
 	Cam = camera.New(1)
 	Cam.SetPosition(float32(Width)*TileSize/2, TileSize, float32(Depth)*TileSize/2)
-	Cam.SetRotation(-45, 0, 0)
+	Cam.SetRotation(0, 0, 0)
 	Scene.Add(Cam)
 	RegisterControls()
+
+	LoadGUI()
+	LoadWorld()
+
+	// Update every n ms so that SimSpeed updates happen per second
+	var tickThreshold float32 = 1000 / float32(SimSpeed)
+	var deltaTime float32 = 0
 
 	// Refresh display
 	Application.Subscribe(window.OnWindowSize, onResize)
 	Application.Gls().ClearColor(0, 0, 0, 1.0)
 	onResize("", nil)
-}
 
-// Run the application
-func Run() {
-	if Running {
-		return
+	// Hide native cursor
+	win, ok := Application.IWindow.(*window.GlfwWindow)
+	if ok {
+		win.SetInputMode(glfw.CursorMode, int(window.CursorDisabled))
 	}
 
-	buildApplication()
-	LoadGUI()
-	LoadWorld()
-	Running = true
-
-	// Update every n ms so that SimSpeed updates happen per second
-	tickThreshold := 1000 / SimSpeed
-	timer := 0
-
-	Application.Run(func(renderer *renderer.Renderer, deltaTime time.Duration) {
+	Application.Run(func(renderer *renderer.Renderer, duration time.Duration) {
 		Application.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(Scene, Cam)
 
 		// TPS counter
-		timer += int(deltaTime / 1000000)
-
-		if timer >= tickThreshold {
-			Update(timer)
-			timer = 0
+		deltaTime += float32(duration.Milliseconds())
+		if deltaTime >= tickThreshold {
+			UpdateWorld(deltaTime)
+			UpdatePlayer(deltaTime)
+			deltaTime = 0
 		}
 	})
 }
