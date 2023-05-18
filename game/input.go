@@ -1,17 +1,27 @@
 package game
 
 import (
-	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/experimental/collision"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/window"
 )
+
+var prevMX int
+var prevMY int
 
 // Handle key down events for the game
 func KeyDown(evname string, ev interface{}) {
 	kev := ev.(*window.KeyEvent)
 
 	switch kev.Key {
+	case window.KeyS:
+		PlayerMoveZ = 1
+	case window.KeyW:
+		PlayerMoveZ = -1
+	case window.KeyD:
+		PlayerMoveX = 1
+	case window.KeyA:
+		PlayerMoveX = -1
 	}
 }
 
@@ -20,6 +30,14 @@ func KeyUp(evname string, ev interface{}) {
 	kev := ev.(*window.KeyEvent)
 
 	switch kev.Key {
+	case window.KeyS:
+		PlayerMoveZ = 0
+	case window.KeyW:
+		PlayerMoveZ = 0
+	case window.KeyD:
+		PlayerMoveX = 0
+	case window.KeyA:
+		PlayerMoveX = 0
 	}
 }
 
@@ -74,11 +92,35 @@ func MouseDown(evname string, ev interface{}) {
 	}
 }
 
+// Handle mouse movement events for the game
+func MouseMove(evname string, ev interface{}) {
+	me := ev.(*window.CursorEvent)
+	mx := int(me.Xpos)
+	my := int(me.Ypos)
+	dx := prevMX - mx
+	dy := my - prevMY
+
+	if dx > 0 {
+		PlayerLookX = 1
+	} else if dx < 0 {
+		PlayerLookX = -1
+	}
+
+	if dy > 0 {
+		PlayerLookY = 1
+	} else if dy < 0 {
+		PlayerLookY = -1
+	}
+
+	prevMX = mx
+	prevMY = my
+}
+
 // Register the controls with the game application
 func RegisterControls() {
 	Application.Subscribe(window.OnKeyDown, KeyDown)
 	Application.Subscribe(window.OnKeyUp, KeyUp)
 	Application.Subscribe(window.OnKeyRepeat, KeyHold)
 	Application.Subscribe(window.OnMouseDown, MouseDown)
-	camera.NewOrbitControl(Cam).SetTarget(*math32.NewVector3(float32(Width)*TileSize/2, 0, float32(Depth)*TileSize/2))
+	Application.Subscribe(window.OnCursor, MouseMove)
 }
