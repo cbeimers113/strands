@@ -6,14 +6,20 @@ import (
 	"github.com/g3n/engine/window"
 )
 
-var prevMX int
-var prevMY int
+var prevMX float32
+var prevMY float32
 
 // Handle key down events for the game
 func KeyDown(evname string, ev interface{}) {
 	kev := ev.(*window.KeyEvent)
 
 	switch kev.Key {
+	case window.KeyEscape:
+		if IsPaused {
+			OpenSimulationView(true)
+		} else {
+			OpenMainMenu(true)
+		}
 	case window.KeyS:
 		PlayerMoveZ = 1
 	case window.KeyW:
@@ -95,23 +101,10 @@ func MouseDown(evname string, ev interface{}) {
 // Handle mouse movement events for the game
 func MouseMove(evname string, ev interface{}) {
 	me := ev.(*window.CursorEvent)
-	mx := int(me.Xpos)
-	my := int(me.Ypos)
-	dx := prevMX - mx
-	dy := my - prevMY
-
-	if dx > 0 {
-		PlayerLookX = 1
-	} else if dx < 0 {
-		PlayerLookX = -1
-	}
-
-	if dy > 0 {
-		PlayerLookY = 1
-	} else if dy < 0 {
-		PlayerLookY = -1
-	}
-
+	mx := me.Xpos
+	my := me.Ypos
+	PlayerLookX = prevMX - mx
+	PlayerLookY = my - prevMY
 	prevMX = mx
 	prevMY = my
 }

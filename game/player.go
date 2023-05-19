@@ -4,8 +4,8 @@ import (
 	"github.com/g3n/engine/math32"
 )
 
-const lookSensitivityX float32 = 0.025
-const lookSensitivityY float32 = 0.0373
+const lookSensitivityX float32 = 0.05
+const lookSensitivityY float32 = 0.03
 
 var PlayerLookX float32
 var PlayerLookY float32
