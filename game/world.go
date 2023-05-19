@@ -11,7 +11,9 @@ import (
 	"github.com/g3n/engine/math32"
 )
 
+// World size in tiles
 const Width int = 64
+const Height int = 64
 const Depth int = 64
 const TileSize float32 = 4
 
@@ -151,17 +153,22 @@ func assignTileNeighbourhoods(tilemap [Width][Depth]Entity) {
 	}
 }
 
+// Create the tilemap
+func CreateMap() {
+	heightmap, min, max := makeHeightmap()
+	tilemap := makeTilemap(heightmap, min, max)
+	assignTileNeighbourhoods(tilemap)
+}
+
 // Load the world into the scene
 func LoadWorld() {
 	// Sun TODO: Sun entity type for day/night cycle
 	Sun = light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 8.0)
 	Scene.Add(Sun)
 	Entities = make(map[int]Entity)
-
-	// Tiles
-	heightmap, min, max := makeHeightmap()
-	tilemap := makeTilemap(heightmap, min, max)
-	assignTileNeighbourhoods(tilemap)
+	
+	CreateMap()
+	CreateAtmosphere()
 }
 
 // Update the game world, deltaTime is time since last update in ms

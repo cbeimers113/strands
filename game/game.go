@@ -82,6 +82,7 @@ func Run() {
 			deltaTime += float32(duration.Milliseconds())
 			if deltaTime >= tickThreshold {
 				UpdateWorld(deltaTime)
+				UpdateAtmosphere(deltaTime)
 				UpdatePlayer(deltaTime)
 				deltaTime = 0
 			}
