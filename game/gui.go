@@ -13,9 +13,8 @@ import (
 var infoText = func() string {
 	txt := "Strands\n"
 
-	// This patch is always the last version + 0.0.1
+	// Retrieve version number
 	out, err := exec.Command("git", "describe", "--tags", "--abbrev=0").Output()
-
 	if err == nil {
 		semver := strings.Split(strings.TrimSpace(string(out)), ".")
 
@@ -23,7 +22,7 @@ var infoText = func() string {
 			major, _ := strconv.Atoi(semver[0])
 			minor, _ := strconv.Atoi(semver[1])
 			patch, _ := strconv.Atoi(semver[2])
-			txt += fmt.Sprintf("Dev patch %d.%d.%d\n", major, minor, patch+1)
+			txt += fmt.Sprintf("Version %d.%d.%d\n", major, minor, patch)
 		}
 	}
 
