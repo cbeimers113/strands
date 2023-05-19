@@ -10,14 +10,14 @@ import (
 
 type TileType = string
 
-const Water TileType = "water"
+const Sand TileType = "sand"
 const Dirt TileType = "dirt"
 const Grass TileType = "grass"
 const Stone TileType = "stone"
 
 // Store list of tile types ordered by spawn height
 var TileTypes []TileType = []TileType{
-	Water,
+	Sand,
 	Dirt,
 	Grass,
 	Stone,
