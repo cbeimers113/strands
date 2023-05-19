@@ -62,7 +62,7 @@ func Run() {
 	// Load game
 	LoadGui()
 	LoadWorld()
-	OpenMainMenu(true)
+	Views[MainMenu].Open(true)
 
 	// Refresh display
 	Application.Subscribe(window.OnWindowSize, onResize)

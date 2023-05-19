@@ -16,9 +16,9 @@ func KeyDown(evname string, ev interface{}) {
 	switch kev.Key {
 	case window.KeyEscape:
 		if IsPaused {
-			OpenSimulationView(true)
+			Views[InfoView].Open(true)
 		} else {
-			OpenMainMenu(true)
+			Views[MainMenu].Open(true)
 		}
 	case window.KeyS:
 		PlayerMoveZ = 1
