@@ -3,8 +3,6 @@ package game
 import (
 	"fmt"
 	"os/exec"
-	"strconv"
-	"strings"
 
 	"github.com/g3n/engine/gui"
 )
@@ -14,16 +12,9 @@ var infoText = func() string {
 	txt := "Strands\n"
 
 	// Retrieve version number
-	out, err := exec.Command("git", "describe", "--tags", "--abbrev=0").Output()
+	ver, err := exec.Command("git", "describe", "--tags", "--abbrev=0").Output()
 	if err == nil {
-		semver := strings.Split(strings.TrimSpace(string(out)), ".")
-
-		if len(semver) >= 3 {
-			major, _ := strconv.Atoi(semver[0])
-			minor, _ := strconv.Atoi(semver[1])
-			patch, _ := strconv.Atoi(semver[2])
-			txt += fmt.Sprintf("Version %d.%d.%d\n", major, minor, patch)
-		}
+		txt += fmt.Sprintf("Version %s\n", ver)
 	}
 
 	txt += "\n"
