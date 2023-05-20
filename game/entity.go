@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/g3n/engine/core"
@@ -26,6 +27,32 @@ const Plant EntityType = "plant"
 const Creature EntityType = "creature"
 
 // Return the type of this entity
-func Type(entity Entity) EntityType {
+func TypeOf(entity Entity) EntityType {
 	return strings.Split(entity.Name(), " ")[0]
+}
+
+// Return an infostring representing this entity
+func EntityInfo(entity Entity) (infoString string) {
+	eType := TypeOf(entity)
+	infoString = fmt.Sprintf("%s:\n", eType)
+
+	switch eType {
+	case Tile:
+		tileData, ok := entity.UserData().(TileData)
+
+		if ok {
+			infoString += fmt.Sprintf("type=%s\n", tileData.Type)
+		}
+	case Plant:
+		plantData, ok := entity.UserData().(PlantData)
+
+		if ok {
+			infoString += fmt.Sprintf("age=%d\n", plantData.Age)
+			infoString += fmt.Sprintf("colour=%x\n", plantData.Colour)
+		}
+	case Creature:
+		infoString += "not implemented yet, how are you seeing this?"
+	}
+
+	return
 }

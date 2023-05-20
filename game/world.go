@@ -166,7 +166,7 @@ func LoadWorld() {
 	Sun = light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 8.0)
 	Scene.Add(Sun)
 	Entities = make(map[int]Entity)
-	
+
 	CreateMap()
 	CreateAtmosphere()
 }
@@ -174,7 +174,7 @@ func LoadWorld() {
 // Update the game world, deltaTime is time since last update in ms
 func UpdateWorld(deltaTime float32) {
 	for _, entity := range Entities {
-		switch Type(entity) {
+		switch TypeOf(entity) {
 		case Plant:
 			UpdatePlant(entity)
 		case Tile:

@@ -41,7 +41,7 @@ func onResize(evname string, ev interface{}) {
 	width, height := Application.GetSize()
 	Application.Gls().Viewport(0, 0, int32(width), int32(height))
 	Cam.SetAspect(float32(width) / float32(height))
-	RefreshGui()
+	ReloadGui()
 }
 
 // Run the application
@@ -84,6 +84,7 @@ func Run() {
 				UpdateWorld(deltaTime)
 				UpdateAtmosphere(deltaTime)
 				UpdatePlayer(deltaTime)
+				RefreshGui()
 				deltaTime = 0
 			}
 		}

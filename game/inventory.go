@@ -1,3 +1,7 @@
 package game
 
-const SeedGenetics = 0x1e4f9a
+// Interface between the player and the world,
+// controls what the player is interacting with
+
+var LookingAt Entity
+var SelectedTile Entity

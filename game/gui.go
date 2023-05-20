@@ -7,17 +7,16 @@ import (
 	"github.com/g3n/engine/gui"
 )
 
-// TODO: Find a more efficient way to implement the gui
-
 type View = string
 
 const MainMenu View = "main menu"
-const InfoView View = "info view"
+const SimulationView View = "simulation view"
 const TileContextMenu View = "tile context menu"
 
 type ViewControls struct {
-	Open  func(bool)
-	Close func()
+	Open    func(bool)
+	Close   func()
+	Refresh func()
 }
 
 // Create a map of view types to their open and close functions
@@ -27,7 +26,8 @@ var Views map[View]ViewControls
 var startButton *gui.Button
 var exitButton *gui.Button
 
-// Info view components
+// Simulation view components
+var simCursor *gui.Image
 var infoLabel *gui.Label
 
 // Tile context menu components
@@ -48,6 +48,12 @@ func infoText() (txt string) {
 	txt += "WASD to move\n"
 	txt += "ESC to open menu\n"
 
+	// Append the WAILA (what am I looking at?) data
+	if LookingAt != nil {
+		txt += "\n"
+		txt += EntityInfo(LookingAt)
+	}
+
 	return
 }
 
@@ -58,8 +64,22 @@ func LoadGui() {
 
 	// Register the views with their controls
 	registerMainMenu()
-	registerInfoView()
+	registerSimulationView()
 	registerTileContextMenu()
+}
+
+// Reload the gui components
+func ReloadGui() {
+	// Iterate over active components
+	for _, child := range Scene.Children() {
+		viewType, ok := child.GetNode().UserData().(View)
+
+		// If this is a gui component, reload it by closing and reopening
+		if ok {
+			Views[viewType].Close()
+			Views[viewType].Open(false)
+		}
+	}
 }
 
 // Refresh the gui components
@@ -67,10 +87,9 @@ func RefreshGui() {
 	for _, child := range Scene.Children() {
 		viewType, ok := child.GetNode().UserData().(View)
 
-		// If this is a gui component, refresh its corresponding menu by closing and reopening it
+		// If this is a gui component, call its refresh method
 		if ok {
-			Views[viewType].Close()
-			Views[viewType].Open(false)
+			Views[viewType].Refresh()
 		}
 	}
 }
@@ -92,7 +111,7 @@ func registerMainMenu() {
 			startButton.SetUserData(MainMenu)
 			startButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
 				SetPaused(false)
-				Views[InfoView].Open(true)
+				Views[SimulationView].Open(true)
 			})
 			Scene.Add(startButton)
 
@@ -112,27 +131,45 @@ func registerMainMenu() {
 			Scene.Remove(startButton)
 			Scene.Remove(exitButton)
 		},
+
+		Refresh: func() {},
 	}
 }
 
-// Register the info view
-func registerInfoView() {
-	Views[InfoView] = ViewControls{
+// Register the simulation view
+func registerSimulationView() {
+	Views[SimulationView] = ViewControls{
 		Open: func(closeOthers bool) {
 			if closeOthers {
 				closeViews()
 			}
 
+			var width, height int = Application.GetSize()
+			var w, h float32
+
+			simCursor, err := gui.NewImage("res/cursor.png")
+			if err == nil {
+				w, h = simCursor.ContentWidth(), simCursor.ContentHeight()
+				simCursor.SetPosition((float32(width)-w)/2, (float32(height)-h)/2)
+				simCursor.SetUserData(MainMenu)
+				Scene.Add(simCursor)
+			}
+
 			infoLabel = gui.NewLabel(infoText())
 			infoLabel.SetPosition(0, 0)
-			infoLabel.SetUserData(InfoView)
+			infoLabel.SetUserData(SimulationView)
 			Scene.Add(infoLabel)
 
 			SetPaused(false)
 		},
 
 		Close: func() {
+			Scene.Remove(simCursor)
 			Scene.Remove(infoLabel)
+		},
+
+		Refresh: func() {
+			infoLabel.SetText(infoText())
 		},
 	}
 }
@@ -149,15 +186,19 @@ func registerTileContextMenu() {
 			var w float32
 
 			tileInfoLabel = gui.NewLabel("<selected tile>")
-			w, _ = startButton.ContentWidth(), startButton.ContentHeight()
+			w, _ = tileInfoLabel.ContentWidth(), tileInfoLabel.ContentHeight()
 			tileInfoLabel.SetPosition(float32(width)-w, 0)
 			tileInfoLabel.SetUserData(TileContextMenu)
 			Scene.Add(tileInfoLabel)
+
+			SetPaused(true)
 		},
 
 		Close: func() {
 			Scene.Remove(tileInfoLabel)
 		},
+
+		Refresh: func() {},
 	}
 }
 

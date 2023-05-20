@@ -83,7 +83,7 @@ func TypeIndex(tType TileType) int {
 // Check if there's a plant on this tile
 func HasPlant(tile Entity) bool {
 	for _, child := range tile.Children() {
-		if Type(child.GetNode()) == Plant {
+		if TypeOf(child.GetNode()) == Plant {
 			return true
 		}
 	}
