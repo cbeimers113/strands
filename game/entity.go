@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/g3n/engine/core"
+	"github.com/g3n/engine/graphic"
 )
 
 // Entity data storage model:
@@ -48,11 +49,29 @@ func EntityInfo(entity Entity) (infoString string) {
 
 		if ok {
 			infoString += fmt.Sprintf("age=%d\n", plantData.Age)
-			infoString += fmt.Sprintf("colour=%x\n", plantData.Colour)
+			infoString += fmt.Sprintf("colour=#%06x\n", plantData.Colour)
 		}
 	case Creature:
 		infoString += "not implemented yet, how are you seeing this?"
 	}
 
 	return
+}
+
+// Set whether an entity is highlighted
+func Highlight(entity Entity, highlight bool) {
+	// TODO: Find a more efficient way to do this
+	// Dig out the material and modify it
+	if mesh, ok := entity.GetINode().(*graphic.Mesh); ok {
+		if imat := mesh.GetMaterial(0); imat != nil {
+			if mat := imat.GetMaterial(); mat != nil {
+				if tex, ok := Texture("highlight"); ok {
+					mat.RemoveTexture(tex)
+					if highlight && !mat.HasTexture(tex) {
+						mat.AddTexture(tex)
+					}
+				}
+			}
+		}
+	}
 }

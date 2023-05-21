@@ -8,11 +8,18 @@ import (
 const lookSensitivityX float32 = 0.025
 const lookSensitivityY float32 = 0.015
 
+// Movement offset inpus
 var PlayerLookX float32
 var PlayerLookY float32
 var PlayerMoveX float32
 var PlayerMoveZ float32
 
+// What entity the player is looking at
+var LookingAt Entity
+// What tile is currently selected by the player
+var SelectedTile Entity
+
+// The rotation offset for looking around
 var rotationY float32
 var rotationX float32
 

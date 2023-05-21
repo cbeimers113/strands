@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/g3n/engine/gui"
 )
@@ -38,9 +39,10 @@ func infoText() (txt string) {
 	txt = "Strands\n"
 
 	// Retrieve version number
-	ver, err := exec.Command("git", "describe", "--tags", "--abbrev=0").Output()
+	out, err := exec.Command("git", "describe", "--tags", "--abbrev=0").Output()
 	if err == nil {
-		txt += fmt.Sprintf("Version %s", ver)
+		ver := strings.TrimSpace(string(out))
+		txt += fmt.Sprintf("Version %s\n", ver)
 	}
 
 	txt += "\n"

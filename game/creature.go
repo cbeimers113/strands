@@ -9,3 +9,8 @@ func OnRightClickCreature(creature Entity) {
 func OnLeftClickCreature(creature Entity) {
 	println("No left click behaviour defined for ", creature.Name())
 }
+
+// Update a creature
+func UpdateCreature(creature Entity) {
+	
+}

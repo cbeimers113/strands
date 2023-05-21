@@ -179,6 +179,10 @@ func UpdateWorld(deltaTime float32) {
 			UpdatePlant(entity)
 		case Tile:
 			UpdateTile(entity)
+		case Creature:
+			UpdateCreature(entity)
 		}
+
+		Highlight(entity, LookingAt == entity)
 	}
 }
