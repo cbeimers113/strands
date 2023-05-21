@@ -10,14 +10,14 @@ import (
 
 type TileType = string
 
-const Water TileType = "water"
+const Sand TileType = "sand"
 const Dirt TileType = "dirt"
 const Grass TileType = "grass"
 const Stone TileType = "stone"
 
 // Store list of tile types ordered by spawn height
 var TileTypes []TileType = []TileType{
-	Water,
+	Sand,
 	Dirt,
 	Grass,
 	Stone,
@@ -83,7 +83,7 @@ func TypeIndex(tType TileType) int {
 // Check if there's a plant on this tile
 func HasPlant(tile Entity) bool {
 	for _, child := range tile.Children() {
-		if Type(child.GetNode()) == Plant {
+		if TypeOf(child.GetNode()) == Plant {
 			return true
 		}
 	}

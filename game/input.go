@@ -16,9 +16,9 @@ func KeyDown(evname string, ev interface{}) {
 	switch kev.Key {
 	case window.KeyEscape:
 		if IsPaused {
-			OpenSimulationView(true)
+			Views[SimulationView].Open(true)
 		} else {
-			OpenMainMenu(true)
+			Views[MainMenu].Open(true)
 		}
 	case window.KeyS:
 		PlayerMoveZ = 1
@@ -58,10 +58,8 @@ func KeyHold(evname string, ev interface{}) {
 // Handle mouse click events for the game
 func MouseDown(evname string, ev interface{}) {
 	me := ev.(*window.MouseEvent)
-
-	w, h := Application.GetSize()
 	r := collision.NewRaycaster(&math32.Vector3{}, &math32.Vector3{})
-	r.SetFromCamera(Cam, (-.5+me.Xpos/float32(w))*2.0, (.5-me.Ypos/float32(h))*2.0)
+	r.SetFromCamera(Cam, 0, 0)
 	i := r.IntersectObject(Scene, true)
 
 	var object Entity
@@ -70,7 +68,7 @@ func MouseDown(evname string, ev interface{}) {
 	if len(i) != 0 {
 		object = i[0].Object.GetNode()
 
-		switch Type(object) {
+		switch TypeOf(object) {
 		case Tile:
 			switch me.Button {
 			case window.MouseButton1:
@@ -93,7 +91,7 @@ func MouseDown(evname string, ev interface{}) {
 				OnRightClickCreature(object)
 			}
 		default:
-			println("No action defined for button ", me.Button, " on ", Type(object))
+			println("No action defined for button ", me.Button, " on ", TypeOf(object))
 		}
 	}
 }
