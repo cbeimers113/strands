@@ -8,12 +8,15 @@ import (
 	"github.com/g3n/engine/math32"
 )
 
-type TileType = string
+type TileType struct {
+	Name    string
+	Fertile bool
+}
 
-const Sand TileType = "sand"
-const Dirt TileType = "dirt"
-const Grass TileType = "grass"
-const Stone TileType = "stone"
+var Sand TileType = TileType{Name: "sand", Fertile: false}
+var Dirt TileType = TileType{Name: "dirt", Fertile: true}
+var Grass TileType = TileType{Name: "grass", Fertile: true}
+var Stone TileType = TileType{Name: "stone", Fertile: false}
 
 // Store list of tile types ordered by spawn height
 var TileTypes []TileType = []TileType{
@@ -28,18 +31,23 @@ type Neighbourhood = [6]Entity
 
 // Which data a tile will store
 type TileData struct {
+	// Static properties
 	MapX int
 	MapZ int
 	// No need for MapY as tiles are not stacked
 	// World (x, y, z) stored in tile.Position()
 	Type       TileType
-	Neighbours Neighbourhood
+	Neighbours Neighbourhood // Pointers to any neighbouring tiles
+
+	// Dynamic properties
+	Temperature float32
+	Moisture    float32
 }
 
 // Perform an action on a tile entity on right click
 func OnRightClickTile(tile Entity) {
-	if !HasPlant(tile) {
-		AddEntityTo(tile, NewPlant(0x00dd05))
+	if tileData, ok := tile.UserData().(TileData); ok && tileData.Type.Fertile {
+		AddEntityTo(tile, NewRandomPlant())
 	}
 }
 
@@ -53,18 +61,17 @@ func NewTile(mapX, mapZ int, y float32, tType TileType) (tile *graphic.Mesh) {
 	geom := CreateHexagon(TileSize, y)
 	mat := material.NewStandard(math32.NewColorHex(0x111111))
 	tile = graphic.NewMesh(geom, mat)
-	tex, ok := Texture(tType)
 	x := (float32(mapX) + (0.5 * float32(mapZ%2))) * TileSize * math32.Sin(math32.Pi/3)
 	z := float32(mapZ) * TileSize * 0.75
 
-	if ok {
+	if tex, ok := Texture(tType.Name); ok {
 		mat.AddTexture(tex)
 	}
 
 	tile.SetPosition(x, y, z)
 	tile.SetRotationY(math32.Pi / 2)
-	tile.SetName(fmt.Sprintf("%s (%s)", Tile, tType))
-	tile.SetUserData(TileData{MapX: mapX, MapZ: mapZ, Type: tType})
+	tile.SetName(fmt.Sprintf("%s (%s)", Tile, tType.Name))
+	tile.SetUserData(TileData{MapX: mapX, MapZ: mapZ, Type: tType, Temperature: 22.0})
 
 	return
 }
@@ -78,17 +85,6 @@ func TypeIndex(tType TileType) int {
 	}
 
 	return -1
-}
-
-// Check if there's a plant on this tile
-func HasPlant(tile Entity) bool {
-	for _, child := range tile.Children() {
-		if TypeOf(child.GetNode()) == Plant {
-			return true
-		}
-	}
-
-	return false
 }
 
 // Perform per-frame updates to a Tile

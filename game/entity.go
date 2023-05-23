@@ -39,15 +39,13 @@ func EntityInfo(entity Entity) (infoString string) {
 
 	switch eType {
 	case Tile:
-		tileData, ok := entity.UserData().(TileData)
-
-		if ok {
-			infoString += fmt.Sprintf("type=%s\n", tileData.Type)
+		if tileData, ok := entity.UserData().(TileData); ok {
+			infoString += fmt.Sprintf("type=%s\n", tileData.Type.Name)
+			infoString += fmt.Sprintf("temperature=%.2f°C\n", tileData.Temperature)
+			infoString += fmt.Sprintf("moisture=%.2f%%\n", tileData.Moisture)
 		}
 	case Plant:
-		plantData, ok := entity.UserData().(PlantData)
-
-		if ok {
+		if plantData, ok := entity.UserData().(PlantData); ok {
 			infoString += fmt.Sprintf("age=%d\n", plantData.Age)
 			infoString += fmt.Sprintf("colour=#%06x\n", plantData.Colour)
 		}

@@ -6,7 +6,6 @@ import (
 
 	"github.com/aquilax/go-perlin"
 	"github.com/g3n/engine/core"
-	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/light"
 	"github.com/g3n/engine/math32"
 )
@@ -21,7 +20,7 @@ var Sun *light.Ambient
 var Entities map[int]Entity
 
 // Add an entity to the game
-func AddEntityTo(node *core.Node, entity *graphic.Mesh) {
+func AddEntityTo(node *core.Node, entity core.INode) {
 	node.Add(entity)
 	Entities[len(Entities)] = node.ChildAt(len(node.Children()) - 1).GetNode()
 }
@@ -173,16 +172,13 @@ func LoadWorld() {
 
 // Update the game world, deltaTime is time since last update in ms
 func UpdateWorld(deltaTime float32) {
+	tick := map[EntityType]func(Entity) {
+		Plant: UpdatePlant,
+		Tile: UpdateTile,
+		Creature: UpdateCreature,
+	}
 	for _, entity := range Entities {
-		switch TypeOf(entity) {
-		case Plant:
-			UpdatePlant(entity)
-		case Tile:
-			UpdateTile(entity)
-		case Creature:
-			UpdateCreature(entity)
-		}
-
+		go tick[TypeOf(entity)](entity)
 		Highlight(entity, LookingAt == entity)
 	}
 }
