@@ -2,10 +2,12 @@ package game
 
 import (
 	"fmt"
-	"strings"
+	"strconv"
 
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/graphic"
+	"github.com/g3n/engine/material"
+	"github.com/g3n/engine/math32"
 )
 
 // Entity data storage model:
@@ -13,28 +15,45 @@ import (
 // The g3n Node type has a UserData field of type interface{} (the 'any' type)
 // which we can set and get any data we want. Each entity type stores its own struct
 // type (eg Plant entities store PlantData, Tile entities store TileData...)
-// Behind the scenes of the code on this side of the engine, all Entities are
-// pointers to g3n nodes.
+// The entity type wraps and promotes a *core.Node
 
-// The g3n Node also has a Name field which is used to store the entity type.
-// Entity type is checked when accessing the entity's UserData so that the proper
-// struct fields are used.
-
-type Entity = *core.Node
 type EntityType = string
+type Entity struct {
+	*graphic.Mesh
+	
+	Type     EntityType
+	Collider math32.Box3
+	Material *material.Material
+}
 
 const Tile EntityType = "tile"
 const Plant EntityType = "plant"
 const Creature EntityType = "creature"
 
-// Return the type of this entity
-func TypeOf(entity Entity) EntityType {
-	return strings.Split(entity.Name(), " ")[0]
+// Create a new entity with the given parameters
+func NewEntity(mesh *graphic.Mesh, eType ElementType) (entity *Entity) {
+	var mat *material.Material
+
+	if imat := mesh.GetMaterial(0); imat != nil {
+		mat = imat.GetMaterial()
+	}
+
+	entity = &Entity{
+		mesh,
+		eType,
+		mesh.BoundingBox(),
+		mat,
+	}
+
+	entity.SetName(fmt.Sprintf("%d", len(Entities)))
+	Entities[len(Entities)] = entity
+
+	return
 }
 
 // Return an infostring representing this entity
-func EntityInfo(entity Entity) (infoString string) {
-	eType := TypeOf(entity)
+func EntityInfo(entity *Entity) (infoString string) {
+	eType := entity.Type
 	infoString = fmt.Sprintf("%s:\n", eType)
 
 	switch eType {
@@ -57,19 +76,32 @@ func EntityInfo(entity Entity) (infoString string) {
 }
 
 // Set whether an entity is highlighted
-func Highlight(entity Entity, highlight bool) {
-	// TODO: Find a more efficient way to do this
-	// Dig out the material and modify it
-	if mesh, ok := entity.GetINode().(*graphic.Mesh); ok {
-		if imat := mesh.GetMaterial(0); imat != nil {
-			if mat := imat.GetMaterial(); mat != nil {
-				if tex, ok := Texture("highlight"); ok {
-					mat.RemoveTexture(tex)
-					if highlight && !mat.HasTexture(tex) {
-						mat.AddTexture(tex)
-					}
-				}
+func Highlight(entity *Entity, highlight bool) {
+	if mat := entity.Material; mat != nil {
+		if tex, ok := Texture("highlight"); ok {
+			mat.RemoveTexture(tex)
+
+			if highlight && !mat.HasTexture(tex) {
+				mat.AddTexture(tex)
 			}
 		}
 	}
+}
+
+// Check if two entities are colliding
+func Colliding(entity1, entity2 *Entity) (colliding bool) {
+	A := entity1.Collider
+	B := entity2.Collider
+	colliding = A.IsIntersectionBox(&B)
+
+	return
+}
+
+// Get the entity associated with a node, return nil if there isn't one
+func EntityOf(node *core.Node) (entity *Entity) {
+	if i, err := strconv.Atoi(node.Name()); err == nil {
+		entity = Entities[i]
+	}
+
+	return
 }

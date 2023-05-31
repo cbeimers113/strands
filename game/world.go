@@ -1,11 +1,11 @@
 package game
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 
 	"github.com/aquilax/go-perlin"
-	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/light"
 	"github.com/g3n/engine/math32"
 )
@@ -17,48 +17,34 @@ const Depth int = 64
 const TileSize float32 = 4
 
 var Sun *light.Ambient
-var Entities map[int]Entity
-
-// Add an entity to the game
-func AddEntityTo(node *core.Node, entity core.INode) {
-	node.Add(entity)
-	Entities[len(Entities)] = node.ChildAt(len(node.Children()) - 1).GetNode()
-}
+var Entities map[int]*Entity
 
 // Remove an entity from the world
-func RemoveEntity(entity Entity) {
-	// Recursively remove children of this entity
-	for _, child := range entity.Children() {
-		RemoveEntity(child.GetNode())
-	}
-
-	dropEntity(entity)
-	entity.SetVisible(false)
-	entity.RemoveAll(true)
-	entity.Parent().GetNode().Remove(entity)
-	entity.DisposeChildren(true)
-	entity.Dispose()
-}
-
-// Remove an entity from the Entities list
-func dropEntity(entity Entity) {
-	index := -1
-
-	// Find the entity's index in the Entities list
-	for i, ent := range Entities {
-		if ent == entity {
-			index = i
-			break
-		}
-	}
+func RemoveEntity(entity *Entity) {
+	index := EntityIndex(entity)
 
 	// If the entity is in the Entities list, remove it and shift all the entities above it down the list
 	if index >= 0 {
 		for i := index + 1; i < len(Entities); i++ {
 			Entities[i-1] = Entities[i]
+			Entities[i-1].SetName(fmt.Sprintf("%d", i-1))
 		}
 		delete(Entities, len(Entities)-1)
 	}
+
+	entity.DisposeChildren(true)
+	entity.Dispose()
+}
+
+// Find an entity's index in the Entities list, return -1 if not found
+func EntityIndex(entity *Entity) int {
+	for i, ent := range Entities {
+		if ent == entity {
+			return i
+		}
+	}
+
+	return -1
 }
 
 // Check if a given coordinate is within the tilemap boundaries
@@ -95,8 +81,8 @@ func makeHeightmap() ([Width][Depth]float32, float32, float32) {
 }
 
 // Create a tilemap with a given heightmap specification
-func makeTilemap(heightmap [Width][Depth]float32, min, max float32) [Width][Depth]Entity {
-	var tilemap [Width][Depth]Entity
+func makeTilemap(heightmap [Width][Depth]float32, min, max float32) [Width][Depth]*Entity {
+	var tilemap [Width][Depth]*Entity
 
 	for x := 0; x < Width; x++ {
 		for z := 0; z < Depth; z++ {
@@ -104,8 +90,8 @@ func makeTilemap(heightmap [Width][Depth]float32, min, max float32) [Width][Dept
 			y := math32.Min(float32(len(TileTypes))*(heightmap[x][z]-min)/(max-min), float32(len(TileTypes)-1))
 			tType := TileTypes[int(y)]
 			tile := NewTile(x, z, y, tType)
-			AddEntityTo(Scene, tile)
-			tilemap[x][z] = tile.GetNode()
+			Scene.Add(tile.GetINode())
+			tilemap[x][z] = tile
 		}
 	}
 
@@ -113,7 +99,7 @@ func makeTilemap(heightmap [Width][Depth]float32, min, max float32) [Width][Dept
 }
 
 // Give each tile in a tilemap a list of pointers to its neighbours
-func assignTileNeighbourhoods(tilemap [Width][Depth]Entity) {
+func assignTileNeighbourhoods(tilemap [Width][Depth]*Entity) {
 	// Base hexmap neighbourhood offsets
 	nbOffsets := [][]int{
 		{1, 0},  // Right
@@ -164,7 +150,7 @@ func LoadWorld() {
 	// Sun TODO: Sun entity type for day/night cycle
 	Sun = light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 8.0)
 	Scene.Add(Sun)
-	Entities = make(map[int]Entity)
+	Entities = make(map[int]*Entity)
 
 	CreateMap()
 	CreateAtmosphere()
@@ -172,13 +158,15 @@ func LoadWorld() {
 
 // Update the game world, deltaTime is time since last update in ms
 func UpdateWorld(deltaTime float32) {
-	tick := map[EntityType]func(Entity) {
-		Plant: UpdatePlant,
-		Tile: UpdateTile,
+	update_callbacks := map[EntityType]func(*Entity){
+		Plant:    UpdatePlant,
+		Tile:     UpdateTile,
 		Creature: UpdateCreature,
 	}
 	for _, entity := range Entities {
-		go tick[TypeOf(entity)](entity)
-		Highlight(entity, LookingAt == entity)
+		if update, ok := update_callbacks[entity.Type]; ok {
+			go update(entity)
+			Highlight(entity, LookingAt == entity)
+		}
 	}
 }

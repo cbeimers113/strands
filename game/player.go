@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/experimental/collision"
 	"github.com/g3n/engine/math32"
 )
@@ -15,9 +16,10 @@ var PlayerMoveX float32
 var PlayerMoveZ float32
 
 // What entity the player is looking at
-var LookingAt Entity
+var LookingAt *Entity
+
 // What tile is currently selected by the player
-var SelectedTile Entity
+var SelectedTile *Entity
 
 // The rotation offset for looking around
 var rotationY float32
@@ -47,17 +49,16 @@ func Look() {
 	r := collision.NewRaycaster(&math32.Vector3{}, &math32.Vector3{})
 	r.SetFromCamera(Cam, 0, 0)
 	i := r.IntersectObject(Scene, true)
-	
+
 	LookingAt = nil
-	var object Entity
+	var object *core.Node
 
 	// If we hit something, set the "looking at" entity to it
 	if len(i) != 0 {
 		object = i[0].Object.GetNode()
-		eType := TypeOf(object)
 
-		if eType != "" {
-			LookingAt = object
+		if entity := EntityOf(object); entity != nil {
+			LookingAt = entity
 		}
-	} 
+	}
 }

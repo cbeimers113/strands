@@ -14,7 +14,7 @@ func CreateAtmosphere() {
 		for y := 0; y < Height; y++ {
 			for z := 0; z < Depth; z++ {
 				Atmosphere[x][y][z] = Cell{
-					Elements: make(map[ElementType]*Quantity),
+					Elements:    make(map[ElementType]*Quantity),
 					Temperature: 22.0,
 				}
 

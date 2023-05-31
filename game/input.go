@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/experimental/collision"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/window"
@@ -62,36 +63,39 @@ func MouseDown(evname string, ev interface{}) {
 	r.SetFromCamera(Cam, 0, 0)
 	i := r.IntersectObject(Scene, true)
 
-	var object Entity
+	var object *core.Node
 
 	// If we hit something, trigger any necessary callbacks
 	if len(i) != 0 {
 		object = i[0].Object.GetNode()
+		entity := EntityOf(object)
 
-		switch TypeOf(object) {
-		case Tile:
-			switch me.Button {
-			case window.MouseButton1:
-				OnLeftClickTile(object)
-			case window.MouseButton2:
-				OnRightClickTile(object)
+		if entity != nil {
+			switch entity.Type {
+			case Tile:
+				switch me.Button {
+				case window.MouseButton1:
+					OnLeftClickTile(entity)
+				case window.MouseButton2:
+					OnRightClickTile(entity)
+				}
+			case Plant:
+				switch me.Button {
+				case window.MouseButton1:
+					OnLeftClickPlant(entity)
+				case window.MouseButton2:
+					OnRightClickPlant(entity)
+				}
+			case Creature:
+				switch me.Button {
+				case window.MouseButton1:
+					OnLeftClickCreature(entity)
+				case window.MouseButton2:
+					OnRightClickCreature(entity)
+				}
+			default:
+				println("No action defined for button ", me.Button, " on ", entity.Type)
 			}
-		case Plant:
-			switch me.Button {
-			case window.MouseButton1:
-				OnLeftClickPlant(object)
-			case window.MouseButton2:
-				OnRightClickPlant(object)
-			}
-		case Creature:
-			switch me.Button {
-			case window.MouseButton1:
-				OnLeftClickCreature(object)
-			case window.MouseButton2:
-				OnRightClickCreature(object)
-			}
-		default:
-			println("No action defined for button ", me.Button, " on ", TypeOf(object))
 		}
 	}
 }

@@ -50,7 +50,6 @@ func Run() {
 	Application = app.App()
 	Win, _ = Application.IWindow.(*window.GlfwWindow)
 	Scene = core.NewNode()
-	Scene.SetName("world")
 
 	// Configure camera
 	Cam = camera.New(1)
