@@ -53,7 +53,7 @@ func infoText() (txt string) {
 	// Append the WAILA (what am I looking at?) data
 	if LookingAt != nil {
 		txt += "\n"
-		txt += EntityInfo(LookingAt)
+		txt += LookingAt.InfoString()
 	}
 
 	return

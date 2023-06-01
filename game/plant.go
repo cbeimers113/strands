@@ -21,21 +21,19 @@ type PlantData struct {
 
 // Perform action on plant entity on right click
 func OnRightClickPlant(plant *Entity) {
-	println("No right click behaviour defined for ", plant.Name())
+	println("No right click behaviour defined for plant")
 }
 
 // Perform action on plant entity on left click
 func OnLeftClickPlant(plant *Entity) {
-	println("No left click behaviour defined for ", plant.Name())
+	println("No left click behaviour defined for plant")
 }
 
 // Create a new plant
-func NewPlant(colour int, height, radius float32) (plant *Entity) {
+func NewPlant(colour int, height, radius, x, z float32) (plant *Entity) {
 	geom := geometry.NewCylinder(float64(radius), float64(height), 8, 8, true, true)
 	mat := material.NewStandard(math32.NewColorHex(uint(colour) / 10))
 	mesh := graphic.NewMesh(geom, mat)
-	x := rand.Float32()*TileSize/2 - TileSize/4
-	z := rand.Float32()*TileSize/2 - TileSize/4
 
 	if tex, ok := Texture("stalk"); ok {
 		mat.AddTexture(tex)
@@ -54,8 +52,11 @@ func NewRandomPlant() *Entity {
 	colour := (int(0xdd+(2*rand.Float32()-0.5)*0x0f) << 8) // TODO: This changes the colour of the highlight texture too
 	height := (TileSize / 4) * (0.95 + rand.Float32()/10)
 	radius := (TileSize / 16) * (0.95 + rand.Float32()/10)
+	x := rand.Float32()*TileSize/2 - TileSize/4
+	z := rand.Float32()*TileSize/2 - TileSize/4
+	plant := NewPlant(colour, height, radius, x, z)
 
-	return NewPlant(colour, height, radius)
+	return plant
 }
 
 // Perform per-frame updates to a plant

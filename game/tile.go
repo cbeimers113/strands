@@ -37,6 +37,7 @@ type TileData struct {
 	Neighbours Neighbourhood // Pointers to any neighbouring tiles
 
 	// Dynamic properties
+	Planted     bool
 	Temperature float32
 	Moisture    float32
 }
@@ -44,14 +45,16 @@ type TileData struct {
 // Perform an action on a tile entity on right click
 func OnRightClickTile(tile *Entity) {
 	// Try to plant a plant here
-	if tileData, ok := tile.UserData().(TileData); ok && tileData.Type.Fertile {
+	if tileData, ok := tile.UserData().(TileData); ok && !tileData.Planted && tileData.Type.Fertile {
 		tile.Add(NewRandomPlant().GetINode())
+		tileData.Planted = true
+		tile.SetUserData(tileData)
 	}
 }
 
 // Perform an action on a tile entity on left click
 func OnLeftClickTile(tile *Entity) {
-	println("No left click behaviour defined for ", tile.Name())
+	println("No left click behaviour defined for tile")
 }
 
 // Spawn a hex tile of type tType at mapX, mapZ (tile precision), y (game world precision)
@@ -71,7 +74,7 @@ func NewTile(mapX, mapZ int, y float32, tType TileType) (tile *Entity) {
 	tile.SetRotationY(math32.Pi / 2)
 	tile.SetUserData(TileData{MapX: mapX, MapZ: mapZ, Type: tType, Temperature: 22.0})
 
-	return 
+	return
 }
 
 // Check what index of the tile types strata a type is, return -1 if invalid type

@@ -166,7 +166,7 @@ func UpdateWorld(deltaTime float32) {
 	for _, entity := range Entities {
 		if update, ok := update_callbacks[entity.Type]; ok {
 			go update(entity)
-			Highlight(entity, LookingAt == entity)
+			entity.Highlight(LookingAt == entity)
 		}
 	}
 }

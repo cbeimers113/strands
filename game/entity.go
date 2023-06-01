@@ -7,7 +7,6 @@ import (
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/material"
-	"github.com/g3n/engine/math32"
 )
 
 // Entity data storage model:
@@ -20,9 +19,8 @@ import (
 type EntityType = string
 type Entity struct {
 	*graphic.Mesh
-	
+
 	Type     EntityType
-	Collider math32.Box3
 	Material *material.Material
 }
 
@@ -41,7 +39,6 @@ func NewEntity(mesh *graphic.Mesh, eType ElementType) (entity *Entity) {
 	entity = &Entity{
 		mesh,
 		eType,
-		mesh.BoundingBox(),
 		mat,
 	}
 
@@ -52,7 +49,7 @@ func NewEntity(mesh *graphic.Mesh, eType ElementType) (entity *Entity) {
 }
 
 // Return an infostring representing this entity
-func EntityInfo(entity *Entity) (infoString string) {
+func (entity *Entity) InfoString() (infoString string) {
 	eType := entity.Type
 	infoString = fmt.Sprintf("%s:\n", eType)
 
@@ -76,7 +73,7 @@ func EntityInfo(entity *Entity) (infoString string) {
 }
 
 // Set whether an entity is highlighted
-func Highlight(entity *Entity, highlight bool) {
+func (entity *Entity) Highlight(highlight bool) {
 	if mat := entity.Material; mat != nil {
 		if tex, ok := Texture("highlight"); ok {
 			mat.RemoveTexture(tex)
@@ -86,15 +83,6 @@ func Highlight(entity *Entity, highlight bool) {
 			}
 		}
 	}
-}
-
-// Check if two entities are colliding
-func Colliding(entity1, entity2 *Entity) (colliding bool) {
-	A := entity1.Collider
-	B := entity2.Collider
-	colliding = A.IsIntersectionBox(&B)
-
-	return
 }
 
 // Get the entity associated with a node, return nil if there isn't one
