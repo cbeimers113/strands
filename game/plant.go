@@ -41,7 +41,7 @@ func NewPlant(colour int, height, radius, x, z float32) (plant *Entity) {
 
 	plant = NewEntity(mesh, Plant)
 	plant.SetPosition(x, mesh.Scale().Y/2, z)
-	plant.SetUserData(PlantData{Colour: colour, Height: height, Radius: radius, X: x, Z: z})
+	plant.SetUserData(&PlantData{Colour: colour, Height: height, Radius: radius, X: x, Z: z})
 
 	return
 }
@@ -59,20 +59,21 @@ func NewRandomPlant() *Entity {
 	return plant
 }
 
+// Grow the plant until maturity is reached
+func (plant *Entity) growPlant(plantData *PlantData) {
+	plantData.Age++
+
+	if plantData.Age < 1000 {  // TODO: Standardize "maturity" for plants
+		scale := plant.Scale()
+		scale.Y *= 1.001
+		plant.SetScale(scale.X, scale.Y, scale.Z)
+		plant.SetPosition(plantData.X, plant.Scale().Y/2, plantData.Z)
+	}
+}
+
 // Perform per-frame updates to a plant
 func UpdatePlant(plant *Entity) {
-	if data, ok := plant.UserData().(PlantData); ok {
-		data.Age++
-
-		// Grow until maturity is reached
-		if data.Age < 1000 {
-			scale := plant.Scale()
-			scale.Y *= 1.001
-			plant.SetScale(scale.X, scale.Y, scale.Z)
-			plant.SetPosition(data.X, plant.Scale().Y/2, data.Z)
-		}
-
-		// Update changes to the plant data
-		plant.SetUserData(data)
+	if plantData, ok := plant.UserData().(*PlantData); ok {
+		plant.growPlant(plantData)
 	}
 }

@@ -89,7 +89,8 @@ func makeTilemap(heightmap [Width][Depth]float32, min, max float32) [Width][Dept
 			// Map the heightmap value to the TileTypes array to determine tile type
 			y := math32.Min(float32(len(TileTypes))*(heightmap[x][z]-min)/(max-min), float32(len(TileTypes)-1))
 			tType := TileTypes[int(y)]
-			tile := NewTile(x, z, y, tType)
+			// Each tile spawns at 22°C with 100 mL of water on top of it
+			tile := NewTile(x, z, y, 22.0, 0.1, tType)
 			Scene.Add(tile.GetINode())
 			tilemap[x][z] = tile
 		}
@@ -131,9 +132,8 @@ func assignTileNeighbourhoods(tilemap [Width][Depth]*Entity) {
 			}
 
 			// Load the neighbour pointers into the tile's metadata
-			data, _ := tile.UserData().(TileData)
+			data, _ := tile.UserData().(*TileData)
 			data.Neighbours = neighbours
-			tile.SetUserData(data)
 		}
 	}
 }
@@ -163,6 +163,7 @@ func UpdateWorld(deltaTime float32) {
 		Tile:     UpdateTile,
 		Creature: UpdateCreature,
 	}
+
 	for _, entity := range Entities {
 		if update, ok := update_callbacks[entity.Type]; ok {
 			go update(entity)

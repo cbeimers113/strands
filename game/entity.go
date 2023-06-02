@@ -31,7 +31,7 @@ func NewEntity(mesh *graphic.Mesh, eType ElementType) (entity *Entity) {
 		mesh,
 		eType,
 	}
-	entity.GetMaterial(0).GetMaterial().SetLineWidth(10)
+	entity.GetMaterial(0).GetMaterial().SetLineWidth(8)
 	
 	// Store the index of this entity in its name so that the entity can be found by a game object
 	entity.SetName(fmt.Sprintf("%d", len(Entities)))
@@ -47,13 +47,13 @@ func (entity *Entity) InfoString() (infoString string) {
 
 	switch eType {
 	case Tile:
-		if tileData, ok := entity.UserData().(TileData); ok {
+		if tileData, ok := entity.UserData().(*TileData); ok {
 			infoString += fmt.Sprintf("type=%s\n", tileData.Type.Name)
-			infoString += fmt.Sprintf("temperature=%.2f°C\n", tileData.Temperature)
-			infoString += fmt.Sprintf("moisture=%.2f%%\n", tileData.Moisture)
+			infoString += fmt.Sprintf("temperature=%s\n", tileData.Temperature)
+			infoString += fmt.Sprintf("water level=%s\n", tileData.WaterLevel)
 		}
 	case Plant:
-		if plantData, ok := entity.UserData().(PlantData); ok {
+		if plantData, ok := entity.UserData().(*PlantData); ok {
 			infoString += fmt.Sprintf("age=%d\n", plantData.Age)
 			infoString += fmt.Sprintf("colour=#%06x\n", plantData.Colour)
 		}
