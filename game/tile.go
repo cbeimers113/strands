@@ -1,20 +1,22 @@
 package game
 
 import (
+	"math/rand"
+
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 )
 
 type TileType struct {
-	Name    string
-	Fertile bool
+	Name      string
+	Fertility float32
 }
 
-var Sand TileType = TileType{Name: "sand", Fertile: false}
-var Dirt TileType = TileType{Name: "dirt", Fertile: true}
-var Grass TileType = TileType{Name: "grass", Fertile: true}
-var Stone TileType = TileType{Name: "stone", Fertile: false}
+var Sand TileType = TileType{Name: "sand", Fertility: 0.05}
+var Dirt TileType = TileType{Name: "dirt", Fertility: 0.33}
+var Grass TileType = TileType{Name: "grass", Fertility: 0.80}
+var Stone TileType = TileType{Name: "stone", Fertility: 0.00}
 
 // Store list of tile types ordered by spawn height
 var TileTypes []TileType = []TileType{
@@ -45,7 +47,9 @@ type TileData struct {
 // Perform an action on a tile entity on right click
 func OnRightClickTile(tile *Entity) {
 	// Try to plant a plant here
-	if tileData, ok := tile.UserData().(TileData); ok && !tileData.Planted && tileData.Type.Fertile {
+	r := rand.Float32()
+
+	if tileData, ok := tile.UserData().(TileData); ok && !tileData.Planted && r < tileData.Type.Fertility {
 		tile.Add(NewRandomPlant().GetINode())
 		tileData.Planted = true
 		tile.SetUserData(tileData)
