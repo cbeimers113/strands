@@ -49,7 +49,7 @@ func NewPlant(colour int, height, radius, x, z float32) (plant *Entity) {
 // Create a new random plant
 func NewRandomPlant() *Entity {
 	// Random shade of green
-	colour := (int(0xdd+(2*rand.Float32()-0.5)*0x0f) << 8) // TODO: This changes the colour of the highlight texture too
+	colour := (int(0xdd+(2*rand.Float32()-1)*0x0f) << 8)
 	height := (TileSize / 4) * (0.95 + rand.Float32()/10)
 	radius := (TileSize / 16) * (0.95 + rand.Float32()/10)
 	x := rand.Float32()*TileSize/2 - TileSize/4

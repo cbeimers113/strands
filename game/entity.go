@@ -6,7 +6,6 @@ import (
 
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/graphic"
-	"github.com/g3n/engine/material"
 )
 
 // Entity data storage model:
@@ -19,9 +18,7 @@ import (
 type EntityType = string
 type Entity struct {
 	*graphic.Mesh
-
-	Type     EntityType
-	Material *material.Material
+	Type EntityType
 }
 
 const Tile EntityType = "tile"
@@ -30,18 +27,13 @@ const Creature EntityType = "creature"
 
 // Create a new entity with the given parameters
 func NewEntity(mesh *graphic.Mesh, eType ElementType) (entity *Entity) {
-	var mat *material.Material
-
-	if imat := mesh.GetMaterial(0); imat != nil {
-		mat = imat.GetMaterial()
-	}
-
 	entity = &Entity{
 		mesh,
 		eType,
-		mat,
 	}
-
+	entity.GetMaterial(0).GetMaterial().SetLineWidth(10)
+	
+	// Store the index of this entity in its name so that the entity can be found by a game object
 	entity.SetName(fmt.Sprintf("%d", len(Entities)))
 	Entities[len(Entities)] = entity
 
@@ -72,17 +64,9 @@ func (entity *Entity) InfoString() (infoString string) {
 	return
 }
 
-// Set whether an entity is highlighted
+// Highlight or unhighlight an entity
 func (entity *Entity) Highlight(highlight bool) {
-	if mat := entity.Material; mat != nil {
-		if tex, ok := Texture("highlight"); ok {
-			mat.RemoveTexture(tex)
-
-			if highlight && !mat.HasTexture(tex) {
-				mat.AddTexture(tex)
-			}
-		}
-	}
+	entity.GetMaterial(0).GetMaterial().SetWireframe(highlight)
 }
 
 // Get the entity associated with a node, return nil if there isn't one
