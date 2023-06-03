@@ -50,10 +50,10 @@ func NewPlant(colour int, height, radius, x, z float32) (plant *Entity) {
 func NewRandomPlant() *Entity {
 	// Random shade of green
 	colour := (int(0xdd+(2*rand.Float32()-1)*0x0f) << 8)
-	height := (1 / 4) * (0.95 + rand.Float32()/10)
-	radius := (1 / 16) * (0.95 + rand.Float32()/10)
-	x := rand.Float32()/2 - 1/4
-	z := rand.Float32()/2 - 1/4
+	height := float32(1)
+	radius := float32(0.125)
+	x := rand.Float32()/4 - 1/8
+	z := rand.Float32()/4 - 1/8
 	plant := NewPlant(colour, height, radius, x, z)
 
 	return plant
@@ -67,7 +67,7 @@ func (plant *Entity) growPlant(plantData *PlantData) {
 		scale := plant.Scale()
 		scale.Y *= 1.001
 		plant.SetScale(scale.X, scale.Y, scale.Z)
-		plant.SetPosition(plantData.X, plant.Scale().Y/2, plantData.Z)
+		plant.SetPosition(plantData.X, 0.5 + plant.Scale().Y/2, plantData.Z)
 	}
 }
 
