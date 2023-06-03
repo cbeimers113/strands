@@ -7,32 +7,32 @@ import (
 )
 
 // Generate a hexagon mesh with a given width and height
-func CreateHexagon(width, height float32) (geom *geometry.Geometry) {
+func CreateHexagon() (geom *geometry.Geometry) {
 	geom = geometry.NewGeometry()
 	vertices := math32.NewArrayF32(0, 16)
 	indices := math32.NewArrayU32(0, 16)
 	uvs := math32.NewArrayF32(0, 16)
 
 	// Vertex positioning for a hexagon made of 6 equilateral triangles
-	r := width / 2
+	r := float32(0.5)
 	dx := r * math32.Cos(math32.Pi/3) // This works out to r / 2
 	dy := r * math32.Sin(math32.Pi/3) // This works out to r * 0.866
 
 	// List all vertices in the hexagon as though looking at the front each face
 	vertices.Append(
-		0.0, 0.0, 0.0, // surface: centre 0
-		-dx, 0.0, dy, // surface: top left 1
-		dx, 0.0, dy, // surface: top right 2
-		-r, 0.0, 0.0, // surface: middle left 3
-		r, 0.0, 0.0, // surface: middle right 4
-		-dx, 0.0, -dy, // surface: bottom left 5
-		dx, 0.0, -dy, // surface: bottom right 6
-		-dx, -height, dy, // sides: top left 7
-		dx, -height, dy, // sides: top right 8
-		-r, -height, 0.0, // sides: middle left 9
-		r, -height, 0.0, // sides: middle right 10
-		-dx, -height, -dy, // sides: bottom left 11
-		dx, -height, -dy, // sides: bottom right 12
+		0.0, 0.5, 0.0, // surface: centre 0
+		-dx, 0.5, dy, // surface: top left 1
+		dx, 0.5, dy, // surface: top right 2
+		-r, 0.5, 0.0, // surface: middle left 3
+		r, 0.5, 0.0, // surface: middle right 4
+		-dx, 0.5, -dy, // surface: bottom left 5
+		dx, 0.5, -dy, // surface: bottom right 6
+		-dx, 0.0, dy, // sides: top left 7
+		dx, 0.0, dy, // sides: top right 8
+		-r, 0.0, 0.0, // sides: middle left 9
+		r, 0.0, 0.0, // sides: middle right 10
+		-dx, 0.0, -dy, // sides: bottom left 11
+		dx, 0.0, -dy, // sides: bottom right 12
 	)
 
 	// Add triangles' vertices in counter-clockwise
@@ -59,12 +59,12 @@ func CreateHexagon(width, height float32) (geom *geometry.Geometry) {
 
 	// Texture mapping, width and height are mapped to [0, 1], origin is top left
 	uvs.Append(
-		(r-dx)/width, 1.0, // bottom left
+		r-dx, 1.0, // bottom left
 		0.0, 0.5, // middle left
-		(r-dx)/width, 0.0, // top left
-		(width-dx)/width, 0.0, // top right
+		r-dx, 0.0, // top left
+		1-dx, 0.0, // top right
 		1.0, 0.5, // middle right
-		(width-dx)/width, 1.0, // bottom right
+		1-dx, 1.0, // bottom right
 	)
 
 	geom.SetIndices(indices)

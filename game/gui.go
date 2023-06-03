@@ -53,8 +53,10 @@ func infoText() (txt string) {
 	// Append the WAILA (what am I looking at?) data
 	if LookingAt != nil {
 		txt += "\n"
-		txt += EntityInfo(LookingAt)
+		txt += LookingAt.InfoString()
 	}
+
+	txt += fmt.Sprintf("\nTotal volume of water:%.2f\n", TotalWaterVolume())
 
 	return
 }
@@ -74,10 +76,8 @@ func LoadGui() {
 func ReloadGui() {
 	// Iterate over active components
 	for _, child := range Scene.Children() {
-		viewType, ok := child.GetNode().UserData().(View)
-
 		// If this is a gui component, reload it by closing and reopening
-		if ok {
+		if viewType, ok := child.GetNode().UserData().(View); ok {
 			Views[viewType].Close()
 			Views[viewType].Open(false)
 		}
@@ -87,10 +87,8 @@ func ReloadGui() {
 // Refresh the gui components
 func RefreshGui() {
 	for _, child := range Scene.Children() {
-		viewType, ok := child.GetNode().UserData().(View)
-
 		// If this is a gui component, call its refresh method
-		if ok {
+		if viewType, ok := child.GetNode().UserData().(View); ok {
 			Views[viewType].Refresh()
 		}
 	}
