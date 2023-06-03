@@ -40,7 +40,7 @@ func NewPlant(colour int, height, radius, x, z float32) (plant *Entity) {
 	}
 
 	plant = NewEntity(mesh, Plant)
-	plant.SetPosition(x, mesh.Scale().Y/2, z)
+	plant.SetPosition(x, mesh.Scale().Y, z)
 	plant.SetUserData(&PlantData{Colour: colour, Height: height, Radius: radius, X: x, Z: z})
 
 	return

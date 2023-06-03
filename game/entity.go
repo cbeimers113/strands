@@ -52,6 +52,8 @@ func (entity *Entity) InfoString() (infoString string) {
 			infoString += fmt.Sprintf("type=%s\n", tileData.Type.Name)
 			infoString += fmt.Sprintf("temperature=%s\n", tileData.Temperature)
 			infoString += fmt.Sprintf("water level=%s\n", tileData.WaterLevel)
+			infoString += fmt.Sprintf("elevation=%.2f\n", entity.GetElevation())
+			infoString += fmt.Sprintf("planted=%t\n", tileData.Planted)
 		}
 	case Plant:
 		if plantData, ok := entity.UserData().(*PlantData); ok {

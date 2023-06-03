@@ -17,6 +17,7 @@ const Depth int = 64
 
 var Sun *light.Ambient
 var Entities map[int]*Entity
+var Tilemap [Width][Depth]*Entity
 
 // Remove an entity from the world
 func RemoveEntity(entity *Entity) {
@@ -80,9 +81,7 @@ func makeHeightmap() ([Width][Depth]float32, float32, float32) {
 }
 
 // Create a tilemap with a given heightmap specification
-func makeTilemap(heightmap [Width][Depth]float32, min, max float32) [Width][Depth]*Entity {
-	var tilemap [Width][Depth]*Entity
-
+func makeTilemap(heightmap [Width][Depth]float32, min, max float32) {
 	for x := 0; x < Width; x++ {
 		for z := 0; z < Depth; z++ {
 			// Map the heightmap value to the TileTypes array to determine tile type
@@ -90,18 +89,16 @@ func makeTilemap(heightmap [Width][Depth]float32, min, max float32) [Width][Dept
 			tType := TileTypes[int(height)]
 			height /= 3
 
-			// Each tile spawns at 22°C with 1 L of water on top of it
-			tile := NewTile(x, z, height, 22.0, 1.0, tType)
+			// Each tile spawns at 22°C with 10 L of water on top of it
+			tile := NewTile(x, z, height, 22.0, 10, tType)
 			Scene.Add(tile.GetINode())
-			tilemap[x][z] = tile
+			Tilemap[x][z] = tile
 		}
 	}
-
-	return tilemap
 }
 
 // Give each tile in a tilemap a list of pointers to its neighbours
-func assignTileNeighbourhoods(tilemap [Width][Depth]*Entity) {
+func assignTileNeighbourhoods() {
 	// Base hexmap neighbourhood offsets
 	nbOffsets := [][]int{
 		{1, 0},  // Right
@@ -116,7 +113,7 @@ func assignTileNeighbourhoods(tilemap [Width][Depth]*Entity) {
 	for x := 0; x < Width; x++ {
 		for z := 0; z < Depth; z++ {
 			var neighbours Neighbourhood
-			tile := tilemap[x][z]
+			tile := Tilemap[x][z]
 
 			for i, offs := range nbOffsets {
 				xOffs := x + offs[0]
@@ -128,7 +125,7 @@ func assignTileNeighbourhoods(tilemap [Width][Depth]*Entity) {
 				}
 
 				if InBounds(xOffs, zOffs) {
-					neighbours[i] = tilemap[xOffs][zOffs]
+					neighbours[i] = Tilemap[xOffs][zOffs]
 				}
 			}
 
@@ -142,8 +139,8 @@ func assignTileNeighbourhoods(tilemap [Width][Depth]*Entity) {
 // Create the tilemap
 func CreateMap() {
 	heightmap, min, max := makeHeightmap()
-	tilemap := makeTilemap(heightmap, min, max)
-	assignTileNeighbourhoods(tilemap)
+	makeTilemap(heightmap, min, max)
+	assignTileNeighbourhoods()
 }
 
 // Load the world into the scene
@@ -161,14 +158,33 @@ func LoadWorld() {
 func UpdateWorld(deltaTime float32) {
 	update_callbacks := map[EntityType]func(*Entity){
 		Plant:    UpdatePlant,
-		Tile:     UpdateTile,
 		Creature: UpdateCreature,
 	}
 
+	// Concurrently update plants and creatures
 	for _, entity := range Entities {
 		if update, ok := update_callbacks[entity.Type]; ok {
 			go update(entity)
 			entity.Highlight(LookingAt == entity)
 		}
 	}
+
+	// Update the tilemap
+	for x := 0; x < Width; x++ {
+		for z := 0; z < Depth; z++ {
+			tile := Tilemap[x][z]
+			UpdateTile(tile)
+			tile.Highlight(LookingAt == tile)
+		}
+	}
+}
+
+// Calculate the total volume of liquid water
+func TotalWaterVolume() (volume float32) {
+	for _, entity := range Entities {
+		if tileData, ok := entity.UserData().(*TileData); ok {
+			volume += tileData.WaterLevel.Value
+		}
+	}
+	return
 }
