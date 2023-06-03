@@ -28,3 +28,8 @@ func (q *Quantity) String() (str string) {
 
 	return
 }
+
+// Convert from litres to cubic metres
+func LitresToCubicMetres(litres float32) float32 {
+	return litres / 1000
+}

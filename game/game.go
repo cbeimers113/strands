@@ -53,7 +53,7 @@ func Run() {
 
 	// Configure camera
 	Cam = camera.New(1)
-	Cam.SetPosition(float32(Width)*TileSize/2, TileSize, float32(Depth)*TileSize/2)
+	Cam.SetPosition(float32(Width)/2, 1, float32(Depth)/2)
 	Cam.SetRotation(0, 0, 0)
 	Scene.Add(Cam)
 	RegisterControls()

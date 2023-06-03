@@ -14,7 +14,6 @@ import (
 const Width int = 64
 const Height int = 64
 const Depth int = 64
-const TileSize float32 = 4
 
 var Sun *light.Ambient
 var Entities map[int]*Entity
@@ -63,7 +62,7 @@ func makeHeightmap() ([Width][Depth]float32, float32, float32) {
 
 	for x := 0; x < Width; x++ {
 		for z := 0; z < Depth; z++ {
-			height := float32(math.Abs(pnoise.Noise2D(float64(x), float64(z)) * 1000))
+			height := float32(math.Abs(pnoise.Noise2D(float64(x), float64(z))))
 			heightmap[x][z] = height
 
 			// Record min and max so that the tile types can be mapped to height range
@@ -87,10 +86,12 @@ func makeTilemap(heightmap [Width][Depth]float32, min, max float32) [Width][Dept
 	for x := 0; x < Width; x++ {
 		for z := 0; z < Depth; z++ {
 			// Map the heightmap value to the TileTypes array to determine tile type
-			y := math32.Min(float32(len(TileTypes))*(heightmap[x][z]-min)/(max-min), float32(len(TileTypes)-1))
-			tType := TileTypes[int(y)]
-			// Each tile spawns at 22°C with 100 mL of water on top of it
-			tile := NewTile(x, z, y, 22.0, 0.1, tType)
+			height := math32.Min(float32(len(TileTypes))*(heightmap[x][z]-min)/(max-min), float32(len(TileTypes)-1))
+			tType := TileTypes[int(height)]
+			height /= 3
+
+			// Each tile spawns at 22°C with 1 L of water on top of it
+			tile := NewTile(x, z, height, 22.0, 1.0, tType)
 			Scene.Add(tile.GetINode())
 			tilemap[x][z] = tile
 		}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/graphic"
+	"github.com/g3n/engine/math32"
 )
 
 // Entity data storage model:
@@ -26,13 +27,13 @@ const Plant EntityType = "plant"
 const Creature EntityType = "creature"
 
 // Create a new entity with the given parameters
-func NewEntity(mesh *graphic.Mesh, eType ElementType) (entity *Entity) {
+func NewEntity(mesh *graphic.Mesh, eType EntityType) (entity *Entity) {
 	entity = &Entity{
 		mesh,
 		eType,
 	}
 	entity.GetMaterial(0).GetMaterial().SetLineWidth(8)
-	
+
 	// Store the index of this entity in its name so that the entity can be found by a game object
 	entity.SetName(fmt.Sprintf("%d", len(Entities)))
 	Entities[len(Entities)] = entity
@@ -76,4 +77,14 @@ func EntityOf(node *core.Node) (entity *Entity) {
 	}
 
 	return
+}
+
+// Get the dimensions of a mesh
+func DimensionsOf(mesh *graphic.Mesh) *math32.Vector3 {
+	bb := mesh.BoundingBox()
+	x := math32.Abs(bb.Max.X - bb.Min.X)
+	y := math32.Abs(bb.Max.Y - bb.Min.Y)
+	z := math32.Abs(bb.Max.Z - bb.Min.Z)
+
+	return math32.NewVector3(x, y, z)
 }

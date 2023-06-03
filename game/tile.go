@@ -62,19 +62,16 @@ func OnLeftClickTile(tile *Entity) {
 }
 
 // Spawn a hex tile of type tType at mapX, mapZ (tile precision), y (game world precision)
-func NewTile(mapX, mapZ int, y, temp, waterLevel float32, tType TileType) (tile *Entity) {
-	tileMesh := createTileMesh(y, tType.Name)
-	waterMesh := createTileMesh(y, "water")
-
+func NewTile(mapX, mapZ int, height, temp, waterLevel float32, tType TileType) (tile *Entity) {
+	tileMesh := createTileMesh(tType.Name)
+	waterMesh := createTileMesh("water")
 	tileMesh.Add(waterMesh)
-	waterMesh.SetScale(waterMesh.Scale().X, waterLevel, waterMesh.Scale().Z)
-	waterMesh.SetPosition(0, waterMesh.Scale().Y, 0)
 
-	x := (float32(mapX) + (0.5 * float32(mapZ%2))) * TileSize * math32.Sin(math32.Pi/3)
-	z := float32(mapZ) * TileSize * 0.75
+	x := (float32(mapX) + (0.5 * float32(mapZ%2))) * math32.Sin(math32.Pi/3)
+	z := float32(mapZ) * 0.75
 
 	tile = NewEntity(tileMesh, Tile)
-	tile.SetPosition(x, y, z)
+	tile.SetPosition(x, height, z)
 	tile.SetRotationY(math32.Pi / 2)
 	tile.SetUserData(&TileData{
 		MapX:        mapX,
@@ -88,9 +85,9 @@ func NewTile(mapX, mapZ int, y, temp, waterLevel float32, tType TileType) (tile 
 	return
 }
 
-// Create a base tile mesh
-func createTileMesh(height float32, texture string) (tileMesh *graphic.Mesh) {
-	geom := CreateHexagon(TileSize, height)
+// Create a base tile mesh with a given texture
+func createTileMesh(texture string) (tileMesh *graphic.Mesh) {
+	geom := CreateHexagon()
 	mat := material.NewStandard(math32.NewColorHex(0x111111))
 	tileMesh = graphic.NewMesh(geom, mat)
 
@@ -114,16 +111,14 @@ func TypeIndex(tType TileType) int {
 
 // Update the tile's water level
 func (tile *Entity) updateWaterLevel(tileData *TileData) {
-	if tileData.WaterLevel.Value > 0 {
-		tileData.WaterLevel.Value -= 0.001
-		tileData.Water.SetVisible(true)
-	} else {
-		tileData.Water.SetVisible(false)
-	}
+	waterLevel := &tileData.WaterLevel.Value
+	water := tileData.Water
 
-	waterMesh := tileData.Water
-	waterMesh.SetScale(waterMesh.Scale().X, tileData.WaterLevel.Value, waterMesh.Scale().Z)
-	waterMesh.SetPosition(0, waterMesh.Scale().Y, 0)
+	// TODO: adjust water each frame
+
+	water.SetVisible(*waterLevel > 0)
+	water.SetScaleY(LitresToCubicMetres(*waterLevel))
+	water.SetPositionY(DimensionsOf(water).Y)
 }
 
 // Perform per-frame updates to a Tile
