@@ -16,9 +16,7 @@ go run main.go
 
 ### Current Features:
 
-    * Left click and drag to rotate around map
-    * Right click and drag to pan
-    * Scroll wheel to zoom in and out
-    * Right click a tile to plant a plant
-    * Plants will slowly grow
-
+    * Controls and info section on HUD
+    * Randomly generated hextile map
+    * Water that flows down the map's topography
+    * Plants which will grow on tiles over time
