@@ -38,6 +38,7 @@ type TileData struct {
 
 	Neighbours Neighbourhood // Pointers to any neighbouring tiles
 	Water      *graphic.Mesh // This is the water tile object that can exist on top of the tile
+	WaterTick  int
 
 	// Dynamic properties
 	Planted     bool
@@ -58,7 +59,7 @@ func OnRightClickTile(tile *Entity) {
 
 // Perform an action on a tile entity on left click
 func OnLeftClickTile(tile *Entity) {
-	tile.AddWater(100)
+	tile.AddWater(CubicMetresToLitres(1))
 }
 
 // Spawn a hex tile of type tType at mapX, mapZ (tile precision), y (game world precision)
@@ -69,6 +70,7 @@ func NewTile(mapX, mapZ int, height, temp, waterLevel float32, tType TileType) (
 	tile = NewEntity(tileMesh, Tile)
 	waterMesh := createTileMesh("water")
 
+	TotalWaterVolume.Value += waterLevel
 	waterMesh.SetName(tile.Name())
 	tileMesh.Add(waterMesh)
 	tile.SetPosition(x, height, z)
@@ -78,6 +80,7 @@ func NewTile(mapX, mapZ int, height, temp, waterLevel float32, tType TileType) (
 		MapZ:        mapZ,
 		Type:        tType,
 		Water:       waterMesh,
+		WaterTick:   rand.Intn(100),
 		Temperature: &Quantity{temp, Celcius},
 		WaterLevel:  &Quantity{waterLevel, Litre},
 	})
@@ -89,6 +92,7 @@ func NewTile(mapX, mapZ int, height, temp, waterLevel float32, tType TileType) (
 func createTileMesh(texture string) (tileMesh *graphic.Mesh) {
 	geom := CreateHexagon()
 	mat := material.NewStandard(math32.NewColorHex(0x111111))
+	mat.SetTransparent(texture == "water")
 	tileMesh = graphic.NewMesh(geom, mat)
 
 	if tex, ok := Texture(texture); ok {
@@ -112,13 +116,19 @@ func TypeIndex(tType TileType) int {
 // Update the tile's water level
 func (tile *Entity) updateWaterLevel() {
 	if tileData, ok := tile.UserData().(*TileData); ok {
-		waterLevel := &tileData.WaterLevel.Value
+		waterLevel := tileData.WaterLevel.Value
 		water := tileData.Water
 
-		water.SetVisible(*waterLevel > 0)
-		water.SetScaleY(LitresToCubicMetres(*waterLevel))
+		water.SetScaleY(LitresToCubicMetres(waterLevel))
 		water.SetPositionY(DimensionsOf(water).Y)
-		// TODO: Lower opacity for low volumes
+		water.SetVisible(tileData.WaterLevel.Value > 0)
+
+		// Lower water texture opacity for low water level
+		if imat := water.GetMaterial(0); imat != nil {
+			if ms, ok := imat.(*material.Standard); ok {
+				ms.SetOpacity(math32.Min(50, waterLevel) / 60)
+			}
+		}
 	}
 }
 
@@ -128,9 +138,10 @@ func (tile *Entity) AddWater(delta float32) float32 {
 	if tileData, ok := tile.UserData().(*TileData); ok {
 		waterLevel := &tileData.WaterLevel.Value
 		backflow := -(*waterLevel + delta)
+		pLevel := *waterLevel
 		*waterLevel += delta
 		*waterLevel = math32.Max(0, *waterLevel)
-		tile.updateWaterLevel()
+		TotalWaterVolume.Value += *waterLevel - pLevel
 
 		return math32.Max(backflow, 0)
 	}
@@ -138,68 +149,93 @@ func (tile *Entity) AddWater(delta float32) float32 {
 }
 
 // Get the elevation of the top of the tile, including its water
-func (tile *Entity) GetElevation() (elevation float32) {
+func (tile *Entity) GetElevation() *Quantity {
+	var elevation float32
+
 	if tileData, ok := tile.UserData().(*TileData); ok {
 		elevation = tile.Position().Y
 		elevation += tileData.Water.Position().Y
 		elevation += LitresToCubicMetres(tileData.WaterLevel.Value)
 	}
 
-	return
+	return &Quantity{
+		Value: elevation,
+		Units: Metre,
+	}
 }
 
 // Perform per-frame updates to a Tile
 func UpdateTile(tile *Entity) {
-	tile.doWaterSpread()
+	if !IsPaused {
+		tile.doWaterSpread()
+	}
+
+	tile.updateWaterLevel()
 }
 
 // Spread water to other tiles
 func (tile *Entity) doWaterSpread() {
-	if tileData, ok := tile.UserData().(*TileData); ok && tileData.WaterLevel.Value > 0 {
-		var lowerNeighbours []*Entity
+	if tileData, ok := tile.UserData().(*TileData); ok {
+		tileData.WaterTick++
 
-		// Filter out the neighbouring tiles which aren't lower than this one
-		for _, neighbour := range tileData.Neighbours {
-			if neighbour == nil {
-				continue
-			}
+		if tileData.WaterTick > 10 && tileData.WaterLevel.Value > 0 {
+			var lowerNeighbours []*Entity
 
-			if neighbour.GetElevation() < tile.GetElevation() {
-				lowerNeighbours = append(lowerNeighbours, neighbour)
-			}
-		}
+			// Filter out the neighbouring tiles which aren't lower than this one
+			for _, neighbour := range tileData.Neighbours {
+				if neighbour == nil {
+					continue
+				}
 
-		for len(lowerNeighbours) > 0 {
-			var neighbour *Entity
-
-			// Find lowest neighbour
-			for _, nb := range lowerNeighbours {
-				if neighbour == nil || nb.GetElevation() < neighbour.GetElevation() {
-					neighbour = nb
+				if neighbour.GetElevation().Value < tile.GetElevation().Value {
+					lowerNeighbours = append(lowerNeighbours, neighbour)
 				}
 			}
 
-			// Stop when this tile is already a local minimum
-			if neighbour.GetElevation() >= tile.GetElevation() {
-				break
-			}
+			// Shuffle the lower neighbours to give some randomness to flow direction
+			rand.Shuffle(len(lowerNeighbours), func(i, j int) {
+				lowerNeighbours[i], lowerNeighbours[j] = lowerNeighbours[j], lowerNeighbours[i]
+			})
 
-			delta := (tile.GetElevation() - neighbour.GetElevation()) / float32(len(lowerNeighbours))
-			neighbour.AddWater(delta - tile.AddWater(-delta))
+			// Distribute water to lower neighbours
+			for len(lowerNeighbours) > 0 {
+				var neighbour *Entity
 
-			// Remove neighbour from lowerNeighbours
-			for i, nb := range lowerNeighbours {
-				if nb == neighbour {
-					lowerNeighbours[i] = lowerNeighbours[len(lowerNeighbours)-1]
-					lowerNeighbours = lowerNeighbours[:len(lowerNeighbours)-1]
+				// Find lowest neighbour
+				for _, nb := range lowerNeighbours {
+					if neighbour == nil || nb.GetElevation().Value < neighbour.GetElevation().Value {
+						neighbour = nb
+					}
+				}
+
+				// Stop when this tile is already a local minimum
+				if neighbour.GetElevation().Value >= tile.GetElevation().Value {
+					break
+				}
+
+				delta := CubicMetresToLitres(tile.GetElevation().Value-neighbour.GetElevation().Value) / float32(len(lowerNeighbours))
+
+				if δ := neighbour.AddWater(delta - tile.AddWater(-delta)); δ != 0 {
+					// TODO: This shouldn't ever be 0, but do something if it is
+					println(δ)
+				}
+
+				// Remove neighbour from lowerNeighbours
+				for i, nb := range lowerNeighbours {
+					if nb == neighbour {
+						lowerNeighbours[i] = lowerNeighbours[len(lowerNeighbours)-1]
+						lowerNeighbours = lowerNeighbours[:len(lowerNeighbours)-1]
+						break
+					}
+				}
+
+				// Stop when we run out of water to spread
+				if tileData.WaterLevel.Value == 0 {
 					break
 				}
 			}
 
-			// Stop when we run out of water to spread
-			if tileData.WaterLevel.Value == 0 {
-				break
-			}
+			tileData.WaterTick = 0
 		}
 	}
 }

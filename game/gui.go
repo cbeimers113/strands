@@ -30,6 +30,7 @@ var exitButton *gui.Button
 // Simulation view components
 var simCursor *gui.Image
 var infoLabel *gui.Label
+var pausedLabel *gui.Label
 
 // Tile context menu components
 var tileInfoLabel *gui.Label
@@ -49,6 +50,10 @@ func infoText() (txt string) {
 	txt += "Controls:\n"
 	txt += "WASD to move\n"
 	txt += "ESC to open menu\n"
+	txt += "Space to toggle simulation\n"
+	txt += "\n"
+	txt += "Left click a tile to add water\n"
+	txt += "Right click a tile to try to add a plant\n"
 
 	// Append the WAILA (what am I looking at?) data
 	if LookingAt != nil {
@@ -56,9 +61,17 @@ func infoText() (txt string) {
 		txt += LookingAt.InfoString()
 	}
 
-	txt += fmt.Sprintf("\nTotal volume of water:%.2f\n", TotalWaterVolume())
+	txt += fmt.Sprintf("\nTotal water volume=%s\n", TotalWaterVolume)
 
 	return
+}
+
+// Update the "Simulation Running/Paused" status
+func pausedStatus() string {
+	return fmt.Sprintf("Simulation %s", map[bool]string{
+		true:  "Paused",
+		false: "Running",
+	}[IsPaused])
 }
 
 // Load the gui
@@ -160,16 +173,25 @@ func registerSimulationView() {
 			infoLabel.SetUserData(SimulationView)
 			Scene.Add(infoLabel)
 
+			pausedLabel = gui.NewLabel(pausedStatus())
+			pausedLabel.SetPosition((float32(width)-pausedLabel.ContentWidth())/2, 0)
+			pausedLabel.SetUserData(SimulationView)
+			Scene.Add(pausedLabel)
+
 			SetPaused(false)
 		},
 
 		Close: func() {
 			Scene.Remove(simCursor)
 			Scene.Remove(infoLabel)
+			Scene.Remove(pausedLabel)
 		},
 
 		Refresh: func() {
+			width, _ := Application.GetSize()
 			infoLabel.SetText(infoText())
+			pausedLabel.SetText(pausedStatus())
+			pausedLabel.SetPosition((float32(width)-pausedLabel.ContentWidth())/2, 0)
 		},
 	}
 }
