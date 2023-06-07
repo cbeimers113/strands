@@ -112,13 +112,19 @@ func TypeIndex(tType TileType) int {
 // Update the tile's water level
 func (tile *Entity) updateWaterLevel() {
 	if tileData, ok := tile.UserData().(*TileData); ok {
-		waterLevel := &tileData.WaterLevel.Value
+		waterLevel := tileData.WaterLevel.Value
 		water := tileData.Water
 
-		water.SetVisible(*waterLevel > 0)
-		water.SetScaleY(LitresToCubicMetres(*waterLevel))
+		water.SetScaleY(LitresToCubicMetres(waterLevel))
 		water.SetPositionY(DimensionsOf(water).Y)
-		// TODO: Lower opacity for low volumes
+
+		// Lower water texture opacity for low water level
+		if imat := water.GetMaterial(0); imat != nil {
+			if ms, ok := imat.(*material.Standard); ok {
+				ms.SetTransparent(true)
+				ms.SetOpacity(math32.Min(1, waterLevel))
+			}
+		}
 	}
 }
 
@@ -138,19 +144,28 @@ func (tile *Entity) AddWater(delta float32) float32 {
 }
 
 // Get the elevation of the top of the tile, including its water
-func (tile *Entity) GetElevation() (elevation float32) {
+func (tile *Entity) GetElevation() *Quantity {
+	var elevation float32
+
 	if tileData, ok := tile.UserData().(*TileData); ok {
 		elevation = tile.Position().Y
 		elevation += tileData.Water.Position().Y
 		elevation += LitresToCubicMetres(tileData.WaterLevel.Value)
 	}
 
-	return
+	return &Quantity{
+		Value: elevation,
+		Units: Metre,
+	}
 }
 
 // Perform per-frame updates to a Tile
 func UpdateTile(tile *Entity) {
 	tile.doWaterSpread()
+
+	if tileData, ok := tile.UserData().(*TileData); ok {
+		tileData.Water.SetVisible(tileData.WaterLevel.Value > 0)
+	}
 }
 
 // Spread water to other tiles
@@ -164,27 +179,32 @@ func (tile *Entity) doWaterSpread() {
 				continue
 			}
 
-			if neighbour.GetElevation() < tile.GetElevation() {
+			if neighbour.GetElevation().Value < tile.GetElevation().Value {
 				lowerNeighbours = append(lowerNeighbours, neighbour)
 			}
 		}
+
+		// Shuffle the lower neighbours to give some randomness to flow direction
+		rand.Shuffle(len(lowerNeighbours), func(i, j int) {
+			lowerNeighbours[i], lowerNeighbours[j] = lowerNeighbours[j], lowerNeighbours[i]
+		})
 
 		for len(lowerNeighbours) > 0 {
 			var neighbour *Entity
 
 			// Find lowest neighbour
 			for _, nb := range lowerNeighbours {
-				if neighbour == nil || nb.GetElevation() < neighbour.GetElevation() {
+				if neighbour == nil || nb.GetElevation().Value < neighbour.GetElevation().Value {
 					neighbour = nb
 				}
 			}
 
 			// Stop when this tile is already a local minimum
-			if neighbour.GetElevation() >= tile.GetElevation() {
+			if neighbour.GetElevation().Value >= tile.GetElevation().Value {
 				break
 			}
 
-			delta := (tile.GetElevation() - neighbour.GetElevation()) / float32(len(lowerNeighbours))
+			delta := (tile.GetElevation().Value - neighbour.GetElevation().Value) / float32(len(lowerNeighbours))
 			neighbour.AddWater(delta - tile.AddWater(-delta))
 
 			// Remove neighbour from lowerNeighbours

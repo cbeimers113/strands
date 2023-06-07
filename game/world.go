@@ -85,12 +85,17 @@ func makeTilemap(heightmap [Width][Depth]float32, min, max float32) {
 	for x := 0; x < Width; x++ {
 		for z := 0; z < Depth; z++ {
 			// Map the heightmap value to the TileTypes array to determine tile type
-			height := math32.Min(float32(len(TileTypes))*(heightmap[x][z]-min)/(max-min), float32(len(TileTypes)-1))
-			tType := TileTypes[int(height)]
+			height := float32(len(TileTypes)) * (heightmap[x][z] - min) / (max - min)
+			tType := Stone
+
+			if int(height) < len(TileTypes) {
+				tType = TileTypes[int(height)]
+			}
+
 			height /= 3
 
 			// Each tile spawns at 22°C with 10 L of water on top of it
-			tile := NewTile(x, z, height, 22.0, 10, tType)
+			tile := NewTile(x, z, height, 22.0, 0.01, tType)
 			Scene.Add(tile.GetINode())
 			Tilemap[x][z] = tile
 		}
@@ -180,11 +185,17 @@ func UpdateWorld(deltaTime float32) {
 }
 
 // Calculate the total volume of liquid water
-func TotalWaterVolume() (volume float32) {
+func TotalWaterVolume() *Quantity {
+	var vol float32
+
 	for _, entity := range Entities {
 		if tileData, ok := entity.UserData().(*TileData); ok {
-			volume += tileData.WaterLevel.Value
+			vol += tileData.WaterLevel.Value
 		}
 	}
-	return
+
+	return &Quantity{
+		Value: vol,
+		Units: Litre,
+	}
 }

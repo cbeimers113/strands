@@ -8,6 +8,7 @@ type Unit string
 const Celcius Unit = "°C"
 const Litre Unit = "L"
 const Gram Unit = "g"
+const Metre Unit = "m"
 
 // Represents an amount of an element
 type Quantity struct {

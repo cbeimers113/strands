@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/g3n/engine/app"
@@ -71,6 +72,9 @@ func Run() {
 	// Update every n ms so that SimSpeed updates happen per second
 	var tickThreshold float32 = 1000 / float32(SimSpeed)
 	var deltaTime float32 = 0
+
+	// Seed the PRNG
+	rand.Seed(time.Now().UnixNano())
 
 	Application.Run(func(renderer *renderer.Renderer, duration time.Duration) {
 		Application.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)

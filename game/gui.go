@@ -56,7 +56,7 @@ func infoText() (txt string) {
 		txt += LookingAt.InfoString()
 	}
 
-	txt += fmt.Sprintf("\nTotal volume of water:%.2f\n", TotalWaterVolume())
+	txt += fmt.Sprintf("\nTotal water volume=%s\n", TotalWaterVolume())
 
 	return
 }
