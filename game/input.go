@@ -13,7 +13,7 @@ func KeyDown(evname string, ev interface{}) {
 
 	switch kev.Key {
 	case window.KeyEscape:
-		if IsPaused {
+		if IsFrozen {
 			Views[SimulationView].Open(true)
 		} else {
 			Views[MainMenu].Open(true)
@@ -26,6 +26,8 @@ func KeyDown(evname string, ev interface{}) {
 		PlayerMoveX = 1
 	case window.KeyA:
 		PlayerMoveX = -1
+	case window.KeySpace:
+		IsPaused = !IsPaused
 	}
 }
 
@@ -57,7 +59,7 @@ func KeyHold(evname string, ev interface{}) {
 func MouseDown(evname string, ev interface{}) {
 	me := ev.(*window.MouseEvent)
 
-	if !IsPaused && LookingAt != nil {
+	if !IsFrozen && LookingAt != nil {
 		switch LookingAt.Type {
 		case Tile:
 			switch me.Button {

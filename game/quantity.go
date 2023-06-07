@@ -30,7 +30,12 @@ func (q *Quantity) String() (str string) {
 	return
 }
 
-// Convert from litres to cubic metres
+// Convert from litres to cubic metres (dimensions of one tile is 1 cubic metre)
 func LitresToCubicMetres(litres float32) float32 {
 	return litres / 1000
+}
+
+// Convert from cubic metres to litres (dimensions of one tile is 1 cubic metre)
+func CubicMetresToLitres(cubicMetres float32) float32 {
+	return cubicMetres * 1000
 }

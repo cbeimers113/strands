@@ -18,6 +18,7 @@ const Depth int = 64
 var Sun *light.Ambient
 var Entities map[int]*Entity
 var Tilemap [Width][Depth]*Entity
+var TotalWaterVolume *Quantity
 
 // Remove an entity from the world
 func RemoveEntity(entity *Entity) {
@@ -95,7 +96,7 @@ func makeTilemap(heightmap [Width][Depth]float32, min, max float32) {
 			height /= 3
 
 			// Each tile spawns at 22°C with 10 L of water on top of it
-			tile := NewTile(x, z, height, 22.0, 0.01, tType)
+			tile := NewTile(x, z, height, 22.0, 10, tType)
 			Scene.Add(tile.GetINode())
 			Tilemap[x][z] = tile
 		}
@@ -154,6 +155,7 @@ func LoadWorld() {
 	Sun = light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 8.0)
 	Scene.Add(Sun)
 	Entities = make(map[int]*Entity)
+	TotalWaterVolume = &Quantity{Units: Litre}
 
 	CreateMap()
 	CreateAtmosphere()
@@ -181,21 +183,5 @@ func UpdateWorld(deltaTime float32) {
 			UpdateTile(tile)
 			tile.Highlight(LookingAt == tile)
 		}
-	}
-}
-
-// Calculate the total volume of liquid water
-func TotalWaterVolume() *Quantity {
-	var vol float32
-
-	for _, entity := range Entities {
-		if tileData, ok := entity.UserData().(*TileData); ok {
-			vol += tileData.WaterLevel.Value
-		}
-	}
-
-	return &Quantity{
-		Value: vol,
-		Units: Litre,
 	}
 }

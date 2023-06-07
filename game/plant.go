@@ -73,7 +73,7 @@ func (plant *Entity) growPlant(plantData *PlantData) {
 
 // Perform per-frame updates to a plant
 func UpdatePlant(plant *Entity) {
-	if plantData, ok := plant.UserData().(*PlantData); ok {
+	if plantData, ok := plant.UserData().(*PlantData); ok && !IsPaused {
 		plant.growPlant(plantData)
 	}
 }

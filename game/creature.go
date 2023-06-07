@@ -12,5 +12,7 @@ func OnLeftClickCreature(creature *Entity) {
 
 // Update a creature
 func UpdateCreature(creature *Entity) {
-	
+	if !IsPaused {
+		
+	}
 }

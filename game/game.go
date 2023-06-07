@@ -21,11 +21,15 @@ var Scene *core.Node
 var Cam *camera.Camera
 var Win *window.GlfwWindow
 
+// This determines if everything in the simulation is frozen, including the player
+var IsFrozen bool
+
+// This determines if the simulation physics are paused, but the player can still interact with the simulation
 var IsPaused bool
 
 // Set whether the game is paused
 func SetPaused(paused bool) {
-	IsPaused = paused
+	IsFrozen = paused
 
 	if Win != nil {
 		switch paused {
@@ -80,7 +84,7 @@ func Run() {
 		Application.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(Scene, Cam)
 
-		if !IsPaused {
+		if !IsFrozen {
 			// TPS counter
 			deltaTime += float32(duration.Milliseconds())
 			if deltaTime >= tickThreshold {
