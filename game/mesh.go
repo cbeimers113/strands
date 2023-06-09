@@ -33,6 +33,8 @@ func CreateHexagon() (geom *geometry.Geometry) {
 		r, 0.0, 0.0, // sides: middle right 10
 		-dx, 0.0, -dy, // sides: bottom left 11
 		dx, 0.0, -dy, // sides: bottom right 12
+		0.0, 0.0, 0.0, // bottom surface: centre 13
+
 	)
 
 	// Add triangles' vertices in counter-clockwise
@@ -55,6 +57,12 @@ func CreateHexagon() (geom *geometry.Geometry) {
 		12, 5, 6, // bottom side 2
 		11, 9, 3, // bottom left side 1
 		5, 11, 3, // bottom left side 2
+		7, 9, 13, // bottom surface top left
+		8, 7, 13, // bottom surface top mid
+		10, 8, 13, // bottom surface top right
+		12, 10, 13, // bottom surface bottom right
+		11, 12, 13, // bottom surface bottom mid
+		9, 11, 13, // bottom surface bottom left
 	)
 
 	// Texture mapping, width and height are mapped to [0, 1], origin is top left
