@@ -90,7 +90,7 @@ func NewTile(mapX, mapZ int, height, temp, waterLevel float32, tType TileType) (
 
 // Create a base tile mesh with a given texture
 func createTileMesh(texture string) (tileMesh *graphic.Mesh) {
-	geom := CreateHexagon()
+	geom := NewHexMesh()
 	mat := material.NewStandard(math32.NewColorHex(0x111111))
 	mat.SetTransparent(texture == "water")
 	tileMesh = graphic.NewMesh(geom, mat)
