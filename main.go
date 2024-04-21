@@ -1,10 +1,25 @@
 package main
 
 import (
-	"strands/game"
+	_ "embed"
+
+	"cbeimers113/strands/internal/config"
+	"cbeimers113/strands/internal/game"
 )
 
-// Main function
+//go:embed cfg.json
+var cfgData []byte
+
 func main() {
-	game.Run()
+	cfg, err := config.Load(cfgData)
+	if err != nil {
+		panic(err)
+	}
+
+	g, err := game.New(cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	g.Start()
 }

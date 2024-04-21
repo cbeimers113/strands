@@ -1,8 +1,9 @@
-package game
+package graphics
 
 import (
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/gls"
+	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/math32"
 )
 
@@ -146,4 +147,14 @@ func NewLeafMesh(w, l, s, c float32) (geom *geometry.Geometry) {
 	geom.AddVBO(gls.NewVBO(uvs).AddAttrib(gls.VertexTexcoord))
 
 	return
+}
+
+// Get the dimensions of a mesh
+func DimensionsOf(mesh *graphic.Mesh) *math32.Vector3 {
+	bb := mesh.BoundingBox()
+	x := math32.Abs(bb.Max.X - bb.Min.X)
+	y := math32.Abs(bb.Max.Y - bb.Min.Y)
+	z := math32.Abs(bb.Max.Z - bb.Min.Z)
+
+	return math32.NewVector3(x, y, z)
 }

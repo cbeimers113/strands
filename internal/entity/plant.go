@@ -1,4 +1,4 @@
-package game
+package entity
 
 import (
 	"math/rand"
@@ -7,6 +7,8 @@ import (
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
+
+	"cbeimers113/strands/internal/graphics"
 )
 
 // Which data a Plant will store
@@ -39,17 +41,17 @@ func OnLeftClickPlant(plant *Entity) {
 }
 
 // Create a new plant
-func NewPlant(colour, numLeaves int, height, radius, x, z, rotX, rotY float32) (plant *Entity) {
+func NewPlant(entities map[int]*Entity, colour, numLeaves int, height, radius, x, z, rotX, rotY float32) (plant *Entity) {
 	geom := geometry.NewCylinder(float64(radius), float64(height), 8, 8, true, true)
 	mat := material.NewStandard(math32.NewColorHex(uint(colour) / 10))
 	mesh := graphic.NewMesh(geom, mat)
 	mesh.SetScale(0.1, 0.1, 0.1)
 
-	if tex, ok := Texture("stalk"); ok {
+	if tex, ok := graphics.Texture("stalk"); ok {
 		mat.AddTexture(tex)
 	}
 
-	plant = NewEntity(mesh, Plant)
+	plant = New(mesh, Plant, entities)
 	plant.SetPosition(x, mesh.Scale().Y, z)
 	plant.SetRotation(rotX, rotY, 0)
 	plant.SetUserData(&PlantData{
@@ -71,7 +73,7 @@ func NewPlant(colour, numLeaves int, height, radius, x, z, rotX, rotY float32) (
 	for i := 0; i < numLeaves; i++ {
 		leaf := NewLeaf()
 		leaf.SetScale(0.1, 0.1, 0.1)
-		leaf.SetRotation(rand.Float32() * math32.Pi / 12, rand.Float32() * 2 * math32.Pi, rand.Float32() * math32.Pi / 12)
+		leaf.SetRotation(rand.Float32()*math32.Pi/12, rand.Float32()*2*math32.Pi, rand.Float32()*math32.Pi/12)
 		plant.Add(leaf)
 	}
 
@@ -79,7 +81,7 @@ func NewPlant(colour, numLeaves int, height, radius, x, z, rotX, rotY float32) (
 }
 
 // Create a new random plant
-func NewRandomPlant() *Entity {
+func NewRandomPlant(entities map[int]*Entity) *Entity {
 	// Random shade of green
 	colour := (int(0xdd+(2*rand.Float32()-1)*0x0f) << 8)
 	numLeaves := rand.Intn(5) + 1
@@ -89,18 +91,18 @@ func NewRandomPlant() *Entity {
 	z := rand.Float32()/4 - 1.0/8
 	rotX := math32.Pi * rand.Float32() / 4
 	rotY := 2 * math32.Pi * rand.Float32()
-	plant := NewPlant(colour, numLeaves, height, radius, x, z, rotX, rotY)
+	plant := NewPlant(entities, colour, numLeaves, height, radius, x, z, rotX, rotY)
 
 	return plant
 }
 
 // Create a new leaf
 func NewLeaf() (mesh *graphic.Mesh) {
-	geom := NewLeafMesh(2, 6, 2, 2)
+	geom := graphics.NewLeafMesh(2, 6, 2, 2)
 	mat := material.NewStandard(math32.NewColorHex(0x101010))
 	mesh = graphic.NewMesh(geom, mat)
 
-	if tex, ok := Texture("grass"); ok {
+	if tex, ok := graphics.Texture("grass"); ok {
 		mat.AddTexture(tex)
 	}
 
@@ -121,7 +123,7 @@ func (plant *Entity) growPlant(plantData *PlantData) {
 
 // Perform per-frame updates to a plant
 func UpdatePlant(plant *Entity) {
-	if plantData, ok := plant.UserData().(*PlantData); ok && !IsPaused {
+	if plantData, ok := plant.UserData().(*PlantData); ok {
 		plant.growPlant(plantData)
 	}
 }

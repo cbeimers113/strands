@@ -1,4 +1,4 @@
-package game
+package graphics
 
 import (
 	"fmt"
@@ -7,6 +7,10 @@ import (
 )
 
 var Textures map[string]*texture.Texture2D
+
+func init() {
+	Textures = make(map[string]*texture.Texture2D)
+}
 
 // Try to load the texture with a given name. Cache loaded textures into Textures buffer
 func Texture(texID string) (tex *texture.Texture2D, ok bool) {

@@ -1,0 +1,14 @@
+{
+  "name": "Strands Test",
+  "version": "0.0.0",
+  "window": {
+    "width": 1200,
+    "height": 800
+  },
+  "simulation": {
+    "width": 64,
+    "height": 64,
+    "depth": 64,
+    "ticks_per_minute": 60
+  }
+}
