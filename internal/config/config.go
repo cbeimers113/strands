@@ -13,12 +13,18 @@ type Config struct {
 		Width  int `json:"width"`
 		Height int `json:"height"`
 	} `json:"window"`
+
 	Simulation struct {
 		Width  int `json:"width"`
 		Height int `json:"height"`
 		Depth  int `json:"depth"`
 		Speed  int `json:"ticks_per_second"`
 	} `json:"simulation"`
+
+	Controls struct {
+		MouseSensitivityX float32 `json:"mouse_sensitivity_x"`
+		MouseSensitivityY float32 `json:"mouse_sensitivity_y"`
+	} `json:"controls"`
 }
 
 const (
@@ -44,15 +50,17 @@ func (c Config) validate() error {
 	if c.Name == "" {
 		return fmt.Errorf("%sapplication name empty", errInvalidCfg)
 	}
-	if m := regexp.MustCompile(`^[0-9].[0-9].[0-9]$`); !m.MatchString(c.Version) {
+	if m := regexp.MustCompile(`^[0-9].[0-9].[0-9](-snapshot)?$`); !m.MatchString(c.Version) {
 		return fmt.Errorf("%ssemantic version not provided", errInvalidCfg)
 	}
+
 	if c.Window.Width <= 0 {
 		return fmt.Errorf("%swindow width [%d] too small", errInvalidCfg, c.Window.Width)
 	}
 	if c.Window.Height <= 0 {
 		return fmt.Errorf("%swindow height [%d] too small", errInvalidCfg, c.Window.Height)
 	}
+
 	if c.Simulation.Width <= 0 {
 		return fmt.Errorf("%ssimulation width [%d] too small", errInvalidCfg, c.Simulation.Width)
 	}
@@ -64,6 +72,13 @@ func (c Config) validate() error {
 	}
 	if c.Simulation.Speed < 1 {
 		return fmt.Errorf("%ssimulation speed (TPS) [%d] too small", errInvalidCfg, c.Simulation.Speed)
+	}
+
+	if c.Controls.MouseSensitivityX <= 0 || c.Controls.MouseSensitivityX > 1 {
+		return fmt.Errorf("%smouse X sensitivity must be between 0 and 1", errInvalidCfg)
+	}
+	if c.Controls.MouseSensitivityY <= 0 || c.Controls.MouseSensitivityY > 1 {
+		return fmt.Errorf("%smouse Y sensitivity must be between 0 and 1", errInvalidCfg)
 	}
 
 	return nil

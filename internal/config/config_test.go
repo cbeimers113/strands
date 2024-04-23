@@ -12,6 +12,7 @@ func Test_Load(t *testing.T) {
 	good := config.Config{
 		Name:    "Strands Test",
 		Version: "0.0.0",
+
 		Window: struct {
 			Width  int `json:"width"`
 			Height int `json:"height"`
@@ -19,6 +20,7 @@ func Test_Load(t *testing.T) {
 			Width:  1200,
 			Height: 800,
 		},
+
 		Simulation: struct {
 			Width  int `json:"width"`
 			Height int `json:"height"`
@@ -30,10 +32,18 @@ func Test_Load(t *testing.T) {
 			Depth:  64,
 			Speed:  60,
 		},
+
+		Controls: struct {
+			MouseSensitivityX float32 `json:"mouse_sensitivity_x"`
+			MouseSensitivityY float32 `json:"mouse_sensitivity_y"`
+		}{
+			MouseSensitivityX: 0.025,
+			MouseSensitivityY: 0.015,
+		},
 	}
 
 	got, err := config.Load(config.TestCfgData)
+	assert.NoError(t, err)
 	assert.NotNil(t, got)
 	assert.Equal(t, good, *got)
-	assert.NoError(t, err)
 }

@@ -12,12 +12,12 @@ import (
 type InputManager struct {
 	*context.Context
 
+	// Δx and y, player movement
+	dx     float32
+	dz     float32
 	prevMX float32
 	prevMY float32
-
-	// Δx and y, player movement
-	dx float32
-	dz float32
+	fast   bool
 
 	// player looking x and y
 	lx float32
@@ -38,11 +38,14 @@ func New(ctx *context.Context) *InputManager {
 }
 
 func (i *InputManager) Update(player *player.Player) {
-	player.Move(i.dx, i.dz)
+	var mf float32 = 1
+	if i.fast {
+		mf = 2
+	}
+
+	player.Move(i.dx*mf, i.dz*mf)
 	player.Look(i.lx, i.ly)
 
-	i.dx = 0
-	i.dz = 0
 	i.lx = 0
 	i.ly = 0
 }
@@ -59,13 +62,15 @@ func (i *InputManager) KeyDown(evname string, ev interface{}) {
 			gui.Open(gui.MainMenu, true)
 		}
 	case window.KeyS:
-		i.dz = 1
+		i.dz = 0.1
 	case window.KeyW:
-		i.dz = -1
+		i.dz = -0.1
 	case window.KeyD:
-		i.dx = 1
+		i.dx = 0.1
 	case window.KeyA:
-		i.dx = -1
+		i.dx = -0.1
+	case window.KeyLeftShift:
+		i.fast = true
 	case window.KeySpace:
 		i.State.SetPaused(!i.State.Paused())
 	}
@@ -84,6 +89,8 @@ func (i *InputManager) KeyUp(evname string, ev interface{}) {
 		i.dx = 0
 	case window.KeyA:
 		i.dx = 0
+	case window.KeyLeftShift:
+		i.fast = false
 	}
 }
 
@@ -134,8 +141,8 @@ func (i *InputManager) MouseMove(evname string, ev interface{}) {
 	mx := me.Xpos
 	my := me.Ypos
 
-	i.lx = i.prevMX - mx
-	i.ly = my - i.prevMY
+	i.lx += (i.prevMX - mx) / 1000
+	i.ly += (my - i.prevMY) / 1000
 
 	i.prevMX = mx
 	i.prevMY = my

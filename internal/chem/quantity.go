@@ -19,7 +19,7 @@ type Quantity struct {
 }
 
 // Create a string representation of a quantity
-func (q *Quantity) String() (str string) {
+func (q Quantity) String() (str string) {
 	space := " "
 
 	// Exception to spacing between value and unit is degrees

@@ -42,7 +42,7 @@ func New(mesh *graphic.Mesh, eType EntityType, entities map[int]*Entity) *Entity
 }
 
 // Return an infostring representing this entity
-func (e *Entity) InfoString() string {
+func (e Entity) InfoString() string {
 	infoString := fmt.Sprintf("%s:\n", e.Type)
 
 	switch e.Type {
@@ -51,7 +51,7 @@ func (e *Entity) InfoString() string {
 			infoString += fmt.Sprintf("type=%s\n", tileData.Type.Name)
 			infoString += fmt.Sprintf("temperature=%s\n", tileData.Temperature)
 			infoString += fmt.Sprintf("water level=%s\n", tileData.WaterLevel)
-			infoString += fmt.Sprintf("elevation=%s\n", e.GetElevation())
+			infoString += fmt.Sprintf("elevation=%s\n", e.getElevation())
 			infoString += fmt.Sprintf("planted=%t\n", tileData.Planted)
 		}
 	case Plant:

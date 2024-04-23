@@ -18,10 +18,9 @@ import (
 type World struct {
 	*context.Context
 
-	sun              *light.Ambient
-	tilemap          [][]*entity.Entity
-	totalWaterVolume *chem.Quantity
-	atmosphere       *atmosphere.Atmosphere
+	sun        *light.Ambient
+	tilemap    [][]*entity.Entity
+	atmosphere *atmosphere.Atmosphere
 }
 
 func New(ctx *context.Context) *World {
@@ -29,9 +28,8 @@ func New(ctx *context.Context) *World {
 		Context: ctx,
 
 		// Sun TODO: Sun entity type for day/night cycle
-		sun:              light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 8.0),
-		totalWaterVolume: &chem.Quantity{Units: chem.Litre},
-		atmosphere:       atmosphere.New(ctx),
+		sun:        light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 8.0),
+		atmosphere: atmosphere.New(ctx),
 	}
 
 	w.Scene.Add(w.sun)
@@ -175,21 +173,22 @@ func (w *World) assignTileNeighbourhoods() {
 }
 
 // Update the game world, deltaTime is time since last update in ms, return total water vol for info text
-func (w *World) Update(deltaTime float32) *chem.Quantity {
-	if w.State.Paused() {
-		return w.totalWaterVolume
-	}
+func (w *World) Update(deltaTime float32) {
+	// Track quantities of various substances in the world
+	waterLevel := chem.Quantity{Units: chem.Litre}
 
-	update_callbacks := map[entity.EntityType]func(*entity.Entity){
-		entity.Plant:    entity.UpdatePlant,
-		entity.Creature: entity.UpdateCreature,
-	}
+	if !w.State.Paused() {
+		update_callbacks := map[entity.EntityType]func(*entity.Entity){
+			entity.Plant:    entity.UpdatePlant,
+			entity.Creature: entity.UpdateCreature,
+		}
 
-	// Concurrently update plants and creatures
-	for _, entity := range w.State.Entities {
-		if update, ok := update_callbacks[entity.Type]; ok {
-			go update(entity)
-			entity.Highlight(w.State.LookingAt == entity)
+		// Concurrently update plants and creatures
+		for _, entity := range w.State.Entities {
+			if update, ok := update_callbacks[entity.Type]; ok {
+				go update(entity)
+				entity.Highlight(w.State.LookingAt == entity)
+			}
 		}
 	}
 
@@ -197,7 +196,7 @@ func (w *World) Update(deltaTime float32) *chem.Quantity {
 	for x := 0; x < w.Cfg.Simulation.Width; x++ {
 		for z := 0; z < w.Cfg.Simulation.Depth; z++ {
 			tile := w.tilemap[x][z]
-			entity.UpdateTile(tile)
+			entity.UpdateTile(tile, w.State.Paused())
 			tile.Highlight(w.State.LookingAt == tile)
 		}
 	}
@@ -205,5 +204,13 @@ func (w *World) Update(deltaTime float32) *chem.Quantity {
 	// Update the atmosphere
 	w.atmosphere.Update(deltaTime)
 
-	return w.totalWaterVolume
+	// Update water level count after updating tiles at atmosphere
+	for x := 0; x < w.Cfg.Simulation.Width; x++ {
+		for z := 0; z < w.Cfg.Simulation.Depth; z++ {
+			tile := w.tilemap[x][z]
+			waterLevel.Value += tile.GetWaterLevel().Value
+		}
+	}
+
+	w.State.Quantities[chem.Water] = waterLevel
 }

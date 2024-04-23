@@ -32,14 +32,20 @@ type Game struct {
 }
 
 func New(cfg *config.Config) (*Game, error) {
+	ctx := &context.Context{
+		App:   app.App(),
+		Scene: core.NewNode(),
+		Cam:   camera.New(1),
+		Cfg:   cfg,
+		State: state.New(),
+	}
+
 	g := &Game{
-		Context: &context.Context{
-			App:   app.App(),
-			Scene: core.NewNode(),
-			Cam:   camera.New(1),
-			Cfg:   cfg,
-			State: state.New(),
-		},
+		Context: ctx,
+		gui:     gui.New(ctx),
+		world:   world.New(ctx),
+		player:  player.New(ctx),
+		iman:    input.New(ctx),
 	}
 
 	// Create window
@@ -49,21 +55,9 @@ func New(cfg *config.Config) (*Game, error) {
 	}
 
 	// Configure camera
-	g.Cam.SetPosition(float32(cfg.Simulation.Width)/2, 1, float32(cfg.Simulation.Depth)/2)
+	g.Cam.SetPosition(float32(cfg.Simulation.Width)/2, 10, float32(cfg.Simulation.Depth)/2)
 	g.Cam.SetRotation(0, 0, 0)
 	g.Scene.Add(g.Cam)
-
-	// Create and configure GUI
-	g.gui = gui.New(g.Context)
-
-	// Create game world
-	g.world = world.New(g.Context)
-
-	// Create the player
-	g.player = player.New(g.Context)
-
-	// Create and configure the input handler
-	g.iman = input.New(g.Context)
 
 	return g, nil
 }
@@ -76,6 +70,8 @@ func (g *Game) Start() {
 	// Refresh display
 	g.App.Subscribe(window.OnWindowSize, g.onResize)
 	g.App.Gls().ClearColor(0, 0, 0, 1.0)
+	g.Win.SetSize(g.Cfg.Window.Width, g.Cfg.Window.Height)
+	g.Win.SetTitle(g.Cfg.Name)
 	g.onResize("", nil)
 
 	// Update every n ms so that n updates happen per second
@@ -87,6 +83,7 @@ func (g *Game) Start() {
 
 	// Start the main loop
 	g.App.Run(func(renderer *renderer.Renderer, duration time.Duration) {
+		deltaTime += float32(duration.Milliseconds())
 		g.App.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(g.Scene, g.Cam)
 
@@ -94,13 +91,12 @@ func (g *Game) Start() {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorNormal))
 		} else {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorDisabled))
-			deltaTime += float32(duration.Milliseconds())
 
 			if deltaTime >= tickThreshold {
-				waterVol := g.world.Update(deltaTime)
+				g.world.Update(deltaTime)
 				g.iman.Update(g.player)
 				g.player.Update(deltaTime)
-				g.gui.Refresh(waterVol)
+				g.gui.Refresh()
 				deltaTime = 0
 			}
 		}

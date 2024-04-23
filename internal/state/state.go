@@ -17,13 +17,13 @@ type State struct {
 	LookingAt    *entity.Entity                      // What the camera/player is looking at
 	SelectedTile *entity.Entity                      // What tile the player currently has selected
 	Entities     map[int]*entity.Entity              // List of entities in the game world
-	Quantities   map[chem.ElementType]*chem.Quantity // Map of quantities of various substances in the simulation
+	Quantities   map[chem.ElementType]chem.Quantity // Map of quantities of various substances in the simulation
 }
 
 func New() *State {
 	return &State{
 		Entities:   make(map[int]*entity.Entity),
-		Quantities: make(map[string]*chem.Quantity),
+		Quantities: make(map[string]chem.Quantity),
 	}
 }
 

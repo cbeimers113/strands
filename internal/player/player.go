@@ -8,11 +8,6 @@ import (
 	"cbeimers113/strands/internal/context"
 )
 
-const (
-	lookSensitivityX float32 = 0.025
-	lookSensitivityY float32 = 0.015
-)
-
 type Player struct {
 	*context.Context
 
@@ -35,8 +30,8 @@ func New(ctx *context.Context) *Player {
 func (p *Player) Update(deltaTime float32) {
 	// Looking
 	θ := p.Cam.Rotation().Y
-	p.rotationX = θ + p.lookX*lookSensitivityX
-	p.rotationY += p.lookY * lookSensitivityY
+	p.rotationX = θ + p.lookX*p.Cfg.Controls.MouseSensitivityX*deltaTime
+	p.rotationY += p.lookY * p.Cfg.Controls.MouseSensitivityY * deltaTime
 	p.rotationY = math32.Clamp(p.rotationY, -math32.Pi/2, math32.Pi/2)
 
 	p.Cam.SetRotation(-p.rotationY, p.rotationX, 0)
@@ -58,20 +53,25 @@ func (p *Player) Update(deltaTime float32) {
 		}
 	}
 
-	p.lookX = 0
-	p.lookY = 0
-
 	// Movement
 	p.Cam.TranslateX(p.moveX)
 	p.Cam.TranslateZ(p.moveZ)
+
+	// Player look deceleration
+	p.lookX *= 0.75
+	p.lookY *= 0.75
+
+	// Player movement deceleration
+	p.moveX *= 0.75
+	p.moveZ *= 0.75
 }
 
 func (p *Player) Move(dx, dz float32) {
-	p.moveX = dx
-	p.moveZ = dz
+	p.moveX += dx
+	p.moveZ += dz
 }
 
 func (p *Player) Look(lx, ly float32) {
-	p.lookX = lx
-	p.lookY = ly
+	p.lookX += lx
+	p.lookY += ly
 }

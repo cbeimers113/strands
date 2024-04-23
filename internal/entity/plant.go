@@ -109,21 +109,21 @@ func NewLeaf() (mesh *graphic.Mesh) {
 	return
 }
 
-// Grow the plant until maturity is reached
-func (plant *Entity) growPlant(plantData *PlantData) {
-	plantData.Age++
-
-	if plantData.Age < 10000 { // TODO: Standardize "maturity" for plants
-		scale := plant.Scale()
-		scale.Y *= 1.001
-		plant.SetScale(scale.X, scale.Y, scale.Z)
-		plant.SetPosition(plantData.X, 0.5+plant.Scale().Y/2, plantData.Z)
-	}
-}
-
 // Perform per-frame updates to a plant
 func UpdatePlant(plant *Entity) {
-	if plantData, ok := plant.UserData().(*PlantData); ok {
-		plant.growPlant(plantData)
+	plant.grow()
+}
+
+// Grow the plant until maturity is reached
+func (p *Entity) grow() {
+	if plantData, ok := p.UserData().(*PlantData); ok {
+		plantData.Age++
+
+		if plantData.Age < 10000 { // TODO: Standardize "maturity" for plants
+			scale := p.Scale()
+			scale.Y *= 1.001
+			p.SetScale(scale.X, scale.Y, scale.Z)
+			p.SetPosition(plantData.X, 0.5+p.Scale().Y/2, plantData.Z)
+		}
 	}
 }

@@ -2,12 +2,9 @@ package gui
 
 import (
 	"fmt"
-	"os/exec"
-	"strings"
 
 	"github.com/g3n/engine/gui"
 
-	"cbeimers113/strands/internal/chem"
 	"cbeimers113/strands/internal/context"
 )
 
@@ -79,7 +76,7 @@ func (g *Gui) Reload() {
 }
 
 // Refresh the gui components
-func (g *Gui) Refresh(waterVol *chem.Quantity) {
+func (g *Gui) Refresh() {
 	for _, child := range g.Scene.Children() {
 		// If this is a gui component, call its refresh method
 		if viewType, ok := child.GetNode().UserData().(View); ok {
@@ -213,16 +210,8 @@ func (g *Gui) closeViews() {
 }
 
 // Load the info text
-func (g *Gui) infoText() (txt string) {
-	txt = "Strands\n"
-
-	// Retrieve version number TODO: Get this from g.config
-	out, err := exec.Command("git", "describe", "--tags", "--abbrev=0").Output()
-	if err == nil {
-		ver := strings.TrimSpace(string(out))
-		txt += fmt.Sprintf("Version %s\n", ver)
-	}
-
+func (g *Gui) infoText() string {
+	txt := fmt.Sprintf("Version %s\n", g.Cfg.Version)
 	txt += "\n"
 	txt += "Controls:\n"
 	txt += "WASD to move\n"
@@ -232,16 +221,19 @@ func (g *Gui) infoText() (txt string) {
 	txt += "Left click a tile to add water\n"
 	txt += "Right click a tile to try to add a plant\n"
 
+	// Append info about simulation
+	txt += "\nChemical Quantities:\n"
+	for name, amnt := range g.State.Quantities {
+		txt += fmt.Sprintf("%s: %s\n", name, amnt.String())
+	}
+
 	// Append the WAILA (what am I looking at?) data
 	if g.State.LookingAt != nil {
-		txt += "\n"
+		txt += "\nLooking At:\n"
 		txt += g.State.LookingAt.InfoString()
 	}
 
-	// TODO: Pass in a list of quantities for atmospheric gases and other elements
-	txt += "\nTODO: substance quantities"
-
-	return
+	return txt
 }
 
 // Update the "Simulation Running/Paused" status

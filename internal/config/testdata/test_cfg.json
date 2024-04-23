@@ -9,6 +9,10 @@
     "width": 64,
     "height": 64,
     "depth": 64,
-    "ticks_per_minute": 60
+    "ticks_per_second": 60
+  },
+  "controls": {
+    "mouse_sensitivity_x": 0.025,
+    "mouse_sensitivity_y": 0.015
   }
 }
