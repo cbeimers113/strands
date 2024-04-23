@@ -54,8 +54,8 @@ func (p *Player) Update(deltaTime float32) {
 	}
 
 	// Movement
-	p.Cam.TranslateX(p.moveX)
-	p.Cam.TranslateZ(p.moveZ)
+	p.Cam.TranslateX(p.moveX*deltaTime)
+	p.Cam.TranslateZ(p.moveZ*deltaTime)
 
 	// Player look deceleration
 	p.lookX *= 0.75

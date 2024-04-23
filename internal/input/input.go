@@ -62,13 +62,13 @@ func (i *InputManager) KeyDown(evname string, ev interface{}) {
 			gui.Open(gui.MainMenu, true)
 		}
 	case window.KeyS:
-		i.dz = 0.1
+		i.dz = 0.01
 	case window.KeyW:
-		i.dz = -0.1
+		i.dz = -0.01
 	case window.KeyD:
-		i.dx = 0.1
+		i.dx = 0.01
 	case window.KeyA:
-		i.dx = -0.1
+		i.dx = -0.01
 	case window.KeyLeftShift:
 		i.fast = true
 	case window.KeySpace:
