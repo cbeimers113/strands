@@ -1,4 +1,4 @@
-package game
+package entity
 
 // Perform action on creature entity on right click
 func OnRightClickCreature(creature *Entity) {
@@ -12,7 +12,5 @@ func OnLeftClickCreature(creature *Entity) {
 
 // Update a creature
 func UpdateCreature(creature *Entity) {
-	if !IsPaused {
-		
-	}
+	
 }

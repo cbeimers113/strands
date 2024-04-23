@@ -1,14 +1,16 @@
-package game
+package chem
 
 import "fmt"
 
 // The various measurement units
 type Unit string
 
-const Celcius Unit = "°C"
-const Litre Unit = "L"
-const Gram Unit = "g"
-const Metre Unit = "m"
+const (
+	Celcius Unit = "°C"
+	Litre   Unit = "L"
+	Gram    Unit = "g"
+	Metre   Unit = "m"
+)
 
 // Represents an amount of an element
 type Quantity struct {
@@ -17,7 +19,7 @@ type Quantity struct {
 }
 
 // Create a string representation of a quantity
-func (q *Quantity) String() (str string) {
+func (q Quantity) String() (str string) {
 	space := " "
 
 	// Exception to spacing between value and unit is degrees
