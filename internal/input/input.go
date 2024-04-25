@@ -1,7 +1,6 @@
 package input
 
 import (
-	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/window"
 
 	"cbeimers113/strands/internal/chem"
@@ -150,14 +149,11 @@ func (i *InputManager) MouseMove(evname string, ev interface{}) {
 	mx := me.Xpos
 	my := me.Ypos
 
-	if !i.State.InMenu() && i.State.MenuCooldown() == 0 {
+	if !i.State.InMenu() {
 		dx := i.prevMX - mx
 		dy := my - i.prevMY
-
-		if math32.Sqrt(dx*dx+dy*dy) <= 10 {
-			i.lx += dx / 1000
-			i.ly += dy / 1000
-		}
+		i.lx += dx / 1000
+		i.ly += dy / 1000
 	} else {
 		i.lx = 0
 		i.ly = 0

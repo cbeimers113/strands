@@ -1,6 +1,8 @@
 package gui
 
-import "github.com/g3n/engine/gui"
+import (
+	"github.com/g3n/engine/gui"
+)
 
 // Register the simulation view
 func (g *Gui) registerSimulationView() {
@@ -38,7 +40,6 @@ func (g *Gui) registerSimulationView() {
 			g.Scene.Remove(g.simCursor)
 			g.Scene.Remove(g.infoLabel)
 			g.Scene.Remove(g.pausedLabel)
-			g.State.ChangeMenuCooldown(1000)
 		},
 
 		refresh: func() {

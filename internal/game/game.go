@@ -80,7 +80,6 @@ func (g *Game) Start() {
 	var deltaTimeController float32 = 0
 
 	var lastTick time.Time
-	var lastFrame time.Time
 	var tps int
 
 	// Seed the PRNG
@@ -88,17 +87,17 @@ func (g *Game) Start() {
 
 	// Start the main loop
 	g.App.Run(func(renderer *renderer.Renderer, duration time.Duration) {
-		deltaTimeWorld += float32(duration.Milliseconds())
-		deltaTimeController += float32(duration.Milliseconds())
 		g.App.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(g.Scene, g.Cam)
 
 		if g.State.InMenu() {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorNormal))
+			deltaTimeController = 0
+			deltaTimeWorld = 0
 		} else {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorDisabled))
-			g.State.ChangeMenuCooldown(-int(time.Since(lastFrame).Milliseconds()))
-			lastFrame = time.Now()
+			deltaTimeWorld += float32(duration.Milliseconds())
+			deltaTimeController += float32(duration.Milliseconds())
 
 			if deltaTimeController >= 1000/60 {
 				g.iman.Update(g.player)
