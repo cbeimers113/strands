@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 )
 
@@ -44,6 +45,21 @@ func Load(data []byte) (*Config, error) {
 	}
 
 	return c, nil
+}
+
+func (c Config) Save() error {
+	data, err := json.MarshalIndent(c, "", "	")
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create("cfg.json")
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write(data)
+	return err
 }
 
 func (c Config) validate() error {

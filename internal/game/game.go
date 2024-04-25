@@ -67,23 +67,29 @@ func (g *Game) Start() {
 	// Open main menu on game start
 	gui.Open(gui.MainMenu, true)
 
-	// Refresh display
+	// Configure app
 	g.App.Subscribe(window.OnWindowSize, g.onResize)
 	g.App.Gls().ClearColor(0, 0, 0, 1.0)
 	g.Win.SetSize(g.Cfg.Window.Width, g.Cfg.Window.Height)
 	g.Win.SetTitle(g.Cfg.Name)
 	g.onResize("", nil)
 
-	// Update every n ms so that n updates happen per second
-	var tickThreshold float32 = 1000 / float32(g.Cfg.Simulation.Speed)
-	var deltaTime float32 = 0
+	// Update world every n ms so that n updates happen per second
+	var deltaTimeWorld float32 = 0
+	// Update the player controller 60 times per second to keep it smooth no matter the sim speed
+	var deltaTimeController float32 = 0
+
+	var lastTick time.Time
+	var lastFrame time.Time
+	var tps int
 
 	// Seed the PRNG
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	// Start the main loop
 	g.App.Run(func(renderer *renderer.Renderer, duration time.Duration) {
-		deltaTime += float32(duration.Milliseconds())
+		deltaTimeWorld += float32(duration.Milliseconds())
+		deltaTimeController += float32(duration.Milliseconds())
 		g.App.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(g.Scene, g.Cam)
 
@@ -91,13 +97,26 @@ func (g *Game) Start() {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorNormal))
 		} else {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorDisabled))
+			g.State.ChangeMenuCooldown(-int(time.Since(lastFrame).Milliseconds()))
+			lastFrame = time.Now()
 
-			if deltaTime >= tickThreshold {
-				g.world.Update(deltaTime)
+			if deltaTimeController >= 1000/60 {
 				g.iman.Update(g.player)
-				g.player.Update(deltaTime)
+				g.player.Update(deltaTimeController)
 				g.gui.Refresh()
-				deltaTime = 0
+				deltaTimeController = 0
+			}
+
+			if deltaTimeWorld >= 1000/float32(g.Cfg.Simulation.Speed) {
+				g.world.Update(deltaTimeWorld)
+				deltaTimeWorld = 0
+				tps++
+			}
+
+			if time.Since(lastTick) >= 1*time.Second {
+				g.State.SetTPS(tps)
+				tps = 0
+				lastTick = time.Now()
 			}
 		}
 	})

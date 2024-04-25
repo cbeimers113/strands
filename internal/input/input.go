@@ -1,8 +1,10 @@
 package input
 
 import (
+	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/window"
 
+	"cbeimers113/strands/internal/chem"
 	"cbeimers113/strands/internal/context"
 	"cbeimers113/strands/internal/entity"
 	"cbeimers113/strands/internal/gui"
@@ -17,7 +19,7 @@ type InputManager struct {
 	dz     float32
 	prevMX float32
 	prevMY float32
-	fast   bool
+	shift  bool
 
 	// player looking x and y
 	lx float32
@@ -39,7 +41,7 @@ func New(ctx *context.Context) *InputManager {
 
 func (i *InputManager) Update(player *player.Player) {
 	var mf float32 = 1
-	if i.fast {
+	if i.shift {
 		mf = 2
 	}
 
@@ -70,7 +72,7 @@ func (i *InputManager) KeyDown(evname string, ev interface{}) {
 	case window.KeyA:
 		i.dx = -0.01
 	case window.KeyLeftShift:
-		i.fast = true
+		i.shift = true
 	case window.KeySpace:
 		i.State.SetPaused(!i.State.Paused())
 	}
@@ -90,7 +92,7 @@ func (i *InputManager) KeyUp(evname string, ev interface{}) {
 	case window.KeyA:
 		i.dx = 0
 	case window.KeyLeftShift:
-		i.fast = false
+		i.shift = false
 	}
 }
 
@@ -108,27 +110,34 @@ func (i *InputManager) MouseDown(evname string, ev interface{}) {
 
 	if !i.State.InMenu() && i.State.LookingAt != nil {
 		switch i.State.LookingAt.Type {
+
 		case entity.Tile:
+			tile := i.State.LookingAt
 			switch me.Button {
 			case window.MouseButton1:
-				entity.OnLeftClickTile(i.State.LookingAt)
+				tile.AddWater(chem.CubicMetresToLitres(1))
 			case window.MouseButton2:
-				entity.OnRightClickTile(i.State.LookingAt, i.State.Entities)
+				gui.Open(gui.TileContextMenu, false)
 			}
+
 		case entity.Plant:
+			plant := i.State.LookingAt
 			switch me.Button {
 			case window.MouseButton1:
-				entity.OnLeftClickPlant(i.State.LookingAt)
+				entity.OnLeftClickPlant(plant)
 			case window.MouseButton2:
-				entity.OnRightClickPlant(i.State.LookingAt)
+				entity.OnRightClickPlant(plant)
 			}
+
 		case entity.Creature:
+			creature := i.State.LookingAt
 			switch me.Button {
 			case window.MouseButton1:
-				entity.OnLeftClickCreature(i.State.LookingAt)
+				entity.OnLeftClickCreature(creature)
 			case window.MouseButton2:
-				entity.OnRightClickCreature(i.State.LookingAt)
+				entity.OnRightClickCreature(creature)
 			}
+
 		default:
 			println("No action defined for button ", me.Button, " on ", i.State.LookingAt.Type)
 		}
@@ -141,8 +150,18 @@ func (i *InputManager) MouseMove(evname string, ev interface{}) {
 	mx := me.Xpos
 	my := me.Ypos
 
-	i.lx += (i.prevMX - mx) / 1000
-	i.ly += (my - i.prevMY) / 1000
+	if !i.State.InMenu() && i.State.MenuCooldown() == 0 {
+		dx := i.prevMX - mx
+		dy := my - i.prevMY
+
+		if math32.Sqrt(dx*dx+dy*dy) <= 10 {
+			i.lx += dx / 1000
+			i.ly += dy / 1000
+		}
+	} else {
+		i.lx = 0
+		i.ly = 0
+	}
 
 	i.prevMX = mx
 	i.prevMY = my

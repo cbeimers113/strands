@@ -49,22 +49,6 @@ type TileData struct {
 	WaterLevel  *chem.Quantity
 }
 
-// Perform an action on a tile entity on right click
-func OnRightClickTile(tile *Entity, entities map[int]*Entity) {
-	// Try to plant a plant here
-	r := rand.Float32()
-
-	if tileData, ok := tile.UserData().(*TileData); ok && !tileData.Planted && r < tileData.Type.Fertility {
-		tile.Add(NewRandomPlant(entities).GetINode())
-		tileData.Planted = true
-	}
-}
-
-// Perform an action on a tile entity on left click
-func OnLeftClickTile(tile *Entity) {
-	tile.addWater(chem.CubicMetresToLitres(1))
-}
-
 // Spawn a hex tile of type tType at mapX, mapZ (tile precision), y (game world precision)
 func NewTile(entities map[int]*Entity, mapX, mapZ int, height, temp, waterLevel float32, tType TileType) (tile *Entity) {
 	x := (float32(mapX) + (0.5 * float32(mapZ%2))) * math32.Sin(math32.Pi/3)
@@ -102,20 +86,6 @@ func createTileMesh(texture string) (tileMesh *graphic.Mesh) {
 	}
 
 	return
-}
-
-// Add an amount of water to a tile. Add a negative amount to remove water.
-// If the new volume is negative, return the amount that was lost
-func (t *Entity) addWater(delta float32) float32 {
-	if tileData, ok := t.UserData().(*TileData); ok {
-		waterLevel := &tileData.WaterLevel.Value
-		backflow := -(*waterLevel + delta)
-		*waterLevel += delta
-		*waterLevel = math32.Max(0, *waterLevel)
-
-		return math32.Max(backflow, 0)
-	}
-	return 0
 }
 
 // Get the elevation of the top of the tile, including its water
@@ -176,7 +146,7 @@ func (t *Entity) doWaterSpread() {
 
 				delta := chem.CubicMetresToLitres(t.getElevation().Value-neighbour.getElevation().Value) / float32(len(lowerNeighbours))
 
-				if δ := neighbour.addWater(delta - t.addWater(-delta)); δ != 0 {
+				if δ := neighbour.AddWater(delta - t.AddWater(-delta)); δ != 0 {
 					// TODO: This shouldn't ever be 0, but do something if it is
 					println(δ)
 				}
@@ -236,4 +206,26 @@ func (t *Entity) GetWaterLevel() *chem.Quantity {
 	}
 
 	return nil
+}
+
+// Add an amount of water to a tile. Add a negative amount to remove water.
+// If the new volume is negative, return the amount that was lost
+func (t *Entity) AddWater(delta float32) float32 {
+	if tileData, ok := t.UserData().(*TileData); ok {
+		waterLevel := &tileData.WaterLevel.Value
+		backflow := -(*waterLevel + delta)
+		*waterLevel += delta
+		*waterLevel = math32.Max(0, *waterLevel)
+
+		return math32.Max(backflow, 0)
+	}
+	return 0
+}
+
+// Add a plant to a tile if plantable
+func (t *Entity) AddPlant(entities map[int]*Entity) {
+	if tileData, ok := t.UserData().(*TileData); ok && !tileData.Planted && tileData.Type.Fertility > 0 {
+		t.Add(NewRandomPlant(entities).GetINode())
+		tileData.Planted = true
+	}
 }
