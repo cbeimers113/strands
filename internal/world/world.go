@@ -6,7 +6,10 @@ import (
 	"math/rand"
 
 	"github.com/aquilax/go-perlin"
+	"github.com/g3n/engine/geometry"
+	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/light"
+	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 
 	"cbeimers113/strands/internal/atmosphere"
@@ -18,8 +21,9 @@ import (
 type World struct {
 	*context.Context
 
-	sun        *light.Ambient
-	tilemap    [][]*entity.Entity
+	light      *light.Ambient
+	sun        *graphic.Mesh
+	tilemap    [][]*entity.Tile
 	atmosphere *atmosphere.Atmosphere
 }
 
@@ -27,11 +31,19 @@ func New(ctx *context.Context) *World {
 	w := &World{
 		Context: ctx,
 
-		// Sun TODO: Sun entity type for day/night cycle
-		sun:        light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 8.0),
+		light:      light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 0),
 		atmosphere: atmosphere.New(ctx),
 	}
 
+	geom := geometry.NewSphere(6, 12, 12)
+	mat := material.NewStandard(&math32.Color{
+		R: 0.2,
+		G: 0.2,
+		B: 0.06,
+	})
+	w.sun = graphic.NewMesh(geom, mat)
+
+	w.Scene.Add(w.light)
 	w.Scene.Add(w.sun)
 	w.createMap()
 
@@ -46,7 +58,7 @@ func (w *World) createMap() {
 }
 
 // Remove an entity from the world
-func (w *World) removeEntity(entity *entity.Entity) {
+func (w *World) removeEntity(entity entity.Entity) {
 	index := w.entityIndex(entity)
 
 	// If the entity is in the Entities list, remove it and shift all the entities above it down the list
@@ -64,7 +76,7 @@ func (w *World) removeEntity(entity *entity.Entity) {
 }
 
 // Find an entity's index in the Entities list, return -1 if not found
-func (w *World) entityIndex(entity *entity.Entity) int {
+func (w *World) entityIndex(entity entity.Entity) int {
 	for i, ent := range w.State.Entities {
 		if ent == entity {
 			return i
@@ -109,10 +121,10 @@ func (w *World) makeHeightmap() ([][]float32, float32, float32) {
 
 // Create a tilemap with a given heightmap specification
 func (w *World) makeTilemap(heightmap [][]float32, min, max float32) {
-	w.tilemap = make([][]*entity.Entity, w.Cfg.Simulation.Width)
+	w.tilemap = make([][]*entity.Tile, w.Cfg.Simulation.Width)
 
 	for x := 0; x < w.Cfg.Simulation.Width; x++ {
-		w.tilemap[x] = make([]*entity.Entity, w.Cfg.Simulation.Depth)
+		w.tilemap[x] = make([]*entity.Tile, w.Cfg.Simulation.Depth)
 
 		for z := 0; z < w.Cfg.Simulation.Depth; z++ {
 			// Map the heightmap value to the TileTypes array to determine tile type
@@ -165,9 +177,61 @@ func (w *World) assignTileNeighbourhoods() {
 				}
 			}
 
-			// Load the neighbour pointers into the tile's metadata
-			data, _ := tile.UserData().(*entity.TileData)
-			data.Neighbours = neighbours
+			tile.Neighbours = neighbours
+		}
+	}
+}
+
+// updateSun adjusts the sun's light intensity and position based on the internal clock
+func (w *World) updateSun() {
+	p := w.State.Clock.Progress(w.Cfg.Simulation.DayLength)
+
+	// Update sunlight using a fine tuned sine wave function
+	i := 6*math32.Sin(2*math32.Pi*(p-0.25)) + 8
+	w.light.SetIntensity(i)
+
+	// Move sun object based on time of day
+	ox, oz := float32(w.Cfg.Simulation.Width)/2-6, float32(w.Cfg.Simulation.Depth)/2-6 // Centre of map
+	d := 2 * math32.Pi * (p - 0.25)
+	dx := math32.Cos(d)
+	dx *= float32(w.Cfg.Simulation.Width) * 1.5
+	dy := math32.Sin(d)
+	dy *= float32(w.Cfg.Simulation.Height) * 1.5
+	w.sun.SetPosition(ox+dx, dy, oz)
+	w.light.SetPosition(ox+dx, dy, oz)
+
+	// Set opacity of the sun so we can't see it at night and shift into red at dusk/dawn
+	// opacity scales up from 4am to 6 am (sunrise)
+	// opacity scales down from 6pm to 8pm (sunset)
+	var change bool
+	var o float32
+
+	// sunrise
+	min := float32(4) / 24
+	max := float32(6) / 24
+	if p >= min && p <= max {
+		o = (p - min) / (max - min)
+		change = true
+	}
+
+	// sunset
+	min = float32(18) / 24
+	max = float32(20) / 24
+	if p >= min && p <= max {
+		o = 1 - (p-min)/(max-min)
+		change = true
+	}
+
+	if change {
+		if imat := w.sun.GetMaterial(0); imat != nil {
+			if ms, ok := imat.(*material.Standard); ok {
+				ms.SetOpacity(o)
+				ms.SetColor(&math32.Color{
+					R: 0.2,
+					G: 0.2 * o,
+					B: 0.06 * o,
+				})
+			}
 		}
 	}
 }
@@ -178,37 +242,31 @@ func (w *World) Update(deltaTime float32) {
 	waterLevel := chem.Quantity{Units: chem.Litre}
 
 	if !w.State.Paused() {
-		update_callbacks := map[entity.EntityType]func(*entity.Entity){
-			entity.Plant:    entity.UpdatePlant,
-			entity.Creature: entity.UpdateCreature,
-		}
+		w.updateSun()
+		w.atmosphere.Update(deltaTime)
 
 		// Concurrently update plants and creatures
-		for _, entity := range w.State.Entities {
-			if update, ok := update_callbacks[entity.Type]; ok {
-				go update(entity)
-				entity.Highlight(w.State.LookingAt == entity)
-			}
+		for _, e := range w.State.Entities {
+			go e.Update()
+			entity.Highlight(e, w.State.LookingAt == e)
 		}
 	}
 
-	// Update the tilemap
+	// Update the tilemap independant of paused state so that things like tile highlighting will still work when physics paused
 	for x := 0; x < w.Cfg.Simulation.Width; x++ {
 		for z := 0; z < w.Cfg.Simulation.Depth; z++ {
 			tile := w.tilemap[x][z]
-			entity.UpdateTile(tile, w.State.Paused())
-			tile.Highlight(w.State.LookingAt == tile)
+			tile.PausePhysics(w.State.Paused())
+			tile.Update()
+			entity.Highlight(tile, w.State.LookingAt == tile)
 		}
 	}
 
-	// Update the atmosphere
-	w.atmosphere.Update(deltaTime)
-
-	// Update water level count after updating tiles at atmosphere
+	// Update water level count after updating tiles and atmosphere
 	for x := 0; x < w.Cfg.Simulation.Width; x++ {
 		for z := 0; z < w.Cfg.Simulation.Depth; z++ {
 			tile := w.tilemap[x][z]
-			waterLevel.Value += tile.GetWaterLevel().Value
+			waterLevel.Value += tile.WaterLevel.Value
 		}
 	}
 

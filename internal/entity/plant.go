@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/g3n/engine/geometry"
@@ -12,7 +13,9 @@ import (
 )
 
 // Which data a Plant will store
-type PlantData struct {
+type Plant struct {
+	*graphic.Mesh
+
 	// Whole Plant
 	Age    int
 	Colour int
@@ -30,18 +33,8 @@ type PlantData struct {
 	LeafSizeVariance float32 // [0, 1], How much the leaf sizes can vary, ie: a value of 0.5 means the leaves can be up to 50% bigger or smaller than AvgSize
 }
 
-// Perform action on plant entity on right click
-func OnRightClickPlant(plant *Entity) {
-	println("No right click behaviour defined for plant")
-}
-
-// Perform action on plant entity on left click
-func OnLeftClickPlant(plant *Entity) {
-	println("No left click behaviour defined for plant")
-}
-
 // Create a new plant
-func NewPlant(entities map[int]*Entity, colour, numLeaves int, height, radius, x, z, rotX, rotY float32) (plant *Entity) {
+func NewPlant(entities map[int]Entity, colour, numLeaves int, height, radius, x, z, rotX, rotY float32) *Plant {
 	geom := geometry.NewCylinder(float64(radius), float64(height), 8, 8, true, true)
 	mat := material.NewStandard(math32.NewColorHex(uint(colour) / 10))
 	mesh := graphic.NewMesh(geom, mat)
@@ -51,10 +44,9 @@ func NewPlant(entities map[int]*Entity, colour, numLeaves int, height, radius, x
 		mat.AddTexture(tex)
 	}
 
-	plant = New(mesh, Plant, entities)
-	plant.SetPosition(x, mesh.Scale().Y, z)
-	plant.SetRotation(rotX, rotY, 0)
-	plant.SetUserData(&PlantData{
+	plant := &Plant{
+		Mesh: mesh,
+
 		Colour:    colour,
 		Height:    height,
 		Radius:    radius,
@@ -68,7 +60,10 @@ func NewPlant(entities map[int]*Entity, colour, numLeaves int, height, radius, x
 		LeafSpawnHeight:  0.5,
 		AvgLeafSize:      1,
 		LeafSizeVariance: 0.1,
-	})
+	}
+
+	plant.SetPosition(x, mesh.Scale().Y, z)
+	plant.SetRotation(rotX, rotY, 0)
 
 	for i := 0; i < numLeaves; i++ {
 		leaf := NewLeaf()
@@ -77,11 +72,14 @@ func NewPlant(entities map[int]*Entity, colour, numLeaves int, height, radius, x
 		plant.Add(leaf)
 	}
 
-	return
+	// Add this plant to the entities list
+	AddEntity(plant, entities)
+
+	return plant
 }
 
 // Create a new random plant
-func NewRandomPlant(entities map[int]*Entity) *Entity {
+func NewRandomPlant(entities map[int]Entity) *Plant {
 	// Random shade of green
 	colour := (int(0xdd+(2*rand.Float32()-1)*0x0f) << 8)
 	numLeaves := rand.Intn(5) + 1
@@ -109,21 +107,33 @@ func NewLeaf() (mesh *graphic.Mesh) {
 	return
 }
 
-// Perform per-frame updates to a plant
-func UpdatePlant(plant *Entity) {
-	plant.grow()
+// Grow the plant until maturity is reached
+func (p *Plant) grow() {
+	p.Age++
+
+	if p.Age < 10000 { // TODO: Standardize "maturity" for plants
+		scale := p.Scale()
+		scale.Y *= 1.001
+		p.SetScale(scale.X, scale.Y, scale.Z)
+		p.SetPosition(p.X, 0.5+p.Scale().Y/2, p.Z)
+	}
 }
 
-// Grow the plant until maturity is reached
-func (p *Entity) grow() {
-	if plantData, ok := p.UserData().(*PlantData); ok {
-		plantData.Age++
+// Perform per-frame updates to a plant
+func (p *Plant) Update() {
+	p.grow()
+}
 
-		if plantData.Age < 10000 { // TODO: Standardize "maturity" for plants
-			scale := p.Scale()
-			scale.Y *= 1.001
-			p.SetScale(scale.X, scale.Y, scale.Z)
-			p.SetPosition(plantData.X, 0.5+p.Scale().Y/2, plantData.Z)
-		}
-	}
+// Infostring returns a string representation of the tile
+func (p Plant) InfoString() string {
+	infoString := "Plant:\n"
+	infoString += fmt.Sprintf("age=%d\n", p.Age)
+	infoString += fmt.Sprintf("colour=#%06x\n", p.Colour)
+
+	return infoString
+}
+
+// Material returns the plant's material
+func (p Plant) Material() *material.Material {
+	return p.GetMaterial(0).GetMaterial()
 }

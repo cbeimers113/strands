@@ -3,27 +3,31 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 )
 
 type Config struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Window  struct {
+	Name     string `json:"name"`
+	Version  string `json:"version"`
+	ShowHelp bool   `json:"show_controls"`
+	Window   struct {
 		Width  int `json:"width"`
 		Height int `json:"height"`
 	} `json:"window"`
 
 	Simulation struct {
-		Width  int `json:"width"`
-		Height int `json:"height"`
-		Depth  int `json:"depth"`
-		Speed  int `json:"ticks_per_second"`
+		Width     int `json:"width"`
+		Height    int `json:"height"`
+		Depth     int `json:"depth"`
+		Speed     int `json:"ticks_per_second"`
+		DayLength int `json:"day_length_mins"`
 	} `json:"simulation"`
 
 	Controls struct {
 		MouseSensitivityX float32 `json:"mouse_sensitivity_x"`
 		MouseSensitivityY float32 `json:"mouse_sensitivity_y"`
+		MoveSpeed         float32 `json:"move_speed"`
 	} `json:"controls"`
 }
 
@@ -44,6 +48,21 @@ func Load(data []byte) (*Config, error) {
 	}
 
 	return c, nil
+}
+
+func (c Config) Save() error {
+	data, err := json.MarshalIndent(c, "", "	")
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create("cfg.json")
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write(data)
+	return err
 }
 
 func (c Config) validate() error {
@@ -73,12 +92,18 @@ func (c Config) validate() error {
 	if c.Simulation.Speed < 1 {
 		return fmt.Errorf("%ssimulation speed (TPS) [%d] too small", errInvalidCfg, c.Simulation.Speed)
 	}
+	if c.Simulation.DayLength < 1 {
+		return fmt.Errorf("%ssimulation day length too small: [%d minutes]", errInvalidCfg, c.Simulation.DayLength)
+	}
 
 	if c.Controls.MouseSensitivityX <= 0 || c.Controls.MouseSensitivityX > 1 {
 		return fmt.Errorf("%smouse X sensitivity must be between 0 and 1", errInvalidCfg)
 	}
 	if c.Controls.MouseSensitivityY <= 0 || c.Controls.MouseSensitivityY > 1 {
 		return fmt.Errorf("%smouse Y sensitivity must be between 0 and 1", errInvalidCfg)
+	}
+	if c.Controls.MoveSpeed <= 0 || c.Controls.MoveSpeed > 1 {
+		return fmt.Errorf("%smove speed must be between 0 and 1", errInvalidCfg)
 	}
 
 	return nil
