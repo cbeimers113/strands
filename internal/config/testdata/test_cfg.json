@@ -1,6 +1,7 @@
 {
-  "name": "Strands Test",
+  "name": "Strands | Test",
   "version": "0.0.0",
+  "show_controls": true,
   "window": {
     "width": 1200,
     "height": 800
@@ -9,10 +10,12 @@
     "width": 64,
     "height": 64,
     "depth": 64,
-    "ticks_per_second": 60
+    "ticks_per_second": 24,
+    "day_length_mins": 5
   },
   "controls": {
-    "mouse_sensitivity_x": 0.025,
-    "mouse_sensitivity_y": 0.015
+    "mouse_sensitivity_x": 0.3,
+    "mouse_sensitivity_y": 0.3,
+    "move_speed": 0.25
   }
 }

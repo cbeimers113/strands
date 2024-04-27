@@ -1,6 +1,7 @@
 {
 	"name": "Strands | Ecosystem Simulator",
-	"version": "0.0.8-snapshot",
+	"version": "0.1.0-snapshot",
+	"show_controls": false,
 	"window": {
 		"width": 1200,
 		"height": 800
@@ -9,10 +10,12 @@
 		"width": 64,
 		"height": 64,
 		"depth": 64,
-		"ticks_per_second": 32
+		"ticks_per_second": 24,
+		"day_length_mins": 10
 	},
 	"controls": {
-		"mouse_sensitivity_x": 0.3,
-		"mouse_sensitivity_y": 0.3
+		"mouse_sensitivity_x": 0.29714286,
+		"mouse_sensitivity_y": 0.29714286,
+		"move_speed": 0.4
 	}
 }

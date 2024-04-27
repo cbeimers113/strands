@@ -3,70 +3,31 @@ package entity
 import (
 	"fmt"
 
-	"github.com/g3n/engine/graphic"
+	"github.com/g3n/engine/material"
 )
 
-// Entity data storage model:
-
-// The g3n Node type has a UserData field of type interface{} (the 'any' type)
-// which we can set and get any data we want. Each entity type stores its own struct
-// type (eg Plant entities store PlantData, Tile entities store TileData...)
-// The entity type wraps and promotes a *core.Node
-
-const (
-	Tile     EntityType = "tile"
-	Plant    EntityType = "plant"
-	Creature EntityType = "creature"
-)
-
-type EntityType = string
-
-type Entity struct {
-	*graphic.Mesh
-	Type EntityType
+type Entity interface {
+	Update()
+	InfoString() string
+	Material() *material.Material
+	SetName(string)
+	Dispose()
+	DisposeChildren(bool)
 }
 
-// Create a new entity with the given parameters
-func New(mesh *graphic.Mesh, eType EntityType, entities map[int]*Entity) *Entity {
-	e := &Entity{
-		Mesh: mesh,
-		Type: eType,
-	}
-	e.GetMaterial(0).GetMaterial().SetLineWidth(8)
-
+// Add an entity to the entities map
+func AddEntity(entity Entity, entities map[int]Entity) {
 	// Store the index of this entity in its name so that the entity can be found by a game object
-	e.SetName(fmt.Sprintf("%d", len(entities)))
-	entities[len(entities)] = e
+	entity.SetName(fmt.Sprintf("%d", len(entities)))
+	entities[len(entities)] = entity
 
-	return e
-}
-
-// Return an infostring representing this entity
-func (e Entity) InfoString() string {
-	infoString := fmt.Sprintf("%s:\n", e.Type)
-
-	switch e.Type {
-	case Tile:
-		if tileData, ok := e.UserData().(*TileData); ok {
-			infoString += fmt.Sprintf("type=%s\n", tileData.Type.Name)
-			infoString += fmt.Sprintf("temperature=%s\n", tileData.Temperature)
-			infoString += fmt.Sprintf("water level=%s\n", tileData.WaterLevel)
-			infoString += fmt.Sprintf("elevation=%s\n", e.getElevation())
-			infoString += fmt.Sprintf("planted=%t\n", tileData.Planted)
-		}
-	case Plant:
-		if plantData, ok := e.UserData().(*PlantData); ok {
-			infoString += fmt.Sprintf("age=%d\n", plantData.Age)
-			infoString += fmt.Sprintf("colour=#%06x\n", plantData.Colour)
-		}
-	case Creature:
-		infoString += "not implemented yet, how are you seeing this?"
+	// If this entity is a tile, store the water sub-meshes under the same entity index
+	if tile, ok := entity.(*Tile); ok {
+		tile.Water.SetName(tile.Name())
 	}
-
-	return infoString
 }
 
 // Highlight or unhighlight an entity
-func (e *Entity) Highlight(highlight bool) {
-	e.GetMaterial(0).GetMaterial().SetWireframe(highlight)
+func Highlight(entity Entity, highlight bool) {
+	entity.Material().SetWireframe(highlight)
 }

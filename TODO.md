@@ -1,12 +1,20 @@
-### v0.1.0 - App Improvements:
+### v0.1.0 - General Enhancements:
 
-- Refactoring gui Views code
-- Icon would be nice
-- Settings Menu to edit config
-- In-game clock & day-night cycle
+- Settings menu to edit config
+- Configurable day length and tick speed
+- Configurable mouse sensitivity and player movement
+- Controls section of info screen is togglable
 - Right click tile to open context menu, plant a seed from context menu
+- In-game clock & day-night cycle
+- Refactored Views in the gui package
+- Refactor entities as Entity interface
 
-### v0.1.1 - Plants Upgrade:
+### v0.1.1 - Misc Enhancements:
+- New icon by Chaems
+- Skybox
+- Assets installer
+
+### v0.2.0 - Plants Upgrade:
 
 - Plants: they look silly as they grow; improve structure
   - Maybe be stages of trunk branching: each stage's branches are shorter, thinner and more numerous than the last
@@ -17,6 +25,6 @@
   - need levels of O2, CO2, H2O in the air
   - need to look into P, S, N2, other elements that could go in soil and water
 
-### v1.2.0 - Creatures Upgrade:
+### v0.3.0 - Creatures Upgrade:
 
 - Creatures: TODO

@@ -1,6 +1,8 @@
 package input
 
 import (
+	"fmt"
+
 	"github.com/g3n/engine/window"
 
 	"cbeimers113/strands/internal/chem"
@@ -19,6 +21,7 @@ type InputManager struct {
 	prevMX float32
 	prevMY float32
 	shift  bool
+	ctrl   bool
 
 	// player looking x and y
 	lx float32
@@ -39,9 +42,9 @@ func New(ctx *context.Context) *InputManager {
 }
 
 func (i *InputManager) Update(player *player.Player) {
-	var mf float32 = 1
+	var mf float32 = i.Cfg.Controls.MoveSpeed
 	if i.shift {
-		mf = 2
+		mf *= 4
 	}
 
 	player.Move(i.dx*mf, i.dz*mf)
@@ -72,6 +75,8 @@ func (i *InputManager) KeyDown(evname string, ev interface{}) {
 		i.dx = -0.01
 	case window.KeyLeftShift:
 		i.shift = true
+	case window.KeyLeftControl:
+		i.ctrl = true
 	case window.KeySpace:
 		i.State.SetPaused(!i.State.Paused())
 	}
@@ -92,6 +97,8 @@ func (i *InputManager) KeyUp(evname string, ev interface{}) {
 		i.dx = 0
 	case window.KeyLeftShift:
 		i.shift = false
+	case window.KeyLeftControl:
+		i.ctrl = false
 	}
 }
 
@@ -108,10 +115,11 @@ func (i *InputManager) MouseDown(evname string, ev interface{}) {
 	me := ev.(*window.MouseEvent)
 
 	if !i.State.InMenu() && i.State.LookingAt != nil {
-		switch i.State.LookingAt.Type {
+		switch i.State.LookingAt.(type) {
 
-		case entity.Tile:
-			tile := i.State.LookingAt
+		case *entity.Tile:
+			tile := i.State.LookingAt.(*entity.Tile)
+
 			switch me.Button {
 			case window.MouseButton1:
 				tile.AddWater(chem.CubicMetresToLitres(1))
@@ -119,26 +127,28 @@ func (i *InputManager) MouseDown(evname string, ev interface{}) {
 				gui.Open(gui.TileContextMenu, false)
 			}
 
-		case entity.Plant:
-			plant := i.State.LookingAt
+		case *entity.Plant:
+			// plant := i.State.LookingAt.(*entity.Plant)
+
 			switch me.Button {
 			case window.MouseButton1:
-				entity.OnLeftClickPlant(plant)
+				// Left click: ?
 			case window.MouseButton2:
-				entity.OnRightClickPlant(plant)
+				// Right click: TODO: plant context menu
 			}
 
-		case entity.Creature:
-			creature := i.State.LookingAt
-			switch me.Button {
-			case window.MouseButton1:
-				entity.OnLeftClickCreature(creature)
-			case window.MouseButton2:
-				entity.OnRightClickCreature(creature)
-			}
+		// case *entity.Creature:
+		// 	creature := i.State.LookingAt.(*entity.Creature)
+
+		// 	switch me.Button {
+		// 	case window.MouseButton1:
+		// 		// On left click creature
+		// 	case window.MouseButton2:
+		// 		// On right click creature
+		// 	}
 
 		default:
-			println("No action defined for button ", me.Button, " on ", i.State.LookingAt.Type)
+			fmt.Printf("No action defined for button %+v on %+v\n", me.Button, i.State.LookingAt)
 		}
 	}
 }

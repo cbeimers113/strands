@@ -37,7 +37,7 @@ func New(cfg *config.Config) (*Game, error) {
 		Scene: core.NewNode(),
 		Cam:   camera.New(1),
 		Cfg:   cfg,
-		State: state.New(),
+		State: state.New(cfg),
 	}
 
 	g := &Game{
@@ -86,7 +86,7 @@ func (g *Game) Start() {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	// Start the main loop
-	g.App.Run(func(renderer *renderer.Renderer, duration time.Duration) {
+	g.App.Run(func(renderer *renderer.Renderer, deltaTime time.Duration) {
 		g.App.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(g.Scene, g.Cam)
 
@@ -96,9 +96,10 @@ func (g *Game) Start() {
 			deltaTimeWorld = 0
 		} else {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorDisabled))
-			deltaTimeWorld += float32(duration.Milliseconds())
-			deltaTimeController += float32(duration.Milliseconds())
+			deltaTimeWorld += float32(deltaTime.Milliseconds())
+			deltaTimeController += float32(deltaTime.Milliseconds())
 
+			// Update the controller on a fixed interval
 			if deltaTimeController >= 1000/60 {
 				g.iman.Update(g.player)
 				g.player.Update(deltaTimeController)
@@ -106,12 +107,19 @@ func (g *Game) Start() {
 				deltaTimeController = 0
 			}
 
+			// Update the world at a dynamic configurable rate
 			if deltaTimeWorld >= 1000/float32(g.Cfg.Simulation.Speed) {
 				g.world.Update(deltaTimeWorld)
+
+				if !g.State.Paused() {
+					g.State.Clock.Update(deltaTimeWorld)
+				}
+
 				deltaTimeWorld = 0
 				tps++
 			}
 
+			// Count how many ticks happened since one second ago, update TPS count
 			if time.Since(lastTick) >= 1*time.Second {
 				g.State.SetTPS(tps)
 				tps = 0
