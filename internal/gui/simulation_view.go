@@ -28,7 +28,7 @@ func (g *Gui) registerSimulationView() {
 				fmt.Println(err)
 			} else {
 				simCursor := gui.NewImageFromTex(cursorTex)
-				w, h = simCursor.ContentWidth(), simCursor.ContentHeight()
+				w, h = simCursor.Width(), simCursor.Height()
 				simCursor.SetPosition((float32(width)-w)/2, (float32(height)-h)/2)
 				simCursor.SetUserData(MainMenu)
 				g.Scene.Add(simCursor)
@@ -40,7 +40,7 @@ func (g *Gui) registerSimulationView() {
 			g.Scene.Add(g.infoLabel)
 
 			g.pausedLabel = gui.NewLabel(g.pausedStatus())
-			g.pausedLabel.SetPosition((float32(width)-g.pausedLabel.ContentWidth())/2, 5)
+			g.pausedLabel.SetPosition((float32(width)-g.pausedLabel.Width())/2, 5)
 			g.pausedLabel.SetUserData(SimulationView)
 			g.Scene.Add(g.pausedLabel)
 
@@ -57,7 +57,7 @@ func (g *Gui) registerSimulationView() {
 			width, _ := g.App.GetSize()
 			g.infoLabel.SetText(g.infoText())
 			g.pausedLabel.SetText(g.pausedStatus())
-			g.pausedLabel.SetPosition((float32(width)-g.pausedLabel.ContentWidth())/2, 0)
+			g.pausedLabel.SetPosition((float32(width)-g.pausedLabel.Width())/2, 0)
 		},
 	}
 }

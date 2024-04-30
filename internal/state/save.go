@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/valyala/gozstd"
 
@@ -14,9 +13,9 @@ import (
 	"cbeimers113/strands/internal/io/file"
 )
 
-const saveFileExtension = ".sim"
+const SaveFileExtension = ".sim"
 
-var ExitSaveFile = filepath.Join(file.StoragePath, fmt.Sprintf("exitSave%s", saveFileExtension))
+var ExitSaveFile = file.Touch("", SaveFileExtension)
 
 type Save struct {
 	Seed  int64          `json:"seed"`

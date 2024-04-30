@@ -4,6 +4,7 @@ import (
 	"github.com/g3n/engine/gui"
 
 	"cbeimers113/strands/internal/context"
+	"cbeimers113/strands/internal/gui/component"
 )
 
 type View int
@@ -29,10 +30,13 @@ var views [numMenus]viewControls
 // GUI manager
 type Gui struct {
 	*context.Context
+	dialogOpen bool
 
 	// Main menu components
 	startButton    *gui.Button
 	settingsButton *gui.Button
+	saveNameField  *component.InputField
+	submitButton   *gui.Button
 	exitButton     *gui.Button
 
 	// Config menu components

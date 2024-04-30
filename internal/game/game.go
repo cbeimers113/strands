@@ -18,6 +18,7 @@ import (
 	"cbeimers113/strands/internal/context"
 	"cbeimers113/strands/internal/gui"
 	"cbeimers113/strands/internal/io/input_manager"
+	"cbeimers113/strands/internal/io/keyboard"
 	"cbeimers113/strands/internal/player"
 	"cbeimers113/strands/internal/state"
 	"cbeimers113/strands/internal/world"
@@ -34,12 +35,13 @@ type Game struct {
 
 func New(cfg *config.Config, version string) (*Game, error) {
 	ctx := &context.Context{
-		Version: version,
-		App:     app.App(),
-		Scene:   core.NewNode(),
-		Cam:     camera.New(1),
-		Cfg:     cfg,
-		State:   state.New(cfg, time.Now().UnixNano()),
+		Version:  version,
+		App:      app.App(),
+		Scene:    core.NewNode(),
+		Cam:      camera.New(1),
+		Cfg:      cfg,
+		State:    state.New(cfg, time.Now().UnixNano()),
+		Keyboard: keyboard.New(),
 	}
 
 	g := &Game{
@@ -55,6 +57,14 @@ func New(cfg *config.Config, version string) (*Game, error) {
 	if g.Win, ok = g.App.IWindow.(*window.GlfwWindow); !ok {
 		return nil, errors.New("cannot instantiate window")
 	}
+	g.Win.SetSize(g.Cfg.Window.Width, g.Cfg.Window.Height)
+	g.Win.SetTitle(g.Cfg.Name)
+
+	// Configure app
+	g.App.Subscribe(window.OnWindowSize, g.onResize)
+	g.App.Subscribe(app.OnExit, g.onExit)
+	g.App.Gls().ClearColor(0, 0, 0, 1.0)
+	g.onResize("", nil)
 
 	// Configure camera
 	g.Cam.SetPosition(float32(cfg.Simulation.Width)/2, 10, float32(cfg.Simulation.Depth)/2)
@@ -71,6 +81,7 @@ func New(cfg *config.Config, version string) (*Game, error) {
 
 // Load a save file
 func (g *Game) LoadGame(filename string) {
+	g.Win.SetTitle(fmt.Sprintf("Loading Simulation [%s]", filename))
 	st, cells, tiles, err := state.LoadSave(g.Cfg, filename)
 	if err != nil {
 		fmt.Printf("Couldn't load save file [%s]: %s\n", filename, err) // TODO: popup with warning
@@ -80,20 +91,22 @@ func (g *Game) LoadGame(filename string) {
 	g.State = st
 	g.world.SetAtmosphere(cells)
 	g.world.SetTiles(tiles)
+	g.Win.SetTitle(g.Cfg.Name)
+}
+
+// Save a save file
+func (g Game) SaveGame(filename string) {
+	g.Win.SetTitle(fmt.Sprintf("Saving Simulation [%s]", filename))
+	if err := state.StoreSave(filename, g.State, g.world.GetAtmosphere(), g.world.GetTiles()); err != nil {
+		fmt.Printf("Couldn't create save file [%s]: %s", filename, err)
+	}
+	g.Win.SetTitle(g.Cfg.Name)
 }
 
 // Start the game
 func (g *Game) Start() {
 	// Open main menu on game start
 	gui.Open(gui.MainMenu, true)
-
-	// Configure app
-	g.App.Subscribe(window.OnWindowSize, g.onResize)
-	g.App.Subscribe(app.OnExit, g.onExit)
-	g.App.Gls().ClearColor(0, 0, 0, 1.0)
-	g.Win.SetSize(g.Cfg.Window.Width, g.Cfg.Window.Height)
-	g.Win.SetTitle(g.Cfg.Name)
-	g.onResize("", nil)
 
 	// Update world every n ms so that n updates happen per second
 	var deltaTimeWorld float32 = 0
@@ -112,12 +125,13 @@ func (g *Game) Start() {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorNormal))
 			deltaTimeController = 0
 			deltaTimeWorld = 0
+			g.gui.Refresh()
 		} else {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorDisabled))
 			deltaTimeWorld += float32(deltaTime.Milliseconds())
 			deltaTimeController += float32(deltaTime.Milliseconds())
 
-			// Update the controller on a fixed interval
+			// Update the controller at a fixed interval
 			if deltaTimeController >= 1000/60 {
 				g.iman.Update(g.player)
 				g.player.Update(deltaTimeController)
@@ -144,6 +158,16 @@ func (g *Game) Start() {
 				lastTick = time.Now()
 			}
 		}
+
+		// Poll for file load/save actions
+		if g.SaveFile != "" {
+			g.SaveGame(g.SaveFile)
+			g.SaveFile = ""
+		}
+		if g.LoadFile != "" {
+			g.LoadGame(g.LoadFile)
+			g.LoadFile = ""
+		}
 	})
 }
 
@@ -152,9 +176,7 @@ func (g Game) onExit(string, interface{}) {
 	g.Cfg.Save()
 
 	if g.Cfg.ExitSave {
-		if err := state.StoreSave(state.ExitSaveFile, g.State, g.world.GetAtmosphere(), g.world.GetTiles()); err != nil {
-			fmt.Printf("Couldn't save autosave file: %s", err)
-		}
+		g.SaveGame(state.ExitSaveFile)
 	}
 }
 
