@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
@@ -33,56 +34,44 @@ var TileTypes []TileType = []TileType{
 // Represents the tiles surrounding this one
 type Neighbourhood = [6]*Tile
 
-// Which data a tile will store
+// The tile entity
 type Tile struct {
-	*graphic.Mesh
+	*graphic.Mesh `json:"-"`
+	*rand.Rand    `json:"-"`
 
 	// Static properties
-	MapX int
-	MapZ int
-	Type TileType
+	MapX   int      `json:"map_x"`
+	WorldY float32  `json:"world_y"`
+	MapZ   int      `json:"map_z"`
+	Type   TileType `json:"type"`
 
-	Neighbours Neighbourhood // Pointers to any neighbouring tiles
-	Water      *graphic.Mesh // This is the water tile object that can exist on top of the tile
-	WaterTick  int
+	Neighbours Neighbourhood `json:"-"` // Pointers to any neighbouring tiles
+	Water      *graphic.Mesh `json:"-"` // This is the water tile object that can exist on top of the tile
+	WaterTick  int           `json:"water_tick"`
 
 	// Dynamic properties
-	Planted     bool
-	Temperature *chem.Quantity
-	WaterLevel  *chem.Quantity
+	Plants      []*Plant       `json:"plants"`
+	Temperature *chem.Quantity `json:"temperature"`
+	WaterLevel  *chem.Quantity `json:"water_level"`
 
-	physicsEnabled bool
+	physicsEnabled bool `json:"-"`
 }
 
-// Spawn a hex tile of type tType at mapX, mapZ (tile precision), y (game world precision)
-func NewTile(entities map[int]Entity, mapX, mapZ int, height, temp, waterLevel float32, tType TileType) *Tile {
-	x := (float32(mapX) + (0.5 * float32(mapZ%2))) * math32.Sin(math32.Pi/3)
-	z := float32(mapZ) * 0.75
-	tileMesh := createTileMesh(tType.Name)
-	waterMesh := createTileMesh("water")
-
+// Spawn a hex tile of type tType at mapX, mapZ (tile precision), worldY (game world precision)
+func NewTile(entities map[int]Entity, mapX, mapZ int, worldY, temp, waterLevel float32, tType TileType, rng *rand.Rand) *Tile {
 	tile := &Tile{
-		Mesh: tileMesh,
+		Rand: rng,
 
-		MapX: mapX,
-		MapZ: mapZ,
-		Type: tType,
+		MapX:   mapX,
+		WorldY: worldY,
+		MapZ:   mapZ,
+		Type:   tType,
 
-		Water:     waterMesh,
-		WaterTick: rand.Intn(100),
+		WaterTick: rng.Intn(100),
 
 		Temperature: &chem.Quantity{Value: temp, Units: chem.Celcius},
 		WaterLevel:  &chem.Quantity{Value: waterLevel, Units: chem.Litre},
 	}
-
-	waterMesh.SetName(tile.Name())
-	tile.Add(waterMesh)
-	tile.SetPosition(x, height, z)
-	tile.SetRotationY(math32.Pi / 2)
-	tile.GetMaterial(0).GetMaterial().SetLineWidth(8)
-
-	// Add this tile to the entities list
-	AddEntity(tile, entities)
 
 	return tile
 }
@@ -91,11 +80,13 @@ func NewTile(entities map[int]Entity, mapX, mapZ int, height, temp, waterLevel f
 func createTileMesh(texture string) (tileMesh *graphic.Mesh) {
 	geom := graphics.NewHexMesh()
 	mat := material.NewStandard(math32.NewColorHex(0x111111))
-	mat.SetTransparent(texture == "water")
+	mat.SetTransparent(texture == graphics.TexWater)
 	tileMesh = graphic.NewMesh(geom, mat)
 
-	if tex, ok := graphics.Texture(texture); ok {
+	if tex, err := graphics.Texture(texture); err == nil {
 		mat.AddTexture(tex)
+	} else {
+		fmt.Println(err)
 	}
 
 	return
@@ -132,7 +123,7 @@ func (t *Tile) doWaterSpread() {
 		}
 
 		// Shuffle the lower neighbours to give some randomness to flow direction
-		rand.Shuffle(len(lowerNeighbours), func(i, j int) {
+		t.Rand.Shuffle(len(lowerNeighbours), func(i, j int) {
 			lowerNeighbours[i], lowerNeighbours[j] = lowerNeighbours[j], lowerNeighbours[i]
 		})
 
@@ -195,6 +186,38 @@ func (t *Tile) updateWaterLevel() {
 	}
 }
 
+// Refresh the game object(s)
+func (t *Tile) Refresh(entities map[int]Entity, scene *core.Node) {
+	// Clear this entity from the entities list if it's in there
+	if t.Mesh != nil {
+		RemoveEntity(t, entities, scene)
+	}
+	if t.Water != nil {
+		scene.Remove(t.Water)
+	}
+
+	x := (float32(t.MapX) + (0.5 * float32(t.MapZ%2))) * math32.Sin(math32.Pi/3)
+	z := float32(t.MapZ) * 0.75
+	tileMesh := createTileMesh(t.Type.Name)
+	waterMesh := createTileMesh(graphics.TexWater)
+
+	t.Mesh = tileMesh
+	t.Water = waterMesh
+	t.Add(waterMesh)
+	t.SetPosition(x, t.WorldY, z)
+	t.SetRotationY(math32.Pi / 2)
+	t.GetMaterial(0).GetMaterial().SetLineWidth(8)
+
+	// Refresh all plants
+	for _, plant := range t.Plants {
+		plant.Rand = t.Rand
+		plant.Refresh(entities, scene)
+	}
+
+	// Add this tile to the entities list
+	AddEntity(t, entities, scene)
+}
+
 // Perform per-frame updates to a Tile
 func (t *Tile) Update() {
 	if t.physicsEnabled {
@@ -221,10 +244,12 @@ func (t *Tile) AddWater(delta float32) float32 {
 }
 
 // Add a plant to a tile if plantable
-func (t *Tile) AddPlant(entities map[int]Entity) {
-	if !t.Planted && t.Type.Fertility > 0 {
-		t.Add(NewRandomPlant(entities).GetINode())
-		t.Planted = true
+func (t *Tile) AddPlant(entities map[int]Entity, scene *core.Node) {
+	if t.Type.Fertility > 0 {
+		plant := NewRandomPlant(entities, t.Rand)
+		plant.Refresh(entities, scene)
+		t.Add(plant.GetINode())
+		t.Plants = append(t.Plants, plant)
 	}
 }
 
@@ -235,7 +260,7 @@ func (t Tile) InfoString() string {
 	infoString += fmt.Sprintf("temperature=%s\n", t.Temperature)
 	infoString += fmt.Sprintf("water level=%s\n", t.WaterLevel)
 	infoString += fmt.Sprintf("elevation=%s\n", t.getElevation())
-	infoString += fmt.Sprintf("planted=%t\n", t.Planted)
+	infoString += fmt.Sprintf("planted=%t\n", len(t.Plants) > 0)
 
 	return infoString
 }

@@ -7,6 +7,7 @@ require (
 	github.com/g3n/engine v0.2.0
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240307211618-a69d953ea142
 	github.com/stretchr/testify v1.9.0
+	github.com/valyala/gozstd v1.20.1
 )
 
 require (

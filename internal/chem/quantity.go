@@ -14,8 +14,8 @@ const (
 
 // Represents an amount of an element
 type Quantity struct {
-	Value float32
-	Units Unit
+	Value float32 `json:"value"`
+	Units Unit    `json:"units"`
 }
 
 // Create a string representation of a quantity

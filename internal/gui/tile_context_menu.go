@@ -33,7 +33,7 @@ func (g *Gui) registerTileContextMenu() {
 			g.plantSeedButton.SetUserData(TileContextMenu)
 			g.plantSeedButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
 				if tile, ok := g.State.LookingAt.(*entity.Tile); ok {
-					tile.AddPlant(g.State.Entities)
+					tile.AddPlant(g.State.Entities, g.Scene)
 					g.tileInfoLabel.SetText(g.State.LookingAt.InfoString())
 				}
 			})

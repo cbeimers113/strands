@@ -1,8 +1,9 @@
 package game
 
 import (
+	_ "embed"
 	"errors"
-	"math/rand"
+	"fmt"
 	"time"
 
 	"github.com/g3n/engine/app"
@@ -16,7 +17,7 @@ import (
 	"cbeimers113/strands/internal/config"
 	"cbeimers113/strands/internal/context"
 	"cbeimers113/strands/internal/gui"
-	"cbeimers113/strands/internal/input"
+	"cbeimers113/strands/internal/io/input_manager"
 	"cbeimers113/strands/internal/player"
 	"cbeimers113/strands/internal/state"
 	"cbeimers113/strands/internal/world"
@@ -26,18 +27,19 @@ type Game struct {
 	*context.Context
 
 	gui    *gui.Gui
-	iman   *input.InputManager
+	iman   *input_manager.InputManager
 	world  *world.World
 	player *player.Player
 }
 
-func New(cfg *config.Config) (*Game, error) {
+func New(cfg *config.Config, version string) (*Game, error) {
 	ctx := &context.Context{
-		App:   app.App(),
-		Scene: core.NewNode(),
-		Cam:   camera.New(1),
-		Cfg:   cfg,
-		State: state.New(cfg),
+		Version: version,
+		App:     app.App(),
+		Scene:   core.NewNode(),
+		Cam:     camera.New(1),
+		Cfg:     cfg,
+		State:   state.New(cfg, time.Now().UnixNano()),
 	}
 
 	g := &Game{
@@ -45,7 +47,7 @@ func New(cfg *config.Config) (*Game, error) {
 		gui:     gui.New(ctx),
 		world:   world.New(ctx),
 		player:  player.New(ctx),
-		iman:    input.New(ctx),
+		iman:    input_manager.New(ctx),
 	}
 
 	// Create window
@@ -59,7 +61,25 @@ func New(cfg *config.Config) (*Game, error) {
 	g.Cam.SetRotation(0, 0, 0)
 	g.Scene.Add(g.Cam)
 
+	// If exit save is enabled, load the exit save file
+	if g.Cfg.ExitSave {
+		g.LoadGame(state.ExitSaveFile)
+	}
+
 	return g, nil
+}
+
+// Load a save file
+func (g *Game) LoadGame(filename string) {
+	st, cells, tiles, err := state.LoadSave(g.Cfg, filename)
+	if err != nil {
+		fmt.Printf("Couldn't load save file [%s]: %s\n", filename, err) // TODO: popup with warning
+		return
+	}
+
+	g.State = st
+	g.world.SetAtmosphere(cells)
+	g.world.SetTiles(tiles)
 }
 
 // Start the game
@@ -69,6 +89,7 @@ func (g *Game) Start() {
 
 	// Configure app
 	g.App.Subscribe(window.OnWindowSize, g.onResize)
+	g.App.Subscribe(app.OnExit, g.onExit)
 	g.App.Gls().ClearColor(0, 0, 0, 1.0)
 	g.Win.SetSize(g.Cfg.Window.Width, g.Cfg.Window.Height)
 	g.Win.SetTitle(g.Cfg.Name)
@@ -81,9 +102,6 @@ func (g *Game) Start() {
 
 	var lastTick time.Time
 	var tps int
-
-	// Seed the PRNG
-	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	// Start the main loop
 	g.App.Run(func(renderer *renderer.Renderer, deltaTime time.Duration) {
@@ -129,8 +147,19 @@ func (g *Game) Start() {
 	})
 }
 
+// Callback for when the app is closed
+func (g Game) onExit(string, interface{}) {
+	g.Cfg.Save()
+
+	if g.Cfg.ExitSave {
+		if err := state.StoreSave(state.ExitSaveFile, g.State, g.world.GetAtmosphere(), g.world.GetTiles()); err != nil {
+			fmt.Printf("Couldn't save autosave file: %s", err)
+		}
+	}
+}
+
 // Callback for when the window is resized, update camera and gui to match
-func (g *Game) onResize(evname string, ev interface{}) {
+func (g *Game) onResize(string, interface{}) {
 	width, height := g.App.GetSize()
 	g.App.Gls().Viewport(0, 0, int32(width), int32(height))
 	g.Cam.SetAspect(float32(width) / float32(height))

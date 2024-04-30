@@ -37,6 +37,7 @@ type Gui struct {
 
 	// Config menu components
 	showControlsCheck *gui.CheckRadio
+	exitSaveCheck     *gui.CheckRadio
 	mouseXSenSlider   *gui.Slider
 	mouseYSenSlider   *gui.Slider
 	moveSpeedSlider   *gui.Slider

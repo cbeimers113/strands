@@ -1,9 +1,11 @@
 package gui
 
 import (
+	"cbeimers113/strands/internal/graphics"
 	"fmt"
 
 	"github.com/g3n/engine/gui"
+	"github.com/g3n/engine/texture"
 )
 
 // Register the simulation view
@@ -14,11 +16,18 @@ func (g *Gui) registerSimulationView() {
 				g.closeViews()
 			}
 
-			var width, height int = g.App.GetSize()
-			var w, h float32
+			var (
+				width, height int = g.App.GetSize()
+				w, h          float32
+				cursorTex     *texture.Texture2D
+				err           error
+			)
 
-			simCursor, err := gui.NewImage("res/cursor.png")
-			if err == nil {
+			cursorTex, err = graphics.Texture(graphics.TexCursor)
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				simCursor := gui.NewImageFromTex(cursorTex)
 				w, h = simCursor.ContentWidth(), simCursor.ContentHeight()
 				simCursor.SetPosition((float32(width)-w)/2, (float32(height)-h)/2)
 				simCursor.SetUserData(MainMenu)
@@ -55,7 +64,7 @@ func (g *Gui) registerSimulationView() {
 
 // Load the info text
 func (g *Gui) infoText() string {
-	txt := fmt.Sprintf("Version %s\n", g.Cfg.Version)
+	txt := fmt.Sprintf("Version %s\n", g.Version)
 	txt += fmt.Sprintf("TPS: %d\n", g.State.TPS())
 	txt += fmt.Sprintf("%s\n", g.State.Clock)
 	txt += "\n"
@@ -70,7 +79,7 @@ func (g *Gui) infoText() string {
 	}
 
 	// Append info about simulation
-	txt += "\nAtmospheric Levels:\n"
+	txt += "\nChemical Levels:\n"
 	for name, amnt := range g.State.Quantities {
 		txt += fmt.Sprintf("%s: %s\n", name, amnt.String())
 	}

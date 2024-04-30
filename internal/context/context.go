@@ -10,12 +10,13 @@ import (
 	"cbeimers113/strands/internal/state"
 )
 
-// Collection of shared instances
+// Collection of shared data and instances
 type Context struct {
-	App   *app.Application   // The G3N application
-	Win   *window.GlfwWindow // The window
-	Scene *core.Node         // The G3N scene containing graphical representation of simulation state
-	Cam   *camera.Camera     // The G3N game camera
-	Cfg   *config.Config     // The game and sim configuration
-	State *state.State       // The game state
+	Version string             // The version number of this build, tracked in .version at compile time
+	App     *app.Application   // The G3N application
+	Win     *window.GlfwWindow // The window
+	Scene   *core.Node         // The G3N scene containing graphical representation of simulation state
+	Cam     *camera.Camera     // The G3N game camera
+	Cfg     *config.Config     // The game and sim configuration
+	State   *state.State       // The game state
 }

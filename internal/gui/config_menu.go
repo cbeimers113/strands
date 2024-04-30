@@ -33,9 +33,19 @@ func (g *Gui) registerConfigMenu() {
 			})
 			g.Scene.Add(g.showControlsCheck)
 
+			g.exitSaveCheck = gui.NewCheckBox("Save on Exit")
+			w, h = g.exitSaveCheck.ContentWidth(), g.exitSaveCheck.ContentHeight()
+			g.exitSaveCheck.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*1.3)
+			g.exitSaveCheck.SetUserData(ConfigMenu)
+			g.exitSaveCheck.SetValue(g.Cfg.ExitSave)
+			g.exitSaveCheck.Subscribe(gui.OnChange, func(name string, ev interface{}) {
+				g.Cfg.ExitSave = g.exitSaveCheck.Value()
+			})
+			g.Scene.Add(g.exitSaveCheck)
+
 			g.mouseXSenSlider = gui.NewHSlider(175, 12.5)
 			w, h = g.mouseXSenSlider.ContentWidth(), g.mouseXSenSlider.ContentHeight()
-			g.mouseXSenSlider.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*2)
+			g.mouseXSenSlider.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*4)
 			g.mouseXSenSlider.SetUserData(ConfigMenu)
 			g.mouseXSenSlider.SetValue(g.Cfg.Controls.MouseSensitivityX)
 			g.mouseXSenSlider.SetText(g.mouseSensXLabel())
@@ -47,7 +57,7 @@ func (g *Gui) registerConfigMenu() {
 
 			g.mouseYSenSlider = gui.NewHSlider(175, 12.5)
 			w, h = g.mouseYSenSlider.ContentWidth(), g.mouseYSenSlider.ContentHeight()
-			g.mouseYSenSlider.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*4)
+			g.mouseYSenSlider.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*6)
 			g.mouseYSenSlider.SetUserData(ConfigMenu)
 			g.mouseYSenSlider.SetValue(g.Cfg.Controls.MouseSensitivityY)
 			g.mouseYSenSlider.SetText(g.mouseSensYLabel())
@@ -59,7 +69,7 @@ func (g *Gui) registerConfigMenu() {
 
 			g.moveSpeedSlider = gui.NewHSlider(175, 12.5)
 			w, h = g.moveSpeedSlider.ContentWidth(), g.moveSpeedSlider.ContentHeight()
-			g.moveSpeedSlider.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*6)
+			g.moveSpeedSlider.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*8)
 			g.moveSpeedSlider.SetUserData(ConfigMenu)
 			g.moveSpeedSlider.SetValue(g.Cfg.Controls.MoveSpeed)
 			g.moveSpeedSlider.SetText(g.moveSpeedLabel())
@@ -71,7 +81,7 @@ func (g *Gui) registerConfigMenu() {
 
 			g.tickSpeedSlider = gui.NewHSlider(175, 12.5)
 			w, h = g.tickSpeedSlider.ContentWidth(), g.tickSpeedSlider.ContentHeight()
-			g.tickSpeedSlider.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*8)
+			g.tickSpeedSlider.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*10)
 			g.tickSpeedSlider.SetUserData(ConfigMenu)
 			g.tickSpeedSlider.SetValue(float32(g.Cfg.Simulation.Speed) / 32)
 			g.tickSpeedSlider.SetText(g.tickSpeedLabel())
@@ -89,14 +99,14 @@ func (g *Gui) registerConfigMenu() {
 			g.dayLengthSlider.SetText(g.dayLengthLabel())
 			g.dayLengthSlider.Subscribe(gui.OnChange, func(name string, ev interface{}) {
 				g.Cfg.Simulation.DayLength = int(math32.Max(1, g.dayLengthSlider.Value()*30))
-				g.State.Clock.SetTime(g.State.Clock.Hour(), g.State.Clock.Minute())
+				g.State.Clock.SetTime(g.State.Clock.Hour, g.State.Clock.Minute)
 				g.dayLengthSlider.SetText(g.dayLengthLabel())
 			})
 			g.Scene.Add(g.dayLengthSlider)
 
 			g.saveButton = gui.NewButton("Save Settings")
 			w, h = g.saveButton.ContentWidth(), g.saveButton.ContentHeight()
-			g.saveButton.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*10)
+			g.saveButton.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*12)
 			g.saveButton.SetUserData(ConfigMenu)
 			g.saveButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
 				if err := g.Cfg.Save(); err != nil {
@@ -108,7 +118,7 @@ func (g *Gui) registerConfigMenu() {
 
 			g.exitButton = gui.NewButton("Close")
 			w, h = g.exitButton.ContentWidth(), g.exitButton.ContentHeight()
-			g.exitButton.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*12)
+			g.exitButton.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*14)
 			g.exitButton.SetUserData(TileContextMenu)
 			g.exitButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
 				g.Cfg.Controls.MouseSensitivityX = saveMouseSensX
@@ -123,6 +133,7 @@ func (g *Gui) registerConfigMenu() {
 
 		close: func() {
 			g.Scene.Remove(g.showControlsCheck)
+			g.Scene.Remove(g.exitSaveCheck)
 			g.Scene.Remove(g.mouseXSenSlider)
 			g.Scene.Remove(g.mouseYSenSlider)
 			g.Scene.Remove(g.moveSpeedSlider)

@@ -3,39 +3,35 @@ package atmosphere
 import (
 	"cbeimers113/strands/internal/chem"
 	"cbeimers113/strands/internal/context"
+	"cbeimers113/strands/internal/state"
 )
-
-// Represents cells of chemical quantities and atmospheric temperature in the atmospheres
-type cell struct {
-	Elements    map[chem.ElementType]*chem.Quantity
-	Temperature float32
-}
 
 type Atmosphere struct {
 	*context.Context
 
-	cells [][][]cell
+	cells [][][]*state.Cell
 }
 
 // Create the atmosphere
 func New(ctx *context.Context) *Atmosphere {
 	a := &Atmosphere{Context: ctx}
-	a.cells = make([][][]cell, a.Cfg.Simulation.Width)
+	a.cells = make([][][]*state.Cell, a.Cfg.Simulation.Width)
 
 	for x := 0; x < a.Cfg.Simulation.Width; x++ {
-		a.cells[x] = make([][]cell, a.Cfg.Simulation.Height)
+		a.cells[x] = make([][]*state.Cell, a.Cfg.Simulation.Height)
 
 		for y := 0; y < a.Cfg.Simulation.Height; y++ {
-			a.cells[x][y] = make([]cell, a.Cfg.Simulation.Depth)
+			a.cells[x][y] = make([]*state.Cell, a.Cfg.Simulation.Depth)
 
 			for z := 0; z < a.Cfg.Simulation.Depth; z++ {
-				a.cells[x][y][z] = cell{
-					Elements:    make(map[chem.ElementType]*chem.Quantity),
-					Temperature: 22.0,
+				var t float32 = 22.0
+				a.cells[x][y][z] = &state.Cell{
+					Quantities:  make(map[chem.ElementType]*chem.Quantity),
+					Temperature: t,
 				}
 
 				// Starting quantities
-				a.cells[x][y][z].Elements[chem.Water] = &chem.Quantity{
+				a.cells[x][y][z].Quantities[chem.Water] = &chem.Quantity{
 					Value: 0.5,
 					Units: chem.Litre,
 				}
@@ -51,7 +47,40 @@ func (a *Atmosphere) Update(deltaTime float32) {
 	for x := 0; x < a.Cfg.Simulation.Width; x++ {
 		for y := 0; y < a.Cfg.Simulation.Height; y++ {
 			for z := 0; z < a.Cfg.Simulation.Depth; z++ {
+				// TODO: this
+			}
+		}
+	}
+}
 
+// GetCells returns the atmosphere as a linear slice of cells
+func (a Atmosphere) GetCells() []*state.Cell {
+	w := a.Cfg.Simulation.Width
+	h := a.Cfg.Simulation.Height
+	d := a.Cfg.Simulation.Depth
+	cells := make([]*state.Cell, w*h*d)
+
+	for x := 0; x < w; x++ {
+		for y := 0; y < h; y++ {
+			for z := 0; z < d; z++ {
+				cells[x+w*(y+h*z)] = a.cells[x][y][z]
+			}
+		}
+	}
+
+	return cells
+}
+
+// SetCells loads a slice of cells into the atmosphere
+func (a *Atmosphere) SetCells(cells []*state.Cell) {
+	w := a.Cfg.Simulation.Width
+	h := a.Cfg.Simulation.Height
+	d := a.Cfg.Simulation.Depth
+
+	for x := 0; x < w; x++ {
+		for y := 0; y < h; y++ {
+			for z := 0; z < d; z++ {
+				a.cells[x][y][z] = cells[x+w*(y+h*z)]
 			}
 		}
 	}
