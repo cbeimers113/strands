@@ -90,7 +90,17 @@ func (g *Gui) registerMainMenu() {
 		refresh: func() {
 			// Update the input field text if the dialog is opened
 			if g.dialogOpen && g.saveNameField.Button != nil && g.saveNameField.Button.Label != nil {
-				g.saveNameField.Label.SetText(g.Keyboard.Read())
+				var (
+					x0 = g.saveNameField.Position().X
+					y0 = g.saveNameField.Position().Y
+					x1 = x0 + g.saveNameField.Width()
+					y1 = y0 + g.saveNameField.Height()
+				)
+
+				g.saveNameField.Update(g.Keyboard.Read())
+				if g.Keyboard.ClickOutCheck(x0, y0, x1, y1) {
+					g.EnableKeyboard(false)
+				}
 			}
 		},
 	}
@@ -101,7 +111,7 @@ func (g *Gui) openSaveDialog() {
 	h := g.startButton.Height()
 
 	// Load input field for save name if the save button is pressed
-	g.saveNameField = component.NewInputField(150, h, "")
+	g.saveNameField = component.NewInputField(150, h, "", 500)
 	g.saveNameField.SetPosition(5+g.saveButton.Position().X+g.saveButton.Width(), y)
 	g.saveNameField.SetUserData(MainMenu)
 	g.saveNameField.Subscribe(gui.OnClick, func(name string, ev interface{}) {
@@ -140,12 +150,14 @@ func (g *Gui) EnableKeyboard(enable bool) {
 
 		if g.saveNameField != nil {
 			g.saveNameField.SetEnabled(false)
+			g.saveNameField.Activate(true)
 		}
 	} else {
 		g.Keyboard.Enable(false)
 
 		if g.saveNameField != nil {
 			g.saveNameField.SetEnabled(true)
+			g.saveNameField.Activate(false)
 		}
 	}
 }

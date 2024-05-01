@@ -160,6 +160,8 @@ func (i *InputManager) MouseDown(evname string, ev interface{}) {
 		default:
 			fmt.Printf("No action defined for button %+v on %+v\n", me.Button, i.State.LookingAt)
 		}
+	} else if i.State.InMenu() {
+		i.Keyboard.RegisterMouseEvent(me.Xpos, me.Ypos)
 	}
 }
 

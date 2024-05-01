@@ -1,7 +1,11 @@
 package gui
 
 import (
+	_ "embed"
+	"fmt"
+
 	"github.com/g3n/engine/gui"
+	"github.com/g3n/engine/text"
 
 	"cbeimers113/strands/internal/context"
 	"cbeimers113/strands/internal/gui/component"
@@ -24,8 +28,13 @@ type viewControls struct {
 	refresh func()
 }
 
-// Map view types to their open and close functions
-var views [numMenus]viewControls
+var (
+	// Map view types to their open and close functions
+	views [numMenus]viewControls
+
+	//go:embed font/Ubuntu-Regular.ttf
+	fontData []byte
+)
 
 // GUI manager
 type Gui struct {
@@ -61,6 +70,7 @@ type Gui struct {
 
 // New creates a new Gui
 func New(ctx *context.Context) *Gui {
+	gui.SetStyleDefault(getStyle())
 	g := &Gui{Context: ctx}
 	gui.Manager().Set(g.Scene)
 
@@ -105,4 +115,25 @@ func (g *Gui) closeViews() {
 	for _, view := range views {
 		view.close()
 	}
+}
+
+// Get the style of the gui
+func getStyle() *gui.Style {
+	var err error
+
+	g := gui.NewDarkStyle()
+	gb := g.Button
+	g.Button = gui.ButtonStyles{
+		Normal:   gb.Normal,
+		Over:     gb.Disabled,
+		Focus:    gb.Focus,
+		Pressed:  gb.Over,
+		Disabled: gb.Pressed,
+	}
+
+	if g.Font, err = text.NewFontFromData(fontData); err != nil {
+		fmt.Printf("Couldn't load GUI font: %s\n", err)
+	}
+
+	return g
 }

@@ -16,6 +16,7 @@ type Keyboard struct {
 	ctrl    bool
 	data    chan window.Key
 	buffer  string
+	mx, my  float32
 }
 
 // New returns a new keyboard
@@ -30,10 +31,9 @@ func (k *Keyboard) listen() {
 	defer close(k.data)
 
 	for l {
+		k.Lock()
 		select {
 		case ev := <-k.data:
-			k.Lock()
-
 			// Check for backspace signal, otherwise try to decode the event
 			if ev != window.KeyBackspace {
 				k.buffer += decode(ev, k.shift)
@@ -44,13 +44,10 @@ func (k *Keyboard) listen() {
 					k.buffer = k.buffer[:len(k.buffer)-1]
 				}
 			}
-
-			k.Unlock()
 		default:
 		}
 
 		// Stop listening if the keyboard was turned off
-		k.Lock()
 		l = k.enabled
 		k.Unlock()
 	}
@@ -107,4 +104,18 @@ func (k *Keyboard) Ctrl(ctrl bool) {
 	k.Lock()
 	defer k.Unlock()
 	k.ctrl = ctrl
+}
+
+// RegisterMouseEvent registers the position of a click event anywhere on a menu so that we know when to unfocus
+func (k *Keyboard) RegisterMouseEvent(mx, my float32) {
+	k.Lock()
+	defer k.Unlock()
+	k.mx, k.my = mx, my
+}
+
+// ClickOutCheck checks if a mouse click event is OOB of the keyboard's host component to unfocus it
+func (k *Keyboard) ClickOutCheck(x0, y0, x1, y1 float32) bool {
+	k.Lock()
+	defer k.Unlock()
+	return k.mx < x0 || k.mx > x1 || k.my < y0 || k.my > y1
 }
