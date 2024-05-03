@@ -27,10 +27,8 @@ func (g *Gui) registerMainMenu() {
 			g.startButton.SetPosition((float32(width)-w)/2, (float32(height)-h)/2)
 			g.startButton.SetUserData(MainMenu)
 			g.startButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
-				g.State.SetInMenu(false)
 				views[SimulationView].open(true)
-				g.Keyboard.Clear()
-				g.EnableKeyboard(false)
+				g.closeSaveDialog()
 			})
 			g.Scene.Add(g.startButton)
 			nextY = g.startButton.Position().Y + g.startButton.Height() + 5
@@ -40,18 +38,28 @@ func (g *Gui) registerMainMenu() {
 			g.saveButton.SetPosition((float32(width)-w)/2, nextY)
 			g.saveButton.SetUserData(MainMenu)
 			g.saveButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
+				g.closeOpenDialog()
 				g.openSaveDialog()
 			})
 			g.Scene.Add(g.saveButton)
 			nextY = g.saveButton.Position().Y + g.saveButton.Height() + 5
+
+			g.openButton = gui.NewButton("Open Simulation")
+			w = g.openButton.Width()
+			g.openButton.SetPosition((float32(width)-w)/2, nextY)
+			g.openButton.SetUserData(MainMenu)
+			g.openButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
+				g.openOpenDialog()
+			})
+			g.Scene.Add(g.openButton)
+			nextY = g.openButton.Position().Y + g.openButton.Height() + 5
 
 			g.settingsButton = gui.NewButton("Settings")
 			w = g.settingsButton.Width()
 			g.settingsButton.SetPosition((float32(width)-w)/2, nextY)
 			g.settingsButton.SetUserData(MainMenu)
 			g.settingsButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
-				g.Keyboard.Clear()
-				g.EnableKeyboard(false)
+				g.closeSaveDialog()
 				Open(ConfigMenu, true)
 			})
 			g.Scene.Add(g.settingsButton)
@@ -62,45 +70,50 @@ func (g *Gui) registerMainMenu() {
 			g.exitButton.SetPosition((float32(width)-w)/2, nextY)
 			g.exitButton.SetUserData(MainMenu)
 			g.exitButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
-				g.Keyboard.Clear()
-				g.EnableKeyboard(false)
+				g.closeSaveDialog()
 				g.App.Exit()
 			})
 			g.Scene.Add(g.exitButton)
-
-			if g.dialogOpen {
-				g.openSaveDialog()
-			}
 
 			g.State.SetInMenu(true)
 		},
 
 		close: func() {
-			g.Keyboard.Clear()
-			g.EnableKeyboard(false)
+			g.closeSaveDialog()
+			g.closeOpenDialog()
+
 			g.Scene.Remove(g.startButton)
 			g.Scene.Remove(g.saveButton)
-			g.Scene.Remove(g.saveNameField)
-			g.Scene.Remove(g.submitButton)
+			g.Scene.Remove(g.openButton)
+			g.Scene.Remove(g.savesList)
 			g.Scene.Remove(g.settingsButton)
 			g.Scene.Remove(g.exitButton)
-			g.dialogOpen = false
+
+			g.State.SetInMenu(false)
 		},
 
 		refresh: func() {
 			// Update the input field text if the dialog is opened
-			if g.dialogOpen && g.saveNameField.Button != nil && g.saveNameField.Button.Label != nil {
+			if g.saveDialog != nil && g.saveDialog.Enabled() {
 				var (
-					x0 = g.saveNameField.Position().X
-					y0 = g.saveNameField.Position().Y
-					x1 = x0 + g.saveNameField.Width()
-					y1 = y0 + g.saveNameField.Height()
+					x0 = g.saveDialog.Position().X
+					y0 = g.saveDialog.Position().Y
+					x1 = x0 + g.saveDialog.Width()
+					y1 = y0 + g.saveDialog.Height()
 				)
 
-				g.saveNameField.Update(g.Keyboard.Read())
+				// If there was a click event outside of the keyboard, disable it
+				g.saveDialog.Update(g.Keyboard.Read())
 				if g.Keyboard.ClickOutCheck(x0, y0, x1, y1) {
-					g.EnableKeyboard(false)
+					g.enableKeyboard(false)
 				}
+			}
+
+			// Check if a file has been slected for loading
+			if g.savesList != nil && g.savesList.Selected != "" {
+				g.Context.LoadGame(g.savesList.Selected)
+				g.savesList.Selected = ""
+				Open(SimulationView, true)
 			}
 		},
 	}
@@ -111,53 +124,100 @@ func (g *Gui) openSaveDialog() {
 	h := g.startButton.Height()
 
 	// Load input field for save name if the save button is pressed
-	g.saveNameField = component.NewInputField(150, h, "", 500)
-	g.saveNameField.SetPosition(5+g.saveButton.Position().X+g.saveButton.Width(), y)
-	g.saveNameField.SetUserData(MainMenu)
-	g.saveNameField.Subscribe(gui.OnClick, func(name string, ev interface{}) {
-		if g.Keyboard.GetEnabled() {
-			return
-		}
+	g.saveDialog = component.NewDialog("", 5+g.saveButton.Position().X+g.saveButton.Width(), y, 150, h, int(MainMenu),
 
-		g.EnableKeyboard(true)
+		// On click input field
+		func() {
+			if g.Keyboard.GetEnabled() {
+				return
+			}
+
+			g.enableKeyboard(true)
+		},
+
+		// On submit...
+		func() {
+			filename := g.Keyboard.Read()
+			if len(filename) == 0 {
+				return
+			}
+
+			// Save the game
+			g.SaveGame(file.Touch(filename, state.SaveFileExtension))
+			Open(SimulationView, true)
+		},
+
+		// On Cancel
+		func() {
+			g.closeSaveDialog()
+		},
+	)
+
+	g.saveDialog.SetUserData(MainMenu)
+	g.saveDialog.Subscribe(gui.OnClick, func(name string, ev interface{}) {
+
 	})
-	g.Scene.Add(g.saveNameField)
-
-	// Also load the submit save button
-	g.submitButton = gui.NewButton("Save")
-	g.submitButton.SetPosition(5+g.saveNameField.Position().X+g.saveNameField.Width(), y)
-	g.submitButton.SetUserData(MainMenu)
-	g.submitButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
-		filename := g.Keyboard.Read()
-		if len(filename) == 0 {
-			return
-		}
-
-		// Save the game
-		g.SaveGame(file.Touch(filename, state.SaveFileExtension))
-		g.EnableKeyboard(false)
-		g.Keyboard.Clear()
-	})
-	g.Scene.Add(g.submitButton)
+	g.Scene.Add(g.saveDialog)
 
 	g.saveButton.SetEnabled(false)
-	g.dialogOpen = true
+	g.saveDialog.Open()
 }
 
-func (g *Gui) EnableKeyboard(enable bool) {
+func (g *Gui) closeSaveDialog() {
+	g.enableKeyboard(false)
+	g.Keyboard.Clear()
+	g.Scene.Remove(g.saveDialog)
+
+	if g.saveButton != nil {
+		g.saveButton.SetEnabled(true)
+	}
+}
+
+func (g *Gui) openOpenDialog() {
+	g.closeSaveDialog()
+	g.openButton.SetEnabled(false)
+
+	y := g.startButton.Position().Y
+	h := g.exitButton.Position().Y + g.exitButton.Height() - g.startButton.Position().Y
+
+	// Load savefile list so we can select one to open
+	filepaths := state.GetSavesList()
+	g.savesList = component.NewFileList(filepaths, 250, h, int(MainMenu))
+	g.savesList.SetPosition(5+g.saveButton.Position().X+g.saveButton.Width(), y)
+	g.savesList.SetUserData(MainMenu)
+	g.Scene.Add(g.savesList)
+
+	// Add a cancel button to go back
+	g.cancelButton = gui.NewButton("Cancel")
+	g.cancelButton.SetPosition(5+g.savesList.Position().X+g.savesList.GetPanel().Width(), y)
+	g.cancelButton.SetUserData(MainMenu)
+	g.cancelButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
+		g.closeOpenDialog()
+	})
+	g.Scene.Add(g.cancelButton)
+}
+
+func (g *Gui) closeOpenDialog() {
+	g.Scene.Remove(g.savesList)
+	g.Scene.Remove(g.cancelButton)
+
+	if g.openButton != nil {
+		g.openButton.SetEnabled(true)
+	}
+}
+
+func (g *Gui) enableKeyboard(enable bool) {
 	if enable {
 		g.Keyboard.Enable(true)
 
-		if g.saveNameField != nil {
-			g.saveNameField.SetEnabled(false)
-			g.saveNameField.Activate(true)
+		if g.saveDialog != nil {
+			g.saveDialog.SetEnabled(true)
 		}
 	} else {
 		g.Keyboard.Enable(false)
 
-		if g.saveNameField != nil {
-			g.saveNameField.SetEnabled(true)
-			g.saveNameField.Activate(false)
+		if g.saveDialog != nil {
+			g.saveDialog.SetEnabled(false)
 		}
 	}
 }

@@ -11,7 +11,7 @@ import (
 func Test_Texture(t *testing.T) {
 	mockId := "mock"
 	mockTexture := new(texture.Texture2D)
-	textures = map[string]*texture.Texture2D{mockId: mockTexture}
+	Textures = map[string]*texture.Texture2D{mockId: mockTexture}
 
 	tests := []struct {
 		name  string

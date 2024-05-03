@@ -12,15 +12,15 @@ var defaultConfig = &Config{
 		Height: 800,
 	},
 	Simulation: struct {
-		Width     int `json:"width"`
-		Height    int `json:"height"`
-		Depth     int `json:"depth"`
+		Width     int `json:"-"`
+		Height    int `json:"-"`
+		Depth     int `json:"-"`
 		Speed     int `json:"ticks_per_second"`
 		DayLength int `json:"day_length_mins"`
 	}{
-		Width:     64,
-		Height:    64,
-		Depth:     64,
+		Width:     Width,
+		Height:    Height,
+		Depth:     Depth,
 		Speed:     24,
 		DayLength: 5,
 	},

@@ -39,13 +39,14 @@ var (
 // GUI manager
 type Gui struct {
 	*context.Context
-	dialogOpen bool
 
 	// Main menu components
 	startButton    *gui.Button
 	settingsButton *gui.Button
-	saveNameField  *component.InputField
-	submitButton   *gui.Button
+	saveDialog     *component.Dialog
+	openButton     *gui.Button
+	savesList      *component.FileList
+	cancelButton   *gui.Button
 	exitButton     *gui.Button
 
 	// Config menu components
@@ -70,8 +71,8 @@ type Gui struct {
 
 // New creates a new Gui
 func New(ctx *context.Context) *Gui {
-	gui.SetStyleDefault(getStyle())
 	g := &Gui{Context: ctx}
+	gui.SetStyleDefault(getStyle())
 	gui.Manager().Set(g.Scene)
 
 	// Register the views with their controls
@@ -104,8 +105,14 @@ func (g *Gui) Reload() {
 func (g *Gui) Refresh() {
 	for _, child := range g.Scene.Children() {
 		// If this is a gui component, call its refresh method
-		if viewType, ok := child.GetNode().UserData().(View); ok {
-			views[viewType].refresh()
+		if child != nil {
+			if node := child.GetNode(); node != nil {
+				if data := node.UserData(); data != nil {
+					if viewType, ok := data.(View); ok {
+						views[viewType].refresh()
+					}
+				}
+			}
 		}
 	}
 }

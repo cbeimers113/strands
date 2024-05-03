@@ -93,11 +93,11 @@ func (w *World) makeHeightmap() ([][]float32, float32, float32) {
 func (w *World) makeTilemap(heightmap [][]float32, min, max float32) {
 	width := w.Cfg.Simulation.Width
 	depth := w.Cfg.Simulation.Depth
+
 	w.tilemap = make([][]*entity.Tile, width)
-
 	for x := 0; x < width; x++ {
-		w.tilemap[x] = make([]*entity.Tile, depth)
 
+		w.tilemap[x] = make([]*entity.Tile, depth)
 		for z := 0; z < depth; z++ {
 			// Map the heightmap value to the TileTypes array to determine tile type
 			height := float32(len(entity.TileTypes)) * (heightmap[x][z] - min) / (max - min)
@@ -110,7 +110,7 @@ func (w *World) makeTilemap(heightmap [][]float32, min, max float32) {
 			height /= 3
 
 			// Each tile spawns at 22°C with 10 L of water on top of it
-			tile := entity.NewTile(w.State.Entities, x, z, height, 22.0, 10, tType, w.State.Rand)
+			tile := entity.NewTile(x, z, height, 22.0, 10, tType, w.State.Rand)
 			tile.Refresh(w.State.Entities, w.Scene)
 			w.tilemap[x][z] = tile
 		}
@@ -281,24 +281,32 @@ func (w *World) SetTiles(tiles []*entity.Tile) {
 	width := w.Cfg.Simulation.Width
 	depth := w.Cfg.Simulation.Depth
 
-	// Make two passes over the map: once to remove old game objects, then once to instantiate the new ones
-	for i := 0; i < 2; i++ {
-		for x := 0; x < width; x++ {
-			for z := 0; z < depth; z++ {
-				if i == 0 {
-					for _, plant := range w.tilemap[x][z].Plants {
-						entity.RemoveEntity(plant, w.State.Entities, w.Scene)
-					}
-					entity.RemoveEntity(w.tilemap[x][z], w.State.Entities, w.Scene)
-				} else {
-					tile := tiles[x+z*depth]
-					w.tilemap[x][z] = tile
-					tile.Rand = w.State.Rand
-					tile.Refresh(w.State.Entities, w.Scene)
-				}
-			}
+	for x := 0; x < width; x++ {
+		for z := 0; z < depth; z++ {
+			tile := tiles[x+z*depth]
+			tile.Rand = w.State.Rand
+			tile.Mesh = w.tilemap[x][z].Mesh
+			tile.Water = w.tilemap[x][z].Water
+			w.tilemap[x][z] = tile
+			tile.Refresh(w.State.Entities, w.Scene)
 		}
 	}
 
 	w.AssignTileNeighbourhoods()
+}
+
+func (w *World) Dispose() {
+	width := w.Cfg.Simulation.Width
+	depth := w.Cfg.Simulation.Depth
+
+	// Destroy tiles and their water and plants
+	for x := 0; x < width; x++ {
+		for z := 0; z < depth; z++ {
+			entity.RemoveEntity(w.tilemap[x][z], w.State.Entities, w.Scene)
+		}
+	}
+
+	// Destroy the sun and its light
+	w.sun.Dispose()
+	w.light.Dispose()
 }

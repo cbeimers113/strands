@@ -25,11 +25,6 @@ func AddEntity(entity Entity, entities map[int]Entity, scene *core.Node) {
 	entity.SetName(fmt.Sprintf("%d", len(entities)))
 	entities[len(entities)] = entity
 
-	// If this entity is a tile, store the water sub-meshes under the same entity index
-	if tile, ok := entity.(*Tile); ok {
-		tile.Water.SetName(tile.Name())
-	}
-
 	scene.Add(entity.GetINode())
 }
 
@@ -51,5 +46,7 @@ func RemoveEntity(entity Entity, entities map[int]Entity, scene *core.Node) {
 
 // Highlight or unhighlight an entity
 func Highlight(entity Entity, highlight bool) {
-	entity.Material().SetWireframe(highlight)
+	if mat := entity.Material(); mat != nil {
+		mat.SetWireframe(highlight)
+	}
 }

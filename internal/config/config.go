@@ -20,9 +20,9 @@ type Config struct {
 	} `json:"window"`
 
 	Simulation struct {
-		Width     int `json:"width"`
-		Height    int `json:"height"`
-		Depth     int `json:"depth"`
+		Width     int `json:"-"`
+		Height    int `json:"-"`
+		Depth     int `json:"-"`
 		Speed     int `json:"ticks_per_second"`
 		DayLength int `json:"day_length_mins"`
 	} `json:"simulation"`
@@ -34,7 +34,11 @@ type Config struct {
 	} `json:"controls"`
 }
 
-const errInvalidCfg = "invalid config: "
+const (
+	Width, Height, Depth = 64, 64, 64
+
+	errInvalidCfg = "invalid config: "
+)
 
 var configFilePath string
 
@@ -61,6 +65,11 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling config: %w", err)
 	}
+
+	// Use a constant world size so that save files will be compatible
+	c.Simulation.Width = Width
+	c.Simulation.Height = Height
+	c.Simulation.Depth = Depth
 
 	if err = c.validate(); err != nil {
 		return nil, err

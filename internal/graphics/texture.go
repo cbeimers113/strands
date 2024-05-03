@@ -41,10 +41,10 @@ var (
 	bytesWater []byte
 )
 
-var textures map[string]*texture.Texture2D
+var Textures map[string]*texture.Texture2D
 
 func init() {
-	textures = make(map[string]*texture.Texture2D)
+	Textures = make(map[string]*texture.Texture2D)
 
 	for _, texLoader := range []struct {
 		id   string
@@ -65,7 +65,7 @@ func init() {
 		)
 
 		if tex, err = decode(texLoader.data); err == nil {
-			textures[texLoader.id] = tex
+			Textures[texLoader.id] = tex
 		} else {
 			panic(fmt.Errorf("error loading texture [%s]: %w", texLoader.id, err))
 		}
@@ -92,7 +92,7 @@ func decode(data []byte) (tex *texture.Texture2D, err error) {
 // Texture returns the texture for a given key if it exists, and errors if it doesn't
 func Texture(texId string) (tex *texture.Texture2D, err error) {
 	var ok bool
-	if tex, ok = textures[texId]; !ok {
+	if tex, ok = Textures[texId]; !ok {
 		err = fmt.Errorf("texture does not exist: [%s]", texId)
 	}
 

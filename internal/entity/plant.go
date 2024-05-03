@@ -3,6 +3,7 @@ package entity
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
@@ -33,6 +34,7 @@ type Plant struct {
 	LeafSpawnHeight  float32 `json:"leaf_spawn_height"`  // [0.1, 1], How far up the stem the leaves will appear (from top), ie: value of 0.25 means leaves will spawn on the top quarter of the stem
 	AvgLeafSize      float32 `json:"avg_leaf_size"`      // (0, ..), Average size of leaf, ie: value of 1 equals the default size
 	LeafSizeVariance float32 `json:"leaf_size_variance"` // [0, 1], How much the leaf sizes can vary, ie: a value of 0.5 means the leaves can be up to 50% bigger or smaller than AvgSize
+	leaves           []*graphic.Mesh
 }
 
 // Create a new plant
@@ -91,11 +93,6 @@ func NewLeaf() (mesh *graphic.Mesh) {
 
 // Refresh reloads the in-game configuration of the plant
 func (p *Plant) Refresh(entities map[int]Entity, scene *core.Node) {
-	// Clear this entity from the entities list if it's in there
-	if p.Mesh != nil {
-		RemoveEntity(p, entities, scene)
-	}
-
 	geom := geometry.NewCylinder(float64(p.Radius), float64(p.Height), 8, 8, true, true)
 	mat := material.NewStandard(math32.NewColorHex(uint(p.Colour) / 10))
 	mesh := graphic.NewMesh(geom, mat)
@@ -107,19 +104,37 @@ func (p *Plant) Refresh(entities map[int]Entity, scene *core.Node) {
 		fmt.Println(err)
 	}
 
-	p.Mesh = mesh
+	if p.Mesh == nil {
+		p.Mesh = mesh
+		AddEntity(p, entities, scene)
+	} else {
+
+		// Make sure the entities map is pointing to this plant at the specified index
+		if i, err := strconv.Atoi(p.Name()); err == nil {
+			entities[i] = p
+		}
+	}
+
 	p.SetPosition(p.X, mesh.Scale().Y, p.Z)
 	p.SetRotation(p.RotX, p.RotY, 0)
 
-	for i := 0; i < p.NumLeaves; i++ {
-		leaf := NewLeaf()
-		leaf.SetScale(0.1, 0.1, 0.1)
-		leaf.SetRotation(p.Rand.Float32()*math32.Pi/12, p.Rand.Float32()*2*math32.Pi, p.Rand.Float32()*math32.Pi/12)
-		p.Add(leaf)
+	// Make sure each leaf exists
+	if p.leaves == nil || len(p.leaves) != p.NumLeaves {
+		p.leaves = make([]*graphic.Mesh, p.NumLeaves)
 	}
 
-	// Add this plant to the entities list
-	AddEntity(p, entities, scene)
+	for i := 0; i < p.NumLeaves; i++ {
+		if p.leaves[i] == nil {
+			leaf := NewLeaf()
+			leaf.SetName(p.Name())
+			p.Add(leaf)
+			p.leaves[i] = leaf
+		}
+
+		// TODO: store leaf positions and rotation in genetics and make reloadable
+		p.leaves[i].SetScale(0.1, 0.1, 0.1)
+		p.leaves[i].SetRotation(p.Rand.Float32()*math32.Pi/12, p.Rand.Float32()*2*math32.Pi, p.Rand.Float32()*math32.Pi/12)
+	}
 }
 
 // Perform per-frame updates to a plant

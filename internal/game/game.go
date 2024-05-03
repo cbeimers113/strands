@@ -17,6 +17,7 @@ import (
 	"cbeimers113/strands/internal/config"
 	"cbeimers113/strands/internal/context"
 	"cbeimers113/strands/internal/gui"
+	"cbeimers113/strands/internal/io/file"
 	"cbeimers113/strands/internal/io/input_manager"
 	"cbeimers113/strands/internal/io/keyboard"
 	"cbeimers113/strands/internal/player"
@@ -88,10 +89,12 @@ func (g *Game) LoadGame(filename string) {
 		return
 	}
 
+	st.Entities = g.State.Entities
 	g.State = st
 	g.world.SetAtmosphere(cells)
 	g.world.SetTiles(tiles)
-	g.Win.SetTitle(g.Cfg.Name)
+	g.Win.SetTitle(fmt.Sprintf("%s [%s]", g.Cfg.Name, file.Name(filename)))
+	g.LoadFile = ""
 }
 
 // Save a save file
@@ -101,6 +104,7 @@ func (g Game) SaveGame(filename string) {
 		fmt.Printf("Couldn't create save file [%s]: %s", filename, err)
 	}
 	g.Win.SetTitle(g.Cfg.Name)
+	g.SaveFile = ""
 }
 
 // Start the game
@@ -157,16 +161,14 @@ func (g *Game) Start() {
 				tps = 0
 				lastTick = time.Now()
 			}
-		}
 
-		// Poll for file load/save actions
-		if g.SaveFile != "" {
-			g.SaveGame(g.SaveFile)
-			g.SaveFile = ""
-		}
-		if g.LoadFile != "" {
-			g.LoadGame(g.LoadFile)
-			g.LoadFile = ""
+			// Poll for file load/save actions
+			if g.SaveFile != "" {
+				g.SaveGame(g.SaveFile)
+			}
+			if g.LoadFile != "" {
+				g.LoadGame(g.LoadFile)
+			}
 		}
 	})
 }
@@ -178,6 +180,8 @@ func (g Game) onExit(string, interface{}) {
 	if g.Cfg.ExitSave {
 		g.SaveGame(state.ExitSaveFile)
 	}
+
+	g.world.Dispose()
 }
 
 // Callback for when the window is resized, update camera and gui to match

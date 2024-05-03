@@ -27,9 +27,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -65,9 +65,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -104,9 +104,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -143,9 +143,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -182,9 +182,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -221,9 +221,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -260,9 +260,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -299,9 +299,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -337,9 +337,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -376,9 +376,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -415,9 +415,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -454,9 +454,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -493,9 +493,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{

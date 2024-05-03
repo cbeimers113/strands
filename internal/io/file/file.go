@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/flytam/filenamify"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
+	"strings"
 )
 
 var StoragePath string
@@ -27,15 +24,22 @@ func init() {
 	}
 }
 
-// Touch returns a full filepath to a new file name and extension, replacing spaces with underscores and removing illegal chars
+// Touch returns a full filepath to a new file name and extension, replacing spaces with underscores and removing special chars
 func Touch(filename, extension string) string {
-	fp, err := filenamify.Filenamify(filename, filenamify.Options{})
-	if err != nil {
-		fmt.Printf("Warning: couldn't create filename for %s\n", filename)
+	underscored := strings.ReplaceAll(filename, " ", "_")
+	fp := ""
+
+	for _, c := range underscored {
+		if ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z' || ('0' <= c && c <= '9') || c == '.' || c == '_') {
+			fp += string(c)
+		}
 	}
 
-	caser := cases.Title(language.English)
-	fp = caser.String(fp)
-
 	return filepath.Join(StoragePath, fp+extension)
+}
+
+// Name returns the name of a file excluding the directory path
+func Name(filepath string) string {
+	tokens := strings.Split(filepath, "/")
+	return tokens[len(tokens)-1]
 }

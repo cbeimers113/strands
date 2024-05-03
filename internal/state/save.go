@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/valyala/gozstd"
 
@@ -78,4 +81,29 @@ func StoreSave(filename string, state *State, cells []*Cell, tiles []*entity.Til
 
 	_, err = f.Write(data)
 	return err
+}
+
+func GetSavesList() map[string]string {
+	var saves = make(map[string]string)
+
+	filepath.WalkDir(file.StoragePath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if filepath.Ext(d.Name()) == SaveFileExtension {
+			parts := strings.Split(path, "/")
+			filename := strings.TrimSuffix(parts[len(parts)-1], SaveFileExtension)
+
+			if filename == "" {
+				filename = "autosave"
+			}
+
+			saves[filename] = path
+		}
+
+		return nil
+	})
+
+	return saves
 }

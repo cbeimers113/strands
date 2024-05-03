@@ -3,6 +3,7 @@ package entity
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/graphic"
@@ -58,7 +59,7 @@ type Tile struct {
 }
 
 // Spawn a hex tile of type tType at mapX, mapZ (tile precision), worldY (game world precision)
-func NewTile(entities map[int]Entity, mapX, mapZ int, worldY, temp, waterLevel float32, tType TileType, rng *rand.Rand) *Tile {
+func NewTile(mapX, mapZ int, worldY, temp, waterLevel float32, tType TileType, rng *rand.Rand) *Tile {
 	tile := &Tile{
 		Rand: rng,
 
@@ -174,6 +175,10 @@ func (t *Tile) updateWaterLevel() {
 	waterLevel := t.WaterLevel.Value
 	water := t.Water
 
+	if water == nil {
+		return
+	}
+
 	water.SetScaleY(chem.LitresToCubicMetres(waterLevel))
 	water.SetPositionY(graphics.DimensionsOf(water).Y)
 	water.SetVisible(t.WaterLevel.Value > 0)
@@ -188,22 +193,43 @@ func (t *Tile) updateWaterLevel() {
 
 // Refresh the game object(s)
 func (t *Tile) Refresh(entities map[int]Entity, scene *core.Node) {
-	// Clear this entity from the entities list if it's in there
-	if t.Mesh != nil {
-		RemoveEntity(t, entities, scene)
-	}
-	if t.Water != nil {
-		scene.Remove(t.Water)
-	}
-
 	x := (float32(t.MapX) + (0.5 * float32(t.MapZ%2))) * math32.Sin(math32.Pi/3)
 	z := float32(t.MapZ) * 0.75
-	tileMesh := createTileMesh(t.Type.Name)
-	waterMesh := createTileMesh(graphics.TexWater)
 
-	t.Mesh = tileMesh
-	t.Water = waterMesh
-	t.Add(waterMesh)
+	// Check if meshes have been created
+	if t.Mesh == nil {
+		t.Mesh = createTileMesh(t.Type.Name)
+		AddEntity(t, entities, scene)
+	} else {
+		if tex, err := graphics.Texture(t.Type.Name); tex != nil {
+			mat := t.GetMaterial(0).GetMaterial()
+
+			// Remove any existing textures before adding the one that matches the tile type
+			for texName := range graphics.Textures {
+				if oTex, err := graphics.Texture(texName); err == nil {
+					if mat.HasTexture(oTex) {
+						mat.RemoveTexture(oTex)
+					}
+				}
+			}
+
+			mat.AddTexture(tex)
+		} else {
+			fmt.Printf("Couldn't get tile texture for %s: %s\n", t.Type.Name, err)
+		}
+
+		// Make sure the entities map is pointing to this tile at the specified index
+		if i, err := strconv.Atoi(t.Name()); err == nil {
+			entities[i] = t
+		}
+	}
+
+	if t.Water == nil {
+		t.Water = createTileMesh(graphics.TexWater)
+		t.Water.SetName(t.Name())
+		t.Add(t.Water)
+	}
+
 	t.SetPosition(x, t.WorldY, z)
 	t.SetRotationY(math32.Pi / 2)
 	t.GetMaterial(0).GetMaterial().SetLineWidth(8)
@@ -212,10 +238,18 @@ func (t *Tile) Refresh(entities map[int]Entity, scene *core.Node) {
 	for _, plant := range t.Plants {
 		plant.Rand = t.Rand
 		plant.Refresh(entities, scene)
-	}
 
-	// Add this tile to the entities list
-	AddEntity(t, entities, scene)
+		has := false
+		for _, child := range t.Children() {
+			if child == plant.GetINode() {
+				has = true
+			}
+		}
+
+		if !has {
+			t.Add(plant)
+		}
+	}
 }
 
 // Perform per-frame updates to a Tile
@@ -248,7 +282,7 @@ func (t *Tile) AddPlant(entities map[int]Entity, scene *core.Node) {
 	if t.Type.Fertility > 0 {
 		plant := NewRandomPlant(entities, t.Rand)
 		plant.Refresh(entities, scene)
-		t.Add(plant.GetINode())
+		t.Add(plant)
 		t.Plants = append(t.Plants, plant)
 	}
 }
@@ -267,5 +301,8 @@ func (t Tile) InfoString() string {
 
 // Material returns the tile's material
 func (t Tile) Material() *material.Material {
-	return t.GetMaterial(0).GetMaterial()
+	if mat0 := t.GetMaterial(0); mat0 != nil {
+		return mat0.GetMaterial()
+	}
+	return nil
 }

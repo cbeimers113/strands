@@ -11,12 +11,16 @@ import (
 // and another process reads what was typed in order
 type Keyboard struct {
 	sync.Mutex
+
 	enabled bool
 	shift   bool
 	ctrl    bool
 	data    chan window.Key
 	buffer  string
-	mx, my  float32
+
+	// Mouse interaction
+	mx, my float32
+	mev    bool
 }
 
 // New returns a new keyboard
@@ -111,11 +115,16 @@ func (k *Keyboard) RegisterMouseEvent(mx, my float32) {
 	k.Lock()
 	defer k.Unlock()
 	k.mx, k.my = mx, my
+	k.mev = true
 }
 
 // ClickOutCheck checks if a mouse click event is OOB of the keyboard's host component to unfocus it
 func (k *Keyboard) ClickOutCheck(x0, y0, x1, y1 float32) bool {
 	k.Lock()
 	defer k.Unlock()
-	return k.mx < x0 || k.mx > x1 || k.my < y0 || k.my > y1
+
+	c := k.mx < x0 || k.mx > x1 || k.my < y0 || k.my > y1
+	k.mev = false
+
+	return c
 }

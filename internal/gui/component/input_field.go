@@ -8,23 +8,26 @@ import (
 
 type InputField struct {
 	*gui.Button
-	Text string
 
-	last   time.Time
-	timer  int64
-	freq   int64
-	blink  bool
+	text   string
 	active bool
+
+	// Cursor
+	last  time.Time
+	timer int64
+	freq  int64 //cursor blink frequency (in ms)
+	blink bool
 }
 
-// Create a new input field with specified width, height, text and cursor blink frequency (in ms)
-func NewInputField(width, height float32, text string, freq int64) *InputField {
+// Create a new input field with specified width, height and starting text
+func NewInputField(width, height float32, text string) *InputField {
 	button := gui.NewButton(text)
 
 	i := &InputField{
 		Button: button,
-		Text:   text,
-		freq:   freq,
+		text:   text,
+
+		freq: 500,
 	}
 	i.SetSize(width, height)
 
@@ -34,11 +37,16 @@ func NewInputField(width, height float32, text string, freq int64) *InputField {
 // Activate enables or disables whether the input field is active / focused
 func (i *InputField) Activate(active bool) {
 	i.active = active
+	i.SetEnabled(!active)
+
+	if !i.active && i.blink {
+		i.Label.SetText(i.text)
+	}
 }
 
 func (i *InputField) Update(text string) {
 	var cursor string
-	i.Text = text
+	i.text = text
 
 	// Keep track of internal timer for blinking
 	i.timer += time.Since(i.last).Milliseconds()
@@ -59,5 +67,5 @@ func (i *InputField) Update(text string) {
 
 	}
 
-	i.Label.SetText(text + cursor)
+	i.Label.SetText(i.text + cursor)
 }
