@@ -42,6 +42,10 @@ func newFileItem(text string, width float32, viewType int) *fileItem {
 
 	// Panel hover color
 	fi.Panel.Subscribe(gui.OnCursorEnter, func(evname string, ev interface{}) {
+		if !fi.Enabled() {
+			return
+		}
+
 		fi.Panel.SetColor(color.Focus)
 	})
 	fi.Panel.Subscribe(gui.OnCursorLeave, func(evname string, ev interface{}) {
@@ -50,11 +54,19 @@ func newFileItem(text string, width float32, viewType int) *fileItem {
 
 	// open button hover color
 	fi.openButton.Subscribe(gui.OnCursor, func(evname string, ev interface{}) {
+		if !fi.Enabled() {
+			return
+		}
+
 		fi.Panel.SetColor(color.Green)
 	})
 
 	// delete button hover color
 	fi.deleteButton.Subscribe(gui.OnCursor, func(evname string, ev interface{}) {
+		if !fi.Enabled() {
+			return
+		}
+
 		fi.Panel.SetColor(color.Red)
 	})
 
@@ -104,8 +116,10 @@ func NewFileList(filepaths map[string]string, width, height float32, viewType in
 
 func (f *FileList) SetEnabled(active bool) {
 	for _, child := range f.Children() {
-		if button, ok := child.(*gui.Button); ok {
-			button.SetEnabled(active)
+		if fi, ok := child.(*fileItem); ok {
+			fi.openButton.SetEnabled(active)
+			fi.deleteButton.SetEnabled(active)
+			fi.SetEnabled(active)
 		}
 	}
 }

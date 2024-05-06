@@ -124,6 +124,10 @@ func (g *Gui) registerConfigMenu() {
 				Open(MainMenu, true)
 			})
 			g.saveButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
+				if !g.saveButton.Enabled() {
+					return
+				}
+
 				g.saveButton.SetColor(color.Green)
 				g.saveButton.Label.SetColor(&math32.Color{R: 1.0, G: 1.0, B: 1.0})
 			})
@@ -141,6 +145,10 @@ func (g *Gui) registerConfigMenu() {
 				Open(MainMenu, true)
 			})
 			g.exitButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
+				if !g.exitButton.Enabled() {
+					return
+				}
+				
 				g.exitButton.SetColor(color.Red)
 				g.exitButton.Label.SetColor(&math32.Color{})
 			})

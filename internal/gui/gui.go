@@ -92,6 +92,19 @@ func Open(view View, closeOthers bool) {
 	views[view].open(closeOthers)
 }
 
+// Create a popup notification
+func (g *Gui) Popup(prompt, submitText string, submit func()) {
+	width, height := g.App.GetSize()
+	g.popup = component.NewPopup(prompt, submitText, 0, 0, 150, 100, -1, submit, func() {
+		g.popup.SetEnabled(false)
+		g.Scene.Remove(g.popup)
+		g.Reload()
+	})
+	g.popup.SetPosition((float32(width)-g.popup.Width())/2, (float32(height)-g.popup.Height())/2)
+	g.popup.Open()
+	g.Scene.Add(g.popup)
+}
+
 // Reload the gui components
 func (g *Gui) Reload() {
 	// Iterate over active components

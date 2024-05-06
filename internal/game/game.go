@@ -85,7 +85,7 @@ func (g *Game) LoadGame(filename string) {
 	g.Win.SetTitle(fmt.Sprintf("Loading Simulation [%s]", filename))
 	st, cells, tiles, err := state.LoadSave(g.Cfg, filename)
 	if err != nil {
-		fmt.Printf("Couldn't load save file [%s]: %s\n", filename, err) // TODO: popup with warning
+		fmt.Printf("Couldn't load save file [%s]: %s\n", filename, err)
 		return
 	}
 

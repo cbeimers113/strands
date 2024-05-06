@@ -84,3 +84,8 @@ func (p *Popup) SetEnabled(active bool) {
 func (p Popup) Enabled() bool {
 	return p.enabled
 }
+
+func (p *Popup) Dispose() {
+	p.DisposeChildren(true)
+	p.Panel.Dispose()
+}

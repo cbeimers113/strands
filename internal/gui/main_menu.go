@@ -36,6 +36,10 @@ func (g *Gui) registerMainMenu() {
 				g.closeSaveDialog()
 			})
 			g.startButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
+				if !g.startButton.Enabled() {
+					return
+				}
+
 				g.startButton.SetColor(color.Green)
 				g.startButton.Label.SetColor(&math32.Color{R: 1.0, G: 1.0, B: 1.0})
 			})
@@ -80,9 +84,29 @@ func (g *Gui) registerMainMenu() {
 			g.exitButton.SetUserData(MainMenu)
 			g.exitButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
 				g.closeSaveDialog()
-				g.App.Exit()
+				g.closeBrowseDialog()
+
+				g.startButton.SetEnabled(false)
+				g.saveButton.SetEnabled(false)
+				g.browseButton.SetEnabled(false)
+				g.settingsButton.SetEnabled(false)
+				g.exitButton.SetEnabled(false)
+				if g.savesList != nil {
+					g.savesList.SetEnabled(false)
+				}
+				if g.cancelButton != nil {
+					g.cancelButton.SetEnabled(false)
+				}
+
+				g.Popup("Exit the simulation?", "Exit", func() {
+					g.App.Exit()
+				})
 			})
 			g.exitButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
+				if !g.exitButton.Enabled() {
+					return
+				}
+
 				g.exitButton.SetColor(color.Red)
 				g.exitButton.Label.SetColor(&math32.Color{})
 			})
@@ -254,6 +278,7 @@ func (g *Gui) openConfirmOpenPopup() {
 		func() {
 			g.LoadGame(g.savesList.Selected)
 			g.savesList.Selected = ""
+			g.closePopup()
 			Open(SimulationView, true)
 		},
 
@@ -316,7 +341,6 @@ func (g *Gui) openConfirmDeletePopup() {
 
 		// on cancel
 		func() {
-			// Enable the other active components in this menu
 			g.savesList.Deleted = ""
 			g.closePopup()
 			g.browseButton.SetEnabled(false)
