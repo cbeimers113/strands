@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"cbeimers113/strands/internal/gui/color"
 	"fmt"
 
 	"github.com/g3n/engine/gui"
@@ -122,6 +123,10 @@ func (g *Gui) registerConfigMenu() {
 				}
 				Open(MainMenu, true)
 			})
+			g.saveButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
+				g.saveButton.SetColor(color.Green)
+				g.saveButton.Label.SetColor(&math32.Color{R: 1.0, G: 1.0, B: 1.0})
+			})
 			g.Scene.Add(g.saveButton)
 			nextY = g.saveButton.Position().Y + g.saveButton.Height() + 5
 
@@ -134,6 +139,10 @@ func (g *Gui) registerConfigMenu() {
 				g.Cfg.Controls.MouseSensitivityY = saveMouseSensY
 				g.Cfg.Simulation.Speed = saveTickSpeed
 				Open(MainMenu, true)
+			})
+			g.exitButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
+				g.exitButton.SetColor(color.Red)
+				g.exitButton.Label.SetColor(&math32.Color{})
 			})
 			g.Scene.Add(g.exitButton)
 

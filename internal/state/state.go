@@ -38,7 +38,6 @@ func New(cfg *config.Config, seed int64) *State {
 // Set the inMenu state
 func (s *State) SetInMenu(inMenu bool) {
 	s.inMenu = inMenu
-	s.SetPaused(inMenu)
 }
 
 // Set the paused state

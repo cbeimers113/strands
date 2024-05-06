@@ -1,8 +1,13 @@
 package gui
 
 import (
-	"github.com/g3n/engine/gui"
+	"fmt"
+	"os"
 
+	"github.com/g3n/engine/gui"
+	"github.com/g3n/engine/math32"
+
+	"cbeimers113/strands/internal/gui/color"
 	"cbeimers113/strands/internal/gui/component"
 	"cbeimers113/strands/internal/io/file"
 	"cbeimers113/strands/internal/state"
@@ -30,6 +35,10 @@ func (g *Gui) registerMainMenu() {
 				views[SimulationView].open(true)
 				g.closeSaveDialog()
 			})
+			g.startButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
+				g.startButton.SetColor(color.Green)
+				g.startButton.Label.SetColor(&math32.Color{R: 1.0, G: 1.0, B: 1.0})
+			})
 			g.Scene.Add(g.startButton)
 			nextY = g.startButton.Position().Y + g.startButton.Height() + 5
 
@@ -38,21 +47,21 @@ func (g *Gui) registerMainMenu() {
 			g.saveButton.SetPosition((float32(width)-w)/2, nextY)
 			g.saveButton.SetUserData(MainMenu)
 			g.saveButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
-				g.closeOpenDialog()
+				g.closeBrowseDialog()
 				g.openSaveDialog()
 			})
 			g.Scene.Add(g.saveButton)
 			nextY = g.saveButton.Position().Y + g.saveButton.Height() + 5
 
-			g.openButton = gui.NewButton("Open Simulation")
-			w = g.openButton.Width()
-			g.openButton.SetPosition((float32(width)-w)/2, nextY)
-			g.openButton.SetUserData(MainMenu)
-			g.openButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
-				g.openOpenDialog()
+			g.browseButton = gui.NewButton("Browse Saves")
+			w = g.browseButton.Width()
+			g.browseButton.SetPosition((float32(width)-w)/2, nextY)
+			g.browseButton.SetUserData(MainMenu)
+			g.browseButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
+				g.openBrowseDialog()
 			})
-			g.Scene.Add(g.openButton)
-			nextY = g.openButton.Position().Y + g.openButton.Height() + 5
+			g.Scene.Add(g.browseButton)
+			nextY = g.browseButton.Position().Y + g.browseButton.Height() + 5
 
 			g.settingsButton = gui.NewButton("Settings")
 			w = g.settingsButton.Width()
@@ -73,6 +82,10 @@ func (g *Gui) registerMainMenu() {
 				g.closeSaveDialog()
 				g.App.Exit()
 			})
+			g.exitButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
+				g.exitButton.SetColor(color.Red)
+				g.exitButton.Label.SetColor(&math32.Color{})
+			})
 			g.Scene.Add(g.exitButton)
 
 			g.State.SetInMenu(true)
@@ -80,20 +93,21 @@ func (g *Gui) registerMainMenu() {
 
 		close: func() {
 			g.closeSaveDialog()
-			g.closeOpenDialog()
+			g.closeBrowseDialog()
 
 			g.Scene.Remove(g.startButton)
 			g.Scene.Remove(g.saveButton)
-			g.Scene.Remove(g.openButton)
+			g.Scene.Remove(g.browseButton)
 			g.Scene.Remove(g.savesList)
 			g.Scene.Remove(g.settingsButton)
 			g.Scene.Remove(g.exitButton)
+			g.Scene.Remove(g.popup)
 
 			g.State.SetInMenu(false)
 		},
 
 		refresh: func() {
-			// Update the input field text if the dialog is opened
+			// Update the input field text if the save dialog is opened
 			if g.saveDialog != nil && g.saveDialog.Enabled() {
 				var (
 					x0 = g.saveDialog.Position().X
@@ -109,22 +123,34 @@ func (g *Gui) registerMainMenu() {
 				}
 			}
 
-			// Check if a file has been slected for loading
-			if g.savesList != nil && g.savesList.Selected != "" {
-				g.Context.LoadGame(g.savesList.Selected)
-				g.savesList.Selected = ""
-				Open(SimulationView, true)
+			// Check if a file has been slected for loading and the confirmation popup needs to be opened
+			if g.savesList != nil && g.savesList.Selected != "" && (g.popup == nil || !g.popup.Enabled()) {
+				g.openConfirmOpenPopup()
+			}
+
+			// Check if a file has been selected for deleting and the confirmation popup needs to be opened
+			if g.savesList != nil && g.savesList.Deleted != "" && (g.popup == nil || !g.popup.Enabled()) {
+				g.openConfirmDeletePopup()
 			}
 		},
 	}
 }
 
 func (g *Gui) openSaveDialog() {
+	x := 5 + g.saveButton.Position().X + g.saveButton.Width()
 	y := g.startButton.Position().Y + g.startButton.Height() + 5
+	w := float32(150)
 	h := g.startButton.Height()
 
 	// Load input field for save name if the save button is pressed
-	g.saveDialog = component.NewDialog("", 5+g.saveButton.Position().X+g.saveButton.Width(), y, 150, h, int(MainMenu),
+	g.saveDialog = component.NewDialog(
+		"",            // Default text
+		"Save",        // Submit button text
+		x,             // x position on screen
+		y,             // y position on screen
+		w,             // width
+		h,             // height
+		int(MainMenu), // parent menu
 
 		// On click input field
 		func() {
@@ -153,13 +179,9 @@ func (g *Gui) openSaveDialog() {
 		},
 	)
 
-	g.saveDialog.SetUserData(MainMenu)
-	g.saveDialog.Subscribe(gui.OnClick, func(name string, ev interface{}) {
-
-	})
-	g.Scene.Add(g.saveDialog)
-
 	g.saveButton.SetEnabled(false)
+	g.saveDialog.SetUserData(MainMenu)
+	g.Scene.Add(g.saveDialog)
 	g.saveDialog.Open()
 }
 
@@ -173,9 +195,8 @@ func (g *Gui) closeSaveDialog() {
 	}
 }
 
-func (g *Gui) openOpenDialog() {
+func (g *Gui) openBrowseDialog() {
 	g.closeSaveDialog()
-	g.openButton.SetEnabled(false)
 
 	y := g.startButton.Position().Y
 	h := g.exitButton.Position().Y + g.exitButton.Height() - g.startButton.Position().Y
@@ -189,21 +210,147 @@ func (g *Gui) openOpenDialog() {
 
 	// Add a cancel button to go back
 	g.cancelButton = gui.NewButton("Cancel")
-	g.cancelButton.SetPosition(5+g.savesList.Position().X+g.savesList.GetPanel().Width(), y)
+	g.cancelButton.SetPosition(5+g.savesList.Position().X+g.savesList.Width(), y)
 	g.cancelButton.SetUserData(MainMenu)
 	g.cancelButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
-		g.closeOpenDialog()
+		g.closeBrowseDialog()
 	})
 	g.Scene.Add(g.cancelButton)
+
+	g.browseButton.SetEnabled(false)
 }
 
-func (g *Gui) closeOpenDialog() {
+func (g *Gui) closeBrowseDialog() {
 	g.Scene.Remove(g.savesList)
 	g.Scene.Remove(g.cancelButton)
 
-	if g.openButton != nil {
-		g.openButton.SetEnabled(true)
+	if g.browseButton != nil {
+		g.browseButton.SetEnabled(true)
 	}
+}
+
+func (g *Gui) openConfirmOpenPopup() {
+	if g.savesList == nil {
+		return
+	}
+
+	width, height := g.App.GetSize()
+	w := float32(150) // Min width, if the text is too long it will expand
+	h := float32(100)
+	x := (float32(width) - w) / 2
+	y := (float32(height) - h) / 2
+
+	prompt := fmt.Sprintf("Open %s?\nUnsaved simulation will be lost.", file.Name(g.savesList.Selected))
+	g.popup = component.NewPopup(
+		prompt,        // Prompt label
+		"Okay",        // Submit button text
+		x,             // x position on screen
+		y,             // y position on screen
+		w,             // popup width
+		h,             // popup height,
+		int(MainMenu), // parent menu
+
+		// on submit...
+		func() {
+			g.LoadGame(g.savesList.Selected)
+			g.savesList.Selected = ""
+			Open(SimulationView, true)
+		},
+
+		// on cancel
+		func() {
+			// Enable the other active components in this menu
+			g.savesList.Selected = ""
+			g.closePopup()
+			g.browseButton.SetEnabled(false)
+		},
+	)
+
+	// Disable the other active components in this menu
+	g.startButton.SetEnabled(false)
+	g.saveButton.SetEnabled(false)
+	g.savesList.SetEnabled(false)
+	g.cancelButton.SetEnabled(false)
+	g.settingsButton.SetEnabled(false)
+	g.exitButton.SetEnabled(false)
+
+	g.popup.SetUserData(MainMenu)
+	g.Scene.Add(g.popup)
+	g.popup.Open()
+}
+
+func (g *Gui) openConfirmDeletePopup() {
+	if g.savesList == nil {
+		return
+	}
+
+	width, height := g.App.GetSize()
+	w := float32(150) // Min width, if the text is too long it will expand
+	h := float32(100)
+	x := (float32(width) - w) / 2
+	y := (float32(height) - h) / 2
+
+	prompt := fmt.Sprintf("Delete %s?\nFile will be lost forever!", file.Name(g.savesList.Deleted))
+	g.popup = component.NewPopup(
+		prompt,        // Prompt label
+		"Delete",      // Submit button text
+		x,             // x position on screen
+		y,             // y position on screen
+		w,             // popup width
+		h,             // popup height,
+		int(MainMenu), // parent menu
+
+		// on submit...
+		func() {
+			if err := os.Remove(g.savesList.Deleted); err != nil {
+				fmt.Printf("Can't delete save file [%s]: %s\n", g.savesList.Deleted, err)
+			}
+
+			g.savesList.Deleted = ""
+			g.closePopup()
+
+			// Refresh the files
+			g.closeBrowseDialog()
+			g.openBrowseDialog()
+		},
+
+		// on cancel
+		func() {
+			// Enable the other active components in this menu
+			g.savesList.Deleted = ""
+			g.closePopup()
+			g.browseButton.SetEnabled(false)
+		},
+	)
+
+	// Disable the other active components in this menu
+	g.startButton.SetEnabled(false)
+	g.saveButton.SetEnabled(false)
+	g.savesList.SetEnabled(false)
+	g.cancelButton.SetEnabled(false)
+	g.settingsButton.SetEnabled(false)
+	g.exitButton.SetEnabled(false)
+
+	g.popup.SetUserData(MainMenu)
+	g.Scene.Add(g.popup)
+	g.popup.Open()
+}
+
+func (g *Gui) closePopup() {
+	if g.popup == nil {
+		return
+	}
+
+	g.startButton.SetEnabled(true)
+	g.saveButton.SetEnabled(true)
+	g.browseButton.SetEnabled(true)
+	g.savesList.SetEnabled(true)
+	g.cancelButton.SetEnabled(true)
+	g.settingsButton.SetEnabled(true)
+	g.exitButton.SetEnabled(true)
+
+	g.popup.SetEnabled(false)
+	g.Scene.Remove(g.popup)
 }
 
 func (g *Gui) enableKeyboard(enable bool) {

@@ -99,8 +99,10 @@ func (g *Gui) infoText() string {
 
 // Update the "Simulation Running/Paused" status
 func (g *Gui) pausedStatus() string {
-	return fmt.Sprintf("Simulation %s", map[bool]string{
-		true:  "Paused",
-		false: "Running",
-	}[g.State.Paused()])
+	suffix := "Running"
+	if g.State.Paused() {
+		suffix = "Paused"
+	}
+
+	return fmt.Sprintf("Simulation %s", suffix)
 }

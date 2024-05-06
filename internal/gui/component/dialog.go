@@ -14,17 +14,21 @@ type Dialog struct {
 	onSubmit func()
 	onCancel func()
 
-	text     string
-	enabled  bool
-	xPos     float32
-	yPos     float32
-	width    float32
-	height   float32
+	text       string // Starting text for the input field
+	submitText string // Text for the submit button
+
+	// Dialog position and dimensions on screen
+	xPos   float32
+	yPos   float32
+	width  float32
+	height float32
+
 	viewType int
+	enabled  bool
 }
 
 // Create a new dialog field with the given input box dimensions and starting text
-func NewDialog(text string, xPos, yPos, width, height float32, viewType int, onClick func(), onSubmit func(), onCancel func()) *Dialog {
+func NewDialog(text, submitText string, xPos, yPos, width, height float32, viewType int, onClick func(), onSubmit func(), onCancel func()) *Dialog {
 	d := &Dialog{
 		Panel: gui.NewPanel(width, height),
 
@@ -32,11 +36,14 @@ func NewDialog(text string, xPos, yPos, width, height float32, viewType int, onC
 		onSubmit: onSubmit,
 		onCancel: onCancel,
 
-		text:     text,
-		xPos:     xPos,
-		yPos:     yPos,
-		width:    width,
-		height:   height,
+		text:       text,
+		submitText: submitText,
+
+		xPos:   xPos,
+		yPos:   yPos,
+		width:  width,
+		height: height,
+
 		viewType: viewType,
 	}
 	d.Panel.SetPosition(xPos, yPos)
@@ -45,14 +52,14 @@ func NewDialog(text string, xPos, yPos, width, height float32, viewType int, onC
 }
 
 func (d *Dialog) Open() {
-	d.inputField = NewInputField(d.width, d.height, d.text)
-	d.inputField.SetWidth(d.width)
-	d.inputField.SetHeight(d.height)
+	d.inputField = NewInputField(d.Width(), d.Height(), d.text)
+	d.inputField.SetWidth(d.Width())
+	d.inputField.SetHeight(d.Height())
 	d.inputField.SetUserData(d.viewType)
 	d.inputField.Button.Subscribe(gui.OnClick, func(name string, ev interface{}) { d.onClick() })
 	d.Add(d.inputField)
 
-	d.submitButton = gui.NewButton("Save")
+	d.submitButton = gui.NewButton(d.submitText)
 	d.submitButton.SetPosition(5+d.inputField.Position().X+d.inputField.Width(), 0)
 	d.submitButton.SetUserData(d.viewType)
 	d.submitButton.Subscribe(gui.OnClick, func(name string, ev interface{}) { d.onSubmit() })

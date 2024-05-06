@@ -40,11 +40,14 @@ var (
 type Gui struct {
 	*context.Context
 
+	// Reusable popup
+	popup *component.Popup
+
 	// Main menu components
 	startButton    *gui.Button
 	settingsButton *gui.Button
 	saveDialog     *component.Dialog
-	openButton     *gui.Button
+	browseButton   *gui.Button
 	savesList      *component.FileList
 	cancelButton   *gui.Button
 	exitButton     *gui.Button
