@@ -50,6 +50,8 @@ func (i *InputManager) Update(player *player.Player) {
 	player.Move(i.dx*mf, i.dz*mf)
 	player.Look(i.lx, i.ly)
 
+	i.State.SetFastMovement(i.shift)
+
 	i.lx = 0
 	i.ly = 0
 }

@@ -150,7 +150,7 @@ func (p *Plant) Update() {
 func (p Plant) InfoString() string {
 	infoString := "Plant:\n"
 	infoString += fmt.Sprintf("age=%d\n", p.Age)
-	infoString += fmt.Sprintf("colour=#%06x\n", p.Colour)
+	infoString += fmt.Sprintf("colour=#%06x", p.Colour)
 
 	return infoString
 }

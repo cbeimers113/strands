@@ -12,17 +12,20 @@ import (
 )
 
 const (
-	TexCursor = "cursor"
-	TexDirt   = "dirt"
-	TexGrass  = "grass"
-	TexSand   = "sand"
-	TexSeed   = "seed"
-	TexStalk  = "stalk"
-	TexStone  = "stone"
-	TexWater  = "water"
+	TexMenuLogo = "menuLogo"
+	TexCursor   = "cursor"
+	TexDirt     = "dirt"
+	TexGrass    = "grass"
+	TexSand     = "sand"
+	TexSeed     = "seed"
+	TexStalk    = "stalk"
+	TexStone    = "stone"
+	TexWater    = "water"
 )
 
 var (
+	//go:embed textures/menuLogo.png
+	bytesMenuLogo []byte
 	//go:embed textures/cursor.png
 	bytesCursor []byte
 	//go:embed textures/dirt.png
@@ -50,6 +53,7 @@ func init() {
 		id   string
 		data []byte
 	}{
+		{id: TexMenuLogo, data: bytesMenuLogo},
 		{id: TexCursor, data: bytesCursor},
 		{id: TexDirt, data: bytesDirt},
 		{id: TexGrass, data: bytesGrass},

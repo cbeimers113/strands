@@ -1,11 +1,13 @@
 package gui
 
 import (
-	"cbeimers113/strands/internal/graphics"
 	"fmt"
 
 	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/texture"
+
+	"cbeimers113/strands/internal/graphics"
+	"cbeimers113/strands/internal/gui/color"
 )
 
 // Register the simulation view
@@ -15,6 +17,8 @@ func (g *Gui) registerSimulationView() {
 			if closeOthers {
 				g.closeViews()
 			}
+
+			g.gameStarted = true
 
 			var (
 				width, height int = g.App.GetSize()
@@ -27,21 +31,27 @@ func (g *Gui) registerSimulationView() {
 			if err != nil {
 				fmt.Println(err)
 			} else {
-				simCursor := gui.NewImageFromTex(cursorTex)
-				w, h = simCursor.Width(), simCursor.Height()
-				simCursor.SetPosition((float32(width)-w)/2, (float32(height)-h)/2)
-				simCursor.SetUserData(MainMenu)
-				g.Scene.Add(simCursor)
+				g.simCursor = gui.NewImageFromTex(cursorTex)
+				w, h = g.simCursor.Width(), g.simCursor.Height()
+				g.simCursor.SetPosition((float32(width)-w)/2, (float32(height)-h)/2)
+				g.simCursor.SetUserData(SimulationView)
+				g.Scene.Add(g.simCursor)
 			}
 
 			g.infoLabel = gui.NewLabel(g.infoText())
+			g.infoLabel.SetColor(color.Black)
+			g.infoLabel.SetBgColor4(color.Opaque)
 			g.infoLabel.SetPosition(5, 5)
 			g.infoLabel.SetUserData(SimulationView)
+			g.infoLabel.SetPaddings(5, 5, 5, 5)
 			g.Scene.Add(g.infoLabel)
 
 			g.pausedLabel = gui.NewLabel(g.pausedStatus())
+			g.pausedLabel.SetColor(color.Black)
+			g.pausedLabel.SetBgColor4(color.Opaque)
 			g.pausedLabel.SetPosition((float32(width)-g.pausedLabel.Width())/2, 5)
 			g.pausedLabel.SetUserData(SimulationView)
+			g.pausedLabel.SetPaddings(5, 5, 5, 5)
 			g.Scene.Add(g.pausedLabel)
 
 			g.State.SetInMenu(false)
@@ -57,7 +67,7 @@ func (g *Gui) registerSimulationView() {
 			width, _ := g.App.GetSize()
 			g.infoLabel.SetText(g.infoText())
 			g.pausedLabel.SetText(g.pausedStatus())
-			g.pausedLabel.SetPosition((float32(width)-g.pausedLabel.Width())/2, 0)
+			g.pausedLabel.SetPosition((float32(width)-g.pausedLabel.Width())/2, 5)
 		},
 	}
 }
@@ -72,6 +82,8 @@ func (g *Gui) infoText() string {
 	if g.Cfg.ShowHelp {
 		txt += "Controls:\n"
 		txt += "WASD to move\n"
+		txt += "Hold shift to move faster\n"
+		txt += "Caps lock to toggle fast movement\n"
 		txt += "ESC to open menu\n"
 		txt += "Space to toggle simulation\n"
 		txt += "Left click a tile to add 10 L of water\n"
@@ -86,11 +98,15 @@ func (g *Gui) infoText() string {
 
 	// Append player info
 	p := g.Cam.Position()
-	txt += fmt.Sprintf("\n(%d, %d, %d)\n", int32(p.X), int32(p.Y), int32(p.Z))
+	if g.State.FastMovement() {
+		txt += "\nFast Move"
+	}
+
+	txt += fmt.Sprintf("\n(%d, %d, %d)", int32(p.X), int32(p.Y), int32(p.Z))
 
 	// Append the WAILA (what am I looking at?) data
 	if g.State.LookingAt != nil {
-		txt += "\nLooking At:\n"
+		txt += "\n\nLooking At:\n"
 		txt += g.State.LookingAt.InfoString()
 	}
 

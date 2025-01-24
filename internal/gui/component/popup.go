@@ -25,6 +25,7 @@ type Popup struct {
 
 	viewType int
 	enabled  bool
+	ack      bool // Is this just an acknowledgement prompt? (only one button option)
 }
 
 func NewPopup(text, submitText string, xPos, yPos, width, height float32, viewType int, onSubmit func(), onCancel func()) *Popup {
@@ -43,6 +44,7 @@ func NewPopup(text, submitText string, xPos, yPos, width, height float32, viewTy
 		height: height,
 
 		viewType: viewType,
+		ack:      submitText == "",
 	}
 	p.Panel.SetPosition(xPos, yPos)
 	p.Panel.SetColor(&math32.Color{R: 0.25, G: 0.25, B: 0.25})
@@ -52,27 +54,33 @@ func NewPopup(text, submitText string, xPos, yPos, width, height float32, viewTy
 	return p
 }
 
-func (p *Popup) Open() {
+func (p *Popup) Open(width, height float32) {
 	p.promptLabel = gui.NewLabel(p.text)
 	p.promptLabel.SetUserData(p.viewType)
 	p.Add(p.promptLabel)
 
 	if p.Width() <= p.promptLabel.Width()+20 {
 		p.SetWidth(p.promptLabel.Width() + 20)
+		p.SetPosition((width-p.Width())/2, (height-p.Height())/2)
 	}
 	p.promptLabel.SetPosition((p.Width()-p.promptLabel.Width())/2-7.5, 5)
 
-	p.submitButton = gui.NewButton(p.submitText)
-	p.submitButton.SetPosition(p.Width()/2-p.submitButton.Width()-12.5, p.Height()-p.submitButton.Height()-15)
-	p.submitButton.SetUserData(p.viewType)
-	p.submitButton.Subscribe(gui.OnClick, func(name string, ev interface{}) { p.onSubmit() })
-	p.Add(p.submitButton)
-
-	p.cancelButton = gui.NewButton("Cancel")
-	p.cancelButton.SetPosition(p.Width()/2-7.5, p.Height()-p.cancelButton.Height()-15)
+	p.cancelButton = gui.NewButton("Okay")
+	p.cancelButton.SetPosition((p.Width()-p.cancelButton.Width())/2, p.Height()-p.cancelButton.Height()-15)
 	p.cancelButton.SetUserData(p.viewType)
 	p.cancelButton.Subscribe(gui.OnClick, func(name string, ev interface{}) { p.onCancel() })
 	p.Add(p.cancelButton)
+
+	if !p.ack {
+		p.submitButton = gui.NewButton(p.submitText)
+		p.submitButton.SetPosition(p.Width()/2-p.submitButton.Width()-12.5, p.Height()-p.submitButton.Height()-15)
+		p.submitButton.SetUserData(p.viewType)
+		p.submitButton.Subscribe(gui.OnClick, func(name string, ev interface{}) { p.onSubmit() })
+		p.Add(p.submitButton)
+
+		p.cancelButton.Label.SetText("Cancel")
+		p.cancelButton.SetPosition(p.Width()/2-7.5, p.Height()-p.cancelButton.Height()-15)
+	}
 
 	p.enabled = true
 }

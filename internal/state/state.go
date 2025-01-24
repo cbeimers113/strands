@@ -13,9 +13,11 @@ import (
 
 // Represent the game state
 type State struct {
-	inMenu bool // Whether the player is in a menu and everything in the simulation is frozen, including the player
-	paused bool // Whether the simulation physics are paused, but the player can still interact with the simulation
-	tps    int  // Record the number of world ticks per second
+	inMenu     bool // Whether the player is in a menu and everything in the simulation is frozen, including the player
+	inMainMenu bool // Whether the main menu is open
+	paused     bool // Whether the simulation physics are paused, but the player can still interact with the simulation
+	fastMove   bool // Whether the player is using fast movement
+	tps        int  // Record the number of world ticks per second
 
 	Seed       int64                              // The world's random seed value
 	Rand       *rand.Rand                         // The simulation's psuedo random number generator
@@ -40,9 +42,20 @@ func (s *State) SetInMenu(inMenu bool) {
 	s.inMenu = inMenu
 }
 
+// Set the inMainMenu state
+func (s *State) SetInMainMenu(inMainMenu bool) {
+	s.inMainMenu = inMainMenu
+	s.SetInMenu(inMainMenu)
+}
+
 // Set the paused state
 func (s *State) SetPaused(paused bool) {
 	s.paused = paused
+}
+
+// Set the fast movement flag
+func (s *State) SetFastMovement(fast bool) {
+	s.fastMove = fast
 }
 
 // Set the number of ticks per second
@@ -55,9 +68,19 @@ func (s State) InMenu() bool {
 	return s.inMenu
 }
 
+// Get the inMainMenu state
+func (s State) InMainMenu() bool {
+	return s.inMainMenu
+}
+
 // Get the paused state
 func (s State) Paused() bool {
 	return s.paused
+}
+
+// Get the fast movement flag
+func (s State) FastMovement() bool {
+	return s.fastMove
 }
 
 // Get the number of ticks per second

@@ -1,6 +1,7 @@
 package file
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -42,4 +43,10 @@ func Touch(filename, extension string) string {
 func Name(filepath string) string {
 	tokens := strings.Split(filepath, "/")
 	return tokens[len(tokens)-1]
+}
+
+// Exists returns whether a given file exists
+func Exists(filepath string) bool {
+	_, err := os.Stat(filepath)
+	return !errors.Is(err, os.ErrNotExist)
 }

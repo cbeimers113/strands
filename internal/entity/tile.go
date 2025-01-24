@@ -277,14 +277,17 @@ func (t *Tile) AddWater(delta float32) float32 {
 	return math32.Max(backflow, 0)
 }
 
-// Add a plant to a tile if plantable
-func (t *Tile) AddPlant(entities map[int]Entity, scene *core.Node) {
+// Add a plant to a tile if plantable, returns whether it was planted
+func (t *Tile) AddPlant(entities map[int]Entity, scene *core.Node) bool {
 	if t.Type.Fertility > 0 {
 		plant := NewRandomPlant(entities, t.Rand)
 		plant.Refresh(entities, scene)
 		t.Add(plant)
 		t.Plants = append(t.Plants, plant)
+		return true
 	}
+
+	return false
 }
 
 // Infostring returns a string representation of the tile
@@ -294,7 +297,7 @@ func (t Tile) InfoString() string {
 	infoString += fmt.Sprintf("temperature=%s\n", t.Temperature)
 	infoString += fmt.Sprintf("water level=%s\n", t.WaterLevel)
 	infoString += fmt.Sprintf("elevation=%s\n", t.getElevation())
-	infoString += fmt.Sprintf("planted=%t\n", len(t.Plants) > 0)
+	infoString += fmt.Sprintf("planted=%t", len(t.Plants) > 0)
 
 	return infoString
 }

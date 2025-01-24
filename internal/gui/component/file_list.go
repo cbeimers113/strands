@@ -19,10 +19,6 @@ type fileItem struct {
 func newFileItem(text string, width float32, viewType int) *fileItem {
 	fi := &fileItem{}
 
-	fi.label = gui.NewLabel(text)
-	fi.label.SetUserData(viewType)
-	fi.label.SetPosition(5, 0)
-
 	fi.openButton = gui.NewButton("")
 	fi.openButton.SetUserData(viewType)
 	fi.openButton.SetIcon(icon.FolderOpen)
@@ -33,6 +29,10 @@ func newFileItem(text string, width float32, viewType int) *fileItem {
 	fi.deleteButton.SetIcon(icon.Delete)
 	fi.deleteButton.SetPosition(width-fi.deleteButton.Width()-5, 0)
 
+	fi.label = gui.NewLabel(text)
+	fi.label.SetUserData(viewType)
+	fi.label.SetPosition(5, (fi.openButton.Height()-fi.label.Height())/2)
+
 	fi.Panel = gui.NewPanel(width, fi.openButton.Height())
 	fi.Panel.SetUserData(viewType)
 	fi.Panel.Add(fi.label)
@@ -41,7 +41,7 @@ func newFileItem(text string, width float32, viewType int) *fileItem {
 	fi.Panel.SetVisible(true)
 
 	// Panel hover color
-	fi.Panel.Subscribe(gui.OnCursorEnter, func(evname string, ev interface{}) {
+	fi.Panel.Subscribe(gui.OnCursor, func(evname string, ev interface{}) {
 		if !fi.Enabled() {
 			return
 		}

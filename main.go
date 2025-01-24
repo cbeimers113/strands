@@ -17,6 +17,9 @@ func main() {
 		fmt.Printf("Warning: non-semantic version number provided: %s\n", Version)
 	}
 
+	// TODO: remove this tag if doing a release/automated build
+	Version += " snapshot"
+
 	cfg, err := config.Load()
 	if err != nil {
 		panic(err)

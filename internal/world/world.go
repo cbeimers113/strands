@@ -276,6 +276,11 @@ func (w World) GetTiles() []*entity.Tile {
 	return t
 }
 
+// GetTile returns the tile at x, z
+func (w World) GetTile(x, z int) *entity.Tile {
+	return w.tilemap[x][z]
+}
+
 // SetTiles loads a linear slice of Tiles into the map
 func (w *World) SetTiles(tiles []*entity.Tile) {
 	width := w.Cfg.Simulation.Width

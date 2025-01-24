@@ -11,7 +11,7 @@ import (
 type Player struct {
 	*context.Context
 
-	// Movement offset inpus
+	// Movement offset inputs
 	lookX float32
 	lookY float32
 	moveX float32

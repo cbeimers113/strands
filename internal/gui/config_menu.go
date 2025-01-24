@@ -1,11 +1,12 @@
 package gui
 
 import (
-	"cbeimers113/strands/internal/gui/color"
 	"fmt"
 
 	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/math32"
+
+	"cbeimers113/strands/internal/gui/color"
 )
 
 // Register the config menu
@@ -120,7 +121,11 @@ func (g *Gui) registerConfigMenu() {
 			g.saveButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
 				if err := g.Cfg.Save(); err != nil {
 					fmt.Println(err)
+					g.Notifications.Push(err.Error())
+				} else {
+					g.Notifications.Push("Settings saved")
 				}
+
 				Open(MainMenu, true)
 			})
 			g.saveButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
@@ -148,7 +153,7 @@ func (g *Gui) registerConfigMenu() {
 				if !g.exitButton.Enabled() {
 					return
 				}
-				
+
 				g.exitButton.SetColor(color.Red)
 				g.exitButton.Label.SetColor(&math32.Color{})
 			})

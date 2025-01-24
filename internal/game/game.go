@@ -10,6 +10,7 @@ import (
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/gls"
+	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
 	"github.com/g3n/engine/window"
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -32,6 +33,14 @@ type Game struct {
 	iman   *input_manager.InputManager
 	world  *world.World
 	player *player.Player
+
+	// Camera spinning in menu
+	camSpin   bool
+	camAngle  float32
+	camDist   float32
+	camTarget math32.Vector3
+	camPos    math32.Vector3
+	camRot    math32.Vector3
 }
 
 func New(cfg *config.Config, version string) (*Game, error) {
@@ -44,6 +53,7 @@ func New(cfg *config.Config, version string) (*Game, error) {
 		State:    state.New(cfg, time.Now().UnixNano()),
 		Keyboard: keyboard.New(),
 	}
+	ctx.Notifications = context.NewNotificationManager(func() *core.Node { return ctx.Scene }, ctx.App)
 
 	g := &Game{
 		Context: ctx,
@@ -60,6 +70,7 @@ func New(cfg *config.Config, version string) (*Game, error) {
 	}
 	g.Win.SetSize(g.Cfg.Window.Width, g.Cfg.Window.Height)
 	g.Win.SetTitle(g.Cfg.Name)
+	g.gui.SetIcon()
 
 	// Configure app
 	g.App.Subscribe(window.OnWindowSize, g.onResize)
@@ -80,31 +91,64 @@ func New(cfg *config.Config, version string) (*Game, error) {
 	return g, nil
 }
 
+// Create a new sim
+func (g *Game) CreateNewSim() {
+	g.Scene = core.NewNode()
+	g.State = state.New(g.Cfg, time.Now().UnixNano())
+	g.gui = gui.New(g.Context)
+	g.world = world.New(g.Context)
+	g.player = player.New(g.Context)
+	g.RefreshSim = false
+	gui.Open(gui.SimulationView, true)
+	g.Notifications.Push("Created new simulation")
+}
+
 // Load a save file
 func (g *Game) LoadGame(filename string) {
 	g.Win.SetTitle(fmt.Sprintf("Loading Simulation [%s]", filename))
-	st, cells, tiles, err := state.LoadSave(g.Cfg, filename)
+	st, cells, tiles, camData, err := state.LoadSave(g.Cfg, filename)
 	if err != nil {
-		fmt.Printf("Couldn't load save file [%s]: %s\n", filename, err)
-		return
+		g.gui.Popup(fmt.Sprintf("Couldn't load save file [%s]:\n%s\n", filename, err), "", nil)
+	} else {
+		st.Entities = g.State.Entities
+		g.State = st
+		g.world.SetAtmosphere(cells)
+		g.world.SetTiles(tiles)
+		g.Cam.SetPosition(camData.PosX, camData.PosY, camData.PosZ)
+		g.Cam.SetRotation(camData.RotX, camData.RotY, 0)
+		g.CurrentSave = filename
 	}
 
-	st.Entities = g.State.Entities
-	g.State = st
-	g.world.SetAtmosphere(cells)
-	g.world.SetTiles(tiles)
-	g.Win.SetTitle(fmt.Sprintf("%s [%s]", g.Cfg.Name, file.Name(filename)))
+	g.Notifications.Push(fmt.Sprintf("Loaded simulation from %s", filename))
 	g.LoadFile = ""
+	g.Win.SetTitle(g.Cfg.Name)
+	if g.CurrentSave != "" {
+		g.Win.SetTitle(fmt.Sprintf("%s [%s]", g.Cfg.Name, file.Name(g.CurrentSave)))
+	}
 }
 
 // Save a save file
 func (g Game) SaveGame(filename string) {
 	g.Win.SetTitle(fmt.Sprintf("Saving Simulation [%s]", filename))
-	if err := state.StoreSave(filename, g.State, g.world.GetAtmosphere(), g.world.GetTiles()); err != nil {
-		fmt.Printf("Couldn't create save file [%s]: %s", filename, err)
+	if err := state.StoreSave(
+		filename,
+		g.State,
+		g.world.GetAtmosphere(),
+		g.world.GetTiles(),
+		g.Cam.Position(),
+		g.Cam.Rotation(),
+	); err != nil {
+		msg := fmt.Sprintf("Couldn't create save file [%s]: %s", filename, err)
+		fmt.Println(msg)
+		g.Notifications.Push(msg)
 	}
-	g.Win.SetTitle(g.Cfg.Name)
+
+	g.Notifications.Push(fmt.Sprintf("Saved simulation to %s", filename))
 	g.SaveFile = ""
+	g.Win.SetTitle(g.Cfg.Name)
+	if g.CurrentSave != "" {
+		g.Win.SetTitle(fmt.Sprintf("%s [%s]", g.Cfg.Name, file.Name(g.CurrentSave)))
+	}
 }
 
 // Start the game
@@ -124,21 +168,57 @@ func (g *Game) Start() {
 	g.App.Run(func(renderer *renderer.Renderer, deltaTime time.Duration) {
 		g.App.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(g.Scene, g.Cam)
+		g.Notifications.Render()
 
 		if g.State.InMenu() {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorNormal))
 			deltaTimeController = 0
 			deltaTimeWorld = 0
 			g.gui.Refresh()
+
+			// Spin camera in main menu
+			if g.State.InMainMenu() {
+				if !g.camSpin {
+					p := g.Cam.Position()
+					g.camSpin = true
+					g.camTarget = g.world.GetTile(g.Cfg.Simulation.Width/2, g.Cfg.Simulation.Depth/2).Position()
+					g.camDist = math32.Sqrt(
+						(p.X-g.camTarget.X)*(p.X-g.camTarget.X) +
+							(p.Y-g.camTarget.Y)*(p.Y-g.camTarget.Y) +
+							(p.Z-g.camTarget.Z)*(p.Z-g.camTarget.Z),
+					)
+					g.camPos = g.Cam.Position()
+					g.camRot = g.Cam.Rotation()
+				} else {
+					g.camAngle += 0.001
+					if g.camAngle >= math32.Pi*2 {
+						g.camAngle -= math32.Pi * 2
+					}
+
+					camX := g.camDist*math32.Cos(g.camAngle) + g.camTarget.X
+					camZ := g.camDist*math32.Sin(g.camAngle) + g.camTarget.Z
+					g.Cam.SetPosition(camX, g.camPos.Y, camZ)
+					g.Cam.LookAt(&g.camTarget, math32.NewVector3(0, 1, 0))
+				}
+			}
 		} else {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorDisabled))
-			deltaTimeWorld += float32(deltaTime.Milliseconds())
-			deltaTimeController += float32(deltaTime.Milliseconds())
+			dt := float32(deltaTime.Milliseconds())
+			deltaTimeWorld += dt
+			deltaTimeController += dt
 
-			// Update the controller at a fixed interval
+			// Disable cam spin
+			if g.camSpin {
+				g.camSpin = false
+				g.Cam.SetPosition(g.camPos.X, g.camPos.Y, g.camPos.Z)
+				g.Cam.SetRotation(g.camRot.X, g.camRot.Y, g.camRot.Z)
+			}
+
+			// Update the controller and notifications at a fixed interval
 			if deltaTimeController >= 1000/60 {
 				g.iman.Update(g.player)
 				g.player.Update(deltaTimeController)
+				g.Notifications.Update(deltaTimeController)
 				g.gui.Refresh()
 				deltaTimeController = 0
 			}
@@ -162,11 +242,12 @@ func (g *Game) Start() {
 				lastTick = time.Now()
 			}
 
-			// Poll for file load/save actions
-			if g.SaveFile != "" {
+			// Poll for file load/save and new sim creation actions
+			if g.RefreshSim {
+				g.CreateNewSim()
+			} else if g.SaveFile != "" {
 				g.SaveGame(g.SaveFile)
-			}
-			if g.LoadFile != "" {
+			} else if g.LoadFile != "" {
 				g.LoadGame(g.LoadFile)
 			}
 		}

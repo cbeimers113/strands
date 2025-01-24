@@ -1,9 +1,12 @@
 package gui
 
 import (
-	"cbeimers113/strands/internal/entity"
+	"fmt"
 
 	"github.com/g3n/engine/gui"
+
+	"cbeimers113/strands/internal/entity"
+	"cbeimers113/strands/internal/gui/color"
 )
 
 // Register the tile context menu
@@ -25,9 +28,12 @@ func (g *Gui) registerTileContextMenu() {
 			)
 
 			g.tileInfoLabel = gui.NewLabel(g.State.LookingAt.InfoString())
-			w, h = g.tileInfoLabel.Width()*0.75, g.tileInfoLabel.Height()
+			w, h = g.tileInfoLabel.Width(), g.tileInfoLabel.Height()
 			g.tileInfoLabel.SetPosition((float32(width)-w)/2, (float32(height)-h)/2)
 			g.tileInfoLabel.SetUserData(TileContextMenu)
+			g.tileInfoLabel.SetColor(color.Black)
+			g.tileInfoLabel.SetBgColor4(color.Opaque)
+			g.tileInfoLabel.SetPaddings(5, 5, 5, 5)
 			g.Scene.Add(g.tileInfoLabel)
 			nextY = g.tileInfoLabel.Position().Y + g.tileInfoLabel.Height() + 5
 
@@ -37,8 +43,14 @@ func (g *Gui) registerTileContextMenu() {
 			g.plantSeedButton.SetUserData(TileContextMenu)
 			g.plantSeedButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
 				if tile, ok := g.State.LookingAt.(*entity.Tile); ok {
-					tile.AddPlant(g.State.Entities, g.Scene)
+					planted := tile.AddPlant(g.State.Entities, g.Scene)
 					g.tileInfoLabel.SetText(g.State.LookingAt.InfoString())
+
+					if planted {
+						g.Notifications.Push(fmt.Sprintf("Seed planted at (%d, %d)", tile.MapX, tile.MapZ))
+					} else {
+						g.Notifications.Push(fmt.Sprintf("Couldn't plant seed on %s tile at (%d, %d)", tile.Type.Name, tile.MapX, tile.MapZ))
+					}
 				}
 			})
 			g.Scene.Add(g.plantSeedButton)
