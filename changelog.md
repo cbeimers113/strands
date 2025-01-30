@@ -1,0 +1,26 @@
+### v0.2.0 - Application & Engine Features
+- Spin the camera slowly when in menu
+- GUI style improvements
+- Notifications
+  - Notifications fade out
+  - Notify when save is saved or loaded
+  - Notify when new sim is created
+  - Notify when save is deleted
+  - Notify when config saved
+  - Notify when a seed is planted
+- Add logo to menu
+- Button to create a fresh sim
+- Save player camera position and rotation in saves
+- Icon
+- Embed textures for static builds
+- Config file is in %APPDATA%/Roaming
+- Version number tracked in .version
+- Optionally save the state of the simulation to the disk between games
+- Keyboard controller for typing input
+- Save and load game files
+- Delete a save
+- Popup system
+  - Prevent overwriting save (exclude autosave)
+  - Notify when save can't be loaded
+  - Ask if user is sure before opening/deleting a save or exiting game
+- Use a nerdfont

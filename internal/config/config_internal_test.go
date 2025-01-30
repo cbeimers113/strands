@@ -16,8 +16,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Happy path",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -28,9 +27,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -55,8 +54,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - invalid name",
 			cfg: Config{
-				Name:    "",
-				Version: "0.0.0",
+				Name: "",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -67,9 +65,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -93,50 +91,9 @@ func Test_validate(t *testing.T) {
 			err: fmt.Errorf("%sapplication name empty", errInvalidCfg),
 		},
 		{
-			name: "Sad path - invalid version",
-			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0",
-
-				Window: struct {
-					Width  int `json:"width"`
-					Height int `json:"height"`
-				}{
-					Width:  1200,
-					Height: 800,
-				},
-
-				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
-					Speed     int `json:"ticks_per_second"`
-					DayLength int `json:"day_length_mins"`
-				}{
-					Width:     64,
-					Height:    64,
-					Depth:     64,
-					Speed:     60,
-					DayLength: 5,
-				},
-
-				Controls: struct {
-					MouseSensitivityX float32 `json:"mouse_sensitivity_x"`
-					MouseSensitivityY float32 `json:"mouse_sensitivity_y"`
-					MoveSpeed         float32 `json:"move_speed"`
-				}{
-					MouseSensitivityX: 0.025,
-					MouseSensitivityY: 0.015,
-					MoveSpeed:         0.5,
-				},
-			},
-			err: fmt.Errorf("%ssemantic version not provided", errInvalidCfg),
-		},
-		{
 			name: "Sad path - invalid window width",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -147,9 +104,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -175,8 +132,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - invalid window height",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -187,9 +143,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -215,8 +171,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - invalid simulation width",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -227,9 +182,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -255,8 +210,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - invalid simulation height",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -267,9 +221,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -295,8 +249,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - invalid simulation depth",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -307,9 +260,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -335,8 +288,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - invalid simulation speed",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -347,9 +299,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -374,8 +326,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - invalid day length",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -386,9 +337,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -414,8 +365,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - mouse X sensitivity too low",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -426,9 +376,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -454,8 +404,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - mouse Y sensitivity too high",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -466,9 +415,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -494,8 +443,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - move speed too low",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -506,9 +454,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{
@@ -534,8 +482,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Sad path - move speed too high",
 			cfg: Config{
-				Name:    "Strands Test",
-				Version: "0.0.0",
+				Name: "Strands Test",
 
 				Window: struct {
 					Width  int `json:"width"`
@@ -546,9 +493,9 @@ func Test_validate(t *testing.T) {
 				},
 
 				Simulation: struct {
-					Width     int `json:"width"`
-					Height    int `json:"height"`
-					Depth     int `json:"depth"`
+					Width     int `json:"-"`
+					Height    int `json:"-"`
+					Depth     int `json:"-"`
 					Speed     int `json:"ticks_per_second"`
 					DayLength int `json:"day_length_mins"`
 				}{

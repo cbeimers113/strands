@@ -3,7 +3,9 @@ package entity
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 
+	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/material"
@@ -12,40 +14,33 @@ import (
 	"cbeimers113/strands/internal/graphics"
 )
 
-// Which data a Plant will store
+// The Plant entity
 type Plant struct {
-	*graphic.Mesh
+	*graphic.Mesh `json:"-"`
+	*rand.Rand    `json:"-"`
 
 	// Whole Plant
-	Age    int
-	Colour int
-	Height float32
-	Radius float32
-	X      float32
-	Z      float32
-	RotX   float32
-	RotY   float32
+	Age    int     `json:"age"`
+	Colour int     `json:"colour"`
+	Height float32 `json:"height"`
+	Radius float32 `json:"radius"`
+	X      float32 `json:"x"`
+	Z      float32 `json:"y"`
+	RotX   float32 `json:"rot_x"`
+	RotY   float32 `json:"rot_y"`
 
 	// Leaves
-	NumLeaves        int     // (0, ..), How many leaves the plant has. (More and bigger leaves consume more resources)
-	LeafSpawnHeight  float32 // [0.1, 1], How far up the stem the leaves will appear (from top), ie: value of 0.25 means leaves will spawn on the top quarter of the stem
-	AvgLeafSize      float32 // (0, ..), Average size of leaf, ie: value of 1 equals the default size
-	LeafSizeVariance float32 // [0, 1], How much the leaf sizes can vary, ie: a value of 0.5 means the leaves can be up to 50% bigger or smaller than AvgSize
+	NumLeaves        int     `json:"num_leaves"`         // (0, ..), How many leaves the plant has. (More and bigger leaves consume more resources)
+	LeafSpawnHeight  float32 `json:"leaf_spawn_height"`  // [0.1, 1], How far up the stem the leaves will appear (from top), ie: value of 0.25 means leaves will spawn on the top quarter of the stem
+	AvgLeafSize      float32 `json:"avg_leaf_size"`      // (0, ..), Average size of leaf, ie: value of 1 equals the default size
+	LeafSizeVariance float32 `json:"leaf_size_variance"` // [0, 1], How much the leaf sizes can vary, ie: a value of 0.5 means the leaves can be up to 50% bigger or smaller than AvgSize
+	leaves           []*graphic.Mesh
 }
 
 // Create a new plant
-func NewPlant(entities map[int]Entity, colour, numLeaves int, height, radius, x, z, rotX, rotY float32) *Plant {
-	geom := geometry.NewCylinder(float64(radius), float64(height), 8, 8, true, true)
-	mat := material.NewStandard(math32.NewColorHex(uint(colour) / 10))
-	mesh := graphic.NewMesh(geom, mat)
-	mesh.SetScale(0.1, 0.1, 0.1)
-
-	if tex, ok := graphics.Texture("stalk"); ok {
-		mat.AddTexture(tex)
-	}
-
+func NewPlant(entities map[int]Entity, colour, numLeaves int, height, radius, x, z, rotX, rotY float32, rng *rand.Rand) *Plant {
 	plant := &Plant{
-		Mesh: mesh,
+		Rand: rng,
 
 		Colour:    colour,
 		Height:    height,
@@ -62,34 +57,21 @@ func NewPlant(entities map[int]Entity, colour, numLeaves int, height, radius, x,
 		LeafSizeVariance: 0.1,
 	}
 
-	plant.SetPosition(x, mesh.Scale().Y, z)
-	plant.SetRotation(rotX, rotY, 0)
-
-	for i := 0; i < numLeaves; i++ {
-		leaf := NewLeaf()
-		leaf.SetScale(0.1, 0.1, 0.1)
-		leaf.SetRotation(rand.Float32()*math32.Pi/12, rand.Float32()*2*math32.Pi, rand.Float32()*math32.Pi/12)
-		plant.Add(leaf)
-	}
-
-	// Add this plant to the entities list
-	AddEntity(plant, entities)
-
 	return plant
 }
 
 // Create a new random plant
-func NewRandomPlant(entities map[int]Entity) *Plant {
+func NewRandomPlant(entities map[int]Entity, rng *rand.Rand) *Plant {
 	// Random shade of green
-	colour := (int(0xdd+(2*rand.Float32()-1)*0x0f) << 8)
-	numLeaves := rand.Intn(5) + 1
+	colour := (int(0xdd+(2*rng.Float32()-1)*0x0f) << 8)
+	numLeaves := rng.Intn(5) + 1
 	height := float32(1)
 	radius := float32(0.125)
-	x := rand.Float32()/4 - 1.0/8
-	z := rand.Float32()/4 - 1.0/8
-	rotX := math32.Pi * rand.Float32() / 4
-	rotY := 2 * math32.Pi * rand.Float32()
-	plant := NewPlant(entities, colour, numLeaves, height, radius, x, z, rotX, rotY)
+	x := rng.Float32()/4 - 1.0/8
+	z := rng.Float32()/4 - 1.0/8
+	rotX := math32.Pi * rng.Float32() / 4
+	rotY := 2 * math32.Pi * rng.Float32()
+	plant := NewPlant(entities, colour, numLeaves, height, radius, x, z, rotX, rotY, rng)
 
 	return plant
 }
@@ -100,35 +82,75 @@ func NewLeaf() (mesh *graphic.Mesh) {
 	mat := material.NewStandard(math32.NewColorHex(0x101010))
 	mesh = graphic.NewMesh(geom, mat)
 
-	if tex, ok := graphics.Texture("grass"); ok {
+	if tex, err := graphics.Texture(graphics.TexGrass); err == nil {
 		mat.AddTexture(tex)
+	} else {
+		fmt.Println(err)
 	}
 
 	return
 }
 
-// Grow the plant until maturity is reached
-func (p *Plant) grow() {
-	p.Age++
+// Refresh reloads the in-game configuration of the plant
+func (p *Plant) Refresh(entities map[int]Entity, scene *core.Node) {
+	geom := geometry.NewCylinder(float64(p.Radius), float64(p.Height), 8, 8, true, true)
+	mat := material.NewStandard(math32.NewColorHex(uint(p.Colour) / 10))
+	mesh := graphic.NewMesh(geom, mat)
+	mesh.SetScale(0.1, 0.1, 0.1)
 
-	if p.Age < 10000 { // TODO: Standardize "maturity" for plants
-		scale := p.Scale()
-		scale.Y *= 1.001
-		p.SetScale(scale.X, scale.Y, scale.Z)
-		p.SetPosition(p.X, 0.5+p.Scale().Y/2, p.Z)
+	if tex, err := graphics.Texture(graphics.TexStalk); err == nil {
+		mat.AddTexture(tex)
+	} else {
+		fmt.Println(err)
+	}
+
+	if p.Mesh == nil {
+		p.Mesh = mesh
+		AddEntity(p, entities, scene)
+	} else {
+
+		// Make sure the entities map is pointing to this plant at the specified index
+		if i, err := strconv.Atoi(p.Name()); err == nil {
+			entities[i] = p
+		}
+	}
+
+	p.SetPosition(p.X, mesh.Scale().Y, p.Z)
+	p.SetRotation(p.RotX, p.RotY, 0)
+
+	// Make sure each leaf exists
+	if p.leaves == nil || len(p.leaves) != p.NumLeaves {
+		p.leaves = make([]*graphic.Mesh, p.NumLeaves)
+	}
+
+	for i := 0; i < p.NumLeaves; i++ {
+		if p.leaves[i] == nil {
+			leaf := NewLeaf()
+			leaf.SetName(p.Name())
+			p.Add(leaf)
+			p.leaves[i] = leaf
+		}
+
+		// TODO: store leaf positions and rotation in genetics and make reloadable
+		p.leaves[i].SetScale(0.1, 0.1, 0.1)
+		p.leaves[i].SetRotation(p.Rand.Float32()*math32.Pi/12, p.Rand.Float32()*2*math32.Pi, p.Rand.Float32()*math32.Pi/12)
 	}
 }
 
 // Perform per-frame updates to a plant
 func (p *Plant) Update() {
-	p.grow()
+	p.Age++
+	scale := p.Scale()
+	scale.Y = 0.1 + (0.001 * math32.Min(float32(p.Age), 10000))
+	p.SetScale(scale.X, scale.Y, scale.Z)
+	p.SetPosition(p.X, 0.5+p.Scale().Y/2, p.Z)
 }
 
 // Infostring returns a string representation of the tile
 func (p Plant) InfoString() string {
 	infoString := "Plant:\n"
 	infoString += fmt.Sprintf("age=%d\n", p.Age)
-	infoString += fmt.Sprintf("colour=#%06x\n", p.Colour)
+	infoString += fmt.Sprintf("colour=#%06x", p.Colour)
 
 	return infoString
 }

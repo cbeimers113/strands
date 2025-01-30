@@ -2,24 +2,27 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
-	"regexp"
+	"path/filepath"
+
+	"cbeimers113/strands/internal/io/file"
 )
 
 type Config struct {
 	Name     string `json:"name"`
-	Version  string `json:"version"`
 	ShowHelp bool   `json:"show_controls"`
+	ExitSave bool   `json:"save_on_exit"`
 	Window   struct {
 		Width  int `json:"width"`
 		Height int `json:"height"`
 	} `json:"window"`
 
 	Simulation struct {
-		Width     int `json:"width"`
-		Height    int `json:"height"`
-		Depth     int `json:"depth"`
+		Width     int `json:"-"`
+		Height    int `json:"-"`
+		Depth     int `json:"-"`
 		Speed     int `json:"ticks_per_second"`
 		DayLength int `json:"day_length_mins"`
 	} `json:"simulation"`
@@ -32,16 +35,41 @@ type Config struct {
 }
 
 const (
+	Width, Height, Depth = 64, 64, 64
+
 	errInvalidCfg = "invalid config: "
 )
 
-func Load(data []byte) (*Config, error) {
-	c := &Config{}
-	err := json.Unmarshal(data, c)
+var configFilePath string
 
-	if err != nil {
-		return nil, err
+func Load() (*Config, error) {
+	var (
+		c    *Config
+		data []byte
+		err  error
+	)
+
+	c = &Config{}
+	configFilePath = filepath.Join(file.StoragePath, "config.json")
+
+	// Make sure a config file exists, otherwise use the default
+	if _, err := os.Stat(configFilePath); errors.Is(err, os.ErrNotExist) {
+		fmt.Println("No config file found, loading default config")
+		c = defaultConfig
+		return c, nil
+	} else if data, err = os.ReadFile(configFilePath); err != nil {
+		panic(fmt.Errorf("error reading config file: %w", err))
 	}
+
+	err = json.Unmarshal(data, c)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling config: %w", err)
+	}
+
+	// Use a constant world size so that save files will be compatible
+	c.Simulation.Width = Width
+	c.Simulation.Height = Height
+	c.Simulation.Depth = Depth
 
 	if err = c.validate(); err != nil {
 		return nil, err
@@ -56,7 +84,7 @@ func (c Config) Save() error {
 		return err
 	}
 
-	f, err := os.Create("cfg.json")
+	f, err := os.Create(configFilePath)
 	if err != nil {
 		return err
 	}
@@ -68,9 +96,6 @@ func (c Config) Save() error {
 func (c Config) validate() error {
 	if c.Name == "" {
 		return fmt.Errorf("%sapplication name empty", errInvalidCfg)
-	}
-	if m := regexp.MustCompile(`^[0-9].[0-9].[0-9](-snapshot)?$`); !m.MatchString(c.Version) {
-		return fmt.Errorf("%ssemantic version not provided", errInvalidCfg)
 	}
 
 	if c.Window.Width <= 0 {

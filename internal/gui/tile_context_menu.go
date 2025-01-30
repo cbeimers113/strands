@@ -1,9 +1,12 @@
 package gui
 
 import (
-	"cbeimers113/strands/internal/entity"
+	"fmt"
 
 	"github.com/g3n/engine/gui"
+
+	"cbeimers113/strands/internal/entity"
+	"cbeimers113/strands/internal/gui/color"
 )
 
 // Register the tile context menu
@@ -18,30 +21,44 @@ func (g *Gui) registerTileContextMenu() {
 				return
 			}
 
-			var width, height int = g.App.GetSize()
-			var w, h float32
+			var (
+				width, height int = g.App.GetSize()
+				w, h          float32
+				nextY         float32
+			)
 
 			g.tileInfoLabel = gui.NewLabel(g.State.LookingAt.InfoString())
-			w, h = g.tileInfoLabel.Width()*0.75, g.tileInfoLabel.Height()
+			w, h = g.tileInfoLabel.Width(), g.tileInfoLabel.Height()
 			g.tileInfoLabel.SetPosition((float32(width)-w)/2, (float32(height)-h)/2)
 			g.tileInfoLabel.SetUserData(TileContextMenu)
+			g.tileInfoLabel.SetColor(color.Black)
+			g.tileInfoLabel.SetBgColor4(color.Opaque)
+			g.tileInfoLabel.SetPaddings(5, 5, 5, 5)
 			g.Scene.Add(g.tileInfoLabel)
+			nextY = g.tileInfoLabel.Position().Y + g.tileInfoLabel.Height() + 5
 
 			g.plantSeedButton = gui.NewButton("Plant Seed")
-			w, h = g.plantSeedButton.ContentWidth(), g.plantSeedButton.ContentHeight()
-			g.plantSeedButton.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*3)
+			w = g.plantSeedButton.Width()
+			g.plantSeedButton.SetPosition((float32(width)-w)/2, nextY)
 			g.plantSeedButton.SetUserData(TileContextMenu)
 			g.plantSeedButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
 				if tile, ok := g.State.LookingAt.(*entity.Tile); ok {
-					tile.AddPlant(g.State.Entities)
+					planted := tile.AddPlant(g.State.Entities, g.Scene)
 					g.tileInfoLabel.SetText(g.State.LookingAt.InfoString())
+
+					if planted {
+						g.Notifications.Push(fmt.Sprintf("Seed planted at (%d, %d)", tile.MapX, tile.MapZ))
+					} else {
+						g.Notifications.Push(fmt.Sprintf("Couldn't plant seed on %s tile at (%d, %d)", tile.Type.Name, tile.MapX, tile.MapZ))
+					}
 				}
 			})
 			g.Scene.Add(g.plantSeedButton)
+			nextY = g.plantSeedButton.Position().Y + g.plantSeedButton.Height() + 5
 
 			g.exitButton = gui.NewButton("Close")
-			w, h = g.exitButton.ContentWidth(), g.exitButton.ContentHeight()
-			g.exitButton.SetPosition((float32(width)-w)/2, (float32(height)-h)/2+h*4.5)
+			w = g.exitButton.Width()
+			g.exitButton.SetPosition((float32(width)-w)/2, nextY)
 			g.exitButton.SetUserData(TileContextMenu)
 			g.exitButton.Subscribe(gui.OnClick, func(name string, ev interface{}) {
 				Open(SimulationView, true)

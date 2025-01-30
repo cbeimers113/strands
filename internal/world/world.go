@@ -1,9 +1,7 @@
 package world
 
 import (
-	"fmt"
 	"math"
-	"math/rand"
 
 	"github.com/aquilax/go-perlin"
 	"github.com/g3n/engine/geometry"
@@ -16,6 +14,7 @@ import (
 	"cbeimers113/strands/internal/chem"
 	"cbeimers113/strands/internal/context"
 	"cbeimers113/strands/internal/entity"
+	"cbeimers113/strands/internal/state"
 )
 
 type World struct {
@@ -54,36 +53,7 @@ func New(ctx *context.Context) *World {
 func (w *World) createMap() {
 	heightmap, min, max := w.makeHeightmap()
 	w.makeTilemap(heightmap, min, max)
-	w.assignTileNeighbourhoods()
-}
-
-// Remove an entity from the world
-func (w *World) removeEntity(entity entity.Entity) {
-	index := w.entityIndex(entity)
-
-	// If the entity is in the Entities list, remove it and shift all the entities above it down the list
-	if index >= 0 {
-		for i := index + 1; i < len(w.State.Entities); i++ {
-			w.State.Entities[i-1] = w.State.Entities[i]
-			w.State.Entities[i-1].SetName(fmt.Sprintf("%d", i-1))
-		}
-
-		delete(w.State.Entities, len(w.State.Entities)-1)
-	}
-
-	entity.DisposeChildren(true)
-	entity.Dispose()
-}
-
-// Find an entity's index in the Entities list, return -1 if not found
-func (w *World) entityIndex(entity entity.Entity) int {
-	for i, ent := range w.State.Entities {
-		if ent == entity {
-			return i
-		}
-	}
-
-	return -1
+	w.AssignTileNeighbourhoods()
 }
 
 // Check if a given coordinate is within the tilemap boundaries
@@ -96,7 +66,7 @@ func (w *World) makeHeightmap() ([][]float32, float32, float32) {
 	var heightmap = make([][]float32, w.Cfg.Simulation.Width)
 	var min float32 = 1_000_000_000.0
 	var max float32 = -min
-	pnoise := perlin.NewPerlin(1, 0.1, 2, rand.Int63())
+	pnoise := perlin.NewPerlin(1, 0.1, 2, w.State.Rand.Int63())
 
 	for x := 0; x < w.Cfg.Simulation.Width; x++ {
 		heightmap[x] = make([]float32, w.Cfg.Simulation.Depth)
@@ -121,12 +91,14 @@ func (w *World) makeHeightmap() ([][]float32, float32, float32) {
 
 // Create a tilemap with a given heightmap specification
 func (w *World) makeTilemap(heightmap [][]float32, min, max float32) {
-	w.tilemap = make([][]*entity.Tile, w.Cfg.Simulation.Width)
+	width := w.Cfg.Simulation.Width
+	depth := w.Cfg.Simulation.Depth
 
-	for x := 0; x < w.Cfg.Simulation.Width; x++ {
-		w.tilemap[x] = make([]*entity.Tile, w.Cfg.Simulation.Depth)
+	w.tilemap = make([][]*entity.Tile, width)
+	for x := 0; x < width; x++ {
 
-		for z := 0; z < w.Cfg.Simulation.Depth; z++ {
+		w.tilemap[x] = make([]*entity.Tile, depth)
+		for z := 0; z < depth; z++ {
 			// Map the heightmap value to the TileTypes array to determine tile type
 			height := float32(len(entity.TileTypes)) * (heightmap[x][z] - min) / (max - min)
 			tType := entity.Stone
@@ -138,15 +110,15 @@ func (w *World) makeTilemap(heightmap [][]float32, min, max float32) {
 			height /= 3
 
 			// Each tile spawns at 22°C with 10 L of water on top of it
-			tile := entity.NewTile(w.State.Entities, x, z, height, 22.0, 10, tType)
-			w.Scene.Add(tile.GetINode())
+			tile := entity.NewTile(x, z, height, 22.0, 10, tType, w.State.Rand)
+			tile.Refresh(w.State.Entities, w.Scene)
 			w.tilemap[x][z] = tile
 		}
 	}
 }
 
 // Give each tile in a tilemap a list of pointers to its neighbours
-func (w *World) assignTileNeighbourhoods() {
+func (w *World) AssignTileNeighbourhoods() {
 	// Base hexmap neighbourhood offsets
 	nbOffsets := [][]int{
 		{1, 0},  // Right
@@ -207,18 +179,24 @@ func (w *World) updateSun() {
 	var o float32
 
 	// sunrise
-	min := float32(4) / 24
-	max := float32(6) / 24
-	if p >= min && p <= max {
-		o = (p - min) / (max - min)
+	srMin := float32(4) / 24
+	srMax := float32(6) / 24
+	if p >= srMin && p <= srMax {
+		o = (p - srMin) / (srMax - srMin)
 		change = true
 	}
 
 	// sunset
-	min = float32(18) / 24
-	max = float32(20) / 24
-	if p >= min && p <= max {
-		o = 1 - (p-min)/(max-min)
+	ssMin := float32(18) / 24
+	ssMax := float32(20) / 24
+	if p >= ssMin && p <= ssMax {
+		o = 1 - (p-ssMin)/(ssMax-ssMin)
+		change = true
+	}
+
+	// night
+	if p < srMin || p > ssMax {
+		o = 0
 		change = true
 	}
 
@@ -245,9 +223,9 @@ func (w *World) Update(deltaTime float32) {
 		w.updateSun()
 		w.atmosphere.Update(deltaTime)
 
-		// Concurrently update plants and creatures
+		// Update plants and creatures
 		for _, e := range w.State.Entities {
-			go e.Update()
+			e.Update()
 			entity.Highlight(e, w.State.LookingAt == e)
 		}
 	}
@@ -271,4 +249,69 @@ func (w *World) Update(deltaTime float32) {
 	}
 
 	w.State.Quantities[chem.Water] = waterLevel
+}
+
+// GetAtmosphere returns a linear slice of Cells representing the atmosphere
+func (w World) GetAtmosphere() []*state.Cell {
+	return w.atmosphere.GetCells()
+}
+
+// SetAtmosphere sets the cells in the atmosphere from a linear slice of Cells
+func (w *World) SetAtmosphere(cells []*state.Cell) {
+	w.atmosphere.SetCells(cells)
+}
+
+// GetTiles returns a linear slice Tiles representing the map
+func (w World) GetTiles() []*entity.Tile {
+	width := w.Cfg.Simulation.Width
+	depth := w.Cfg.Simulation.Depth
+	t := make([]*entity.Tile, width*depth)
+
+	for x := 0; x < width; x++ {
+		for z := 0; z < depth; z++ {
+			t[x+z*depth] = w.tilemap[x][z]
+		}
+	}
+
+	return t
+}
+
+// GetTile returns the tile at x, z
+func (w World) GetTile(x, z int) *entity.Tile {
+	return w.tilemap[x][z]
+}
+
+// SetTiles loads a linear slice of Tiles into the map
+func (w *World) SetTiles(tiles []*entity.Tile) {
+	width := w.Cfg.Simulation.Width
+	depth := w.Cfg.Simulation.Depth
+
+	for x := 0; x < width; x++ {
+		for z := 0; z < depth; z++ {
+			tile := tiles[x+z*depth]
+			tile.Rand = w.State.Rand
+			tile.Mesh = w.tilemap[x][z].Mesh
+			tile.Water = w.tilemap[x][z].Water
+			w.tilemap[x][z] = tile
+			tile.Refresh(w.State.Entities, w.Scene)
+		}
+	}
+
+	w.AssignTileNeighbourhoods()
+}
+
+func (w *World) Dispose() {
+	width := w.Cfg.Simulation.Width
+	depth := w.Cfg.Simulation.Depth
+
+	// Destroy tiles and their water and plants
+	for x := 0; x < width; x++ {
+		for z := 0; z < depth; z++ {
+			entity.RemoveEntity(w.tilemap[x][z], w.State.Entities, w.Scene)
+		}
+	}
+
+	// Destroy the sun and its light
+	w.sun.Dispose()
+	w.light.Dispose()
 }

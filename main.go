@@ -2,25 +2,30 @@ package main
 
 import (
 	_ "embed"
-	"os"
+	"fmt"
+	"regexp"
 
 	"cbeimers113/strands/internal/config"
 	"cbeimers113/strands/internal/game"
 )
 
+//go:embed .version
+var Version string
 
 func main() {
-	cfgData, err := os.ReadFile("cfg.json")
-	if err != nil {
-		panic(err)
+	if m := regexp.MustCompile(`^[0-9].[0-9].[0-9](-snapshot)?$`); !m.MatchString(Version) {
+		fmt.Printf("Warning: non-semantic version number provided: %s\n", Version)
 	}
-	
-	cfg, err := config.Load(cfgData)
+
+	// TODO: remove this tag if doing a release/automated build
+	Version += " snapshot"
+
+	cfg, err := config.Load()
 	if err != nil {
 		panic(err)
 	}
 
-	g, err := game.New(cfg)
+	g, err := game.New(cfg, Version)
 	if err != nil {
 		panic(err)
 	}

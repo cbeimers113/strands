@@ -1,4 +1,4 @@
-package input
+package input_manager
 
 import (
 	"fmt"
@@ -50,6 +50,8 @@ func (i *InputManager) Update(player *player.Player) {
 	player.Move(i.dx*mf, i.dz*mf)
 	player.Look(i.lx, i.ly)
 
+	i.State.SetFastMovement(i.shift)
+
 	i.lx = 0
 	i.ly = 0
 }
@@ -75,11 +77,21 @@ func (i *InputManager) KeyDown(evname string, ev interface{}) {
 		i.dx = -0.01
 	case window.KeyLeftShift:
 		i.shift = true
+	case window.KeyCapsLock:
+		i.shift = !i.shift
 	case window.KeyLeftControl:
 		i.ctrl = true
 	case window.KeySpace:
 		i.State.SetPaused(!i.State.Paused())
+
+		// Debugging keyboard: toggle keyboard on
+	case window.KeyTab:
+		i.Keyboard.Enable(!i.Keyboard.GetEnabled())
 	}
+
+	i.Keyboard.Shift(i.shift)
+	i.Keyboard.Ctrl(i.ctrl)
+	i.Keyboard.Input(kev.Key)
 }
 
 // Handle key up events for the game
@@ -105,9 +117,9 @@ func (i *InputManager) KeyUp(evname string, ev interface{}) {
 // Handle key hold events for the game
 func (i *InputManager) KeyHold(evname string, ev interface{}) {
 	kev := ev.(*window.KeyEvent)
-
-	switch kev.Key {
-	}
+	i.Keyboard.Shift(i.shift)
+	i.Keyboard.Ctrl(i.ctrl)
+	i.Keyboard.Input(kev.Key)
 }
 
 // Handle mouse click events for the game
@@ -150,6 +162,8 @@ func (i *InputManager) MouseDown(evname string, ev interface{}) {
 		default:
 			fmt.Printf("No action defined for button %+v on %+v\n", me.Button, i.State.LookingAt)
 		}
+	} else if i.State.InMenu() {
+		i.Keyboard.RegisterMouseEvent(me.Xpos, me.Ypos)
 	}
 }
 
