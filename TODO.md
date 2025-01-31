@@ -1,6 +1,7 @@
 ### v0.2.1:
 
-- [ ] Space & control to go vertically up and down
+- [x] Space & control to go vertically up and down
+- [x] Limit how far from map we can go
 - [ ] Tab to play/pause
 - [ ] Toolbar instead of info panel
 - [ ] Fullscreen option in config
@@ -9,6 +10,7 @@
 - [ ] Auto updates
 - [ ] Skybox
 - [ ] Shadows
+- [ ] Revisit tile highlighting
 
 ### v0.3.0 - Plants Upgrade:
 

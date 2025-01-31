@@ -15,13 +15,14 @@ import (
 type InputManager struct {
 	*context.Context
 
-	// Δx and y, player movement
+	// Δx, y and z, player movement
 	dx     float32
 	dz     float32
 	prevMX float32
 	prevMY float32
 	shift  bool
 	ctrl   bool
+	space  bool
 
 	// player looking x and y
 	lx float32
@@ -47,7 +48,15 @@ func (i *InputManager) Update(player *player.Player) {
 		mf *= 4
 	}
 
-	player.Move(i.dx*mf, i.dz*mf)
+	var dy float32 = 0
+	if i.space {
+		dy = 0.01
+	} else if i.ctrl {
+		dy = -0.01
+	}
+
+	player.MoveHorizontal(i.dx*mf, i.dz*mf)
+	player.MoveVertical(dy * mf * 2)
 	player.Look(i.lx, i.ly)
 
 	i.State.SetFastMovement(i.shift)
@@ -79,14 +88,12 @@ func (i *InputManager) KeyDown(evname string, ev interface{}) {
 		i.shift = true
 	case window.KeyCapsLock:
 		i.shift = !i.shift
+	case window.KeySpace:
+		i.space = true
 	case window.KeyLeftControl:
 		i.ctrl = true
-	case window.KeySpace:
-		i.State.SetPaused(!i.State.Paused())
-
-		// Debugging keyboard: toggle keyboard on
 	case window.KeyTab:
-		i.Keyboard.Enable(!i.Keyboard.GetEnabled())
+		i.State.SetPaused(!i.State.Paused())
 	}
 
 	i.Keyboard.Shift(i.shift)
@@ -109,6 +116,8 @@ func (i *InputManager) KeyUp(evname string, ev interface{}) {
 		i.dx = 0
 	case window.KeyLeftShift:
 		i.shift = false
+	case window.KeySpace:
+		i.space = false
 	case window.KeyLeftControl:
 		i.ctrl = false
 	}

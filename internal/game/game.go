@@ -35,12 +35,12 @@ type Game struct {
 	player *player.Player
 
 	// Camera spinning in menu
-	camSpin   bool
-	camAngle  float32
-	camDist   float32
-	camTarget math32.Vector3
-	camPos    math32.Vector3
-	camRot    math32.Vector3
+	camSpin  bool
+	camAngle float32
+	camDist  float32
+	centre   math32.Vector3
+	camPos   math32.Vector3
+	camRot   math32.Vector3
 }
 
 func New(cfg *config.Config, version string) (*Game, error) {
@@ -170,6 +170,11 @@ func (g *Game) Start() {
 		renderer.Render(g.Scene, g.Cam)
 		g.Notifications.Render()
 
+		// Determine player max bounds based on map and tile size
+		maxPos := g.world.GetTile(g.Cfg.Simulation.Width-1, g.Cfg.Simulation.Depth-1).Position()
+		maxPlayerX := maxPos.X
+		maxPlayerZ := maxPos.Z
+
 		if g.State.InMenu() {
 			g.Win.SetInputMode(glfw.CursorMode, int(window.CursorNormal))
 			deltaTimeController = 0
@@ -181,11 +186,11 @@ func (g *Game) Start() {
 				if !g.camSpin {
 					p := g.Cam.Position()
 					g.camSpin = true
-					g.camTarget = g.world.GetTile(g.Cfg.Simulation.Width/2, g.Cfg.Simulation.Depth/2).Position()
+					g.centre = g.world.GetTile(g.Cfg.Simulation.Width/2, g.Cfg.Simulation.Depth/2).Position()
 					g.camDist = math32.Sqrt(
-						(p.X-g.camTarget.X)*(p.X-g.camTarget.X) +
-							(p.Y-g.camTarget.Y)*(p.Y-g.camTarget.Y) +
-							(p.Z-g.camTarget.Z)*(p.Z-g.camTarget.Z),
+						(p.X-g.centre.X)*(p.X-g.centre.X) +
+							(p.Y-g.centre.Y)*(p.Y-g.centre.Y) +
+							(p.Z-g.centre.Z)*(p.Z-g.centre.Z),
 					)
 					g.camPos = g.Cam.Position()
 					g.camRot = g.Cam.Rotation()
@@ -195,10 +200,10 @@ func (g *Game) Start() {
 						g.camAngle -= math32.Pi * 2
 					}
 
-					camX := g.camDist*math32.Cos(g.camAngle) + g.camTarget.X
-					camZ := g.camDist*math32.Sin(g.camAngle) + g.camTarget.Z
+					camX := g.camDist*math32.Cos(g.camAngle) + g.centre.X
+					camZ := g.camDist*math32.Sin(g.camAngle) + g.centre.Z
 					g.Cam.SetPosition(camX, g.camPos.Y, camZ)
-					g.Cam.LookAt(&g.camTarget, math32.NewVector3(0, 1, 0))
+					g.Cam.LookAt(&g.centre, math32.NewVector3(0, 1, 0))
 				}
 			}
 		} else {
@@ -217,7 +222,7 @@ func (g *Game) Start() {
 			// Update the controller and notifications at a fixed interval
 			if deltaTimeController >= 1000/60 {
 				g.iman.Update(g.player)
-				g.player.Update(deltaTimeController)
+				g.player.Update(deltaTimeController, maxPlayerX, maxPlayerZ, g.centre)
 				g.Notifications.Update(deltaTimeController)
 				g.gui.Refresh()
 				deltaTimeController = 0

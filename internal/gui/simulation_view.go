@@ -84,8 +84,9 @@ func (g *Gui) infoText() string {
 		txt += "WASD to move\n"
 		txt += "Hold shift to move faster\n"
 		txt += "Caps lock to toggle fast movement\n"
+		txt += "Space and CTRL to go up and down\n"
 		txt += "ESC to open menu\n"
-		txt += "Space to toggle simulation\n"
+		txt += "Tab to play/pause simulation\n"
 		txt += "Left click a tile to add 10 L of water\n"
 		txt += "Right click a tile to open the tile menu\n"
 	}
