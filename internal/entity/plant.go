@@ -146,13 +146,9 @@ func (p *Plant) Update() {
 	p.SetPosition(p.X, 0.5+p.Scale().Y/2, p.Z)
 }
 
-// Infostring returns a string representation of the tile
+// Infostring returns a string representation of the plant
 func (p Plant) InfoString() string {
-	infoString := "Plant:\n"
-	infoString += fmt.Sprintf("age=%d\n", p.Age)
-	infoString += fmt.Sprintf("colour=#%06x", p.Colour)
-
-	return infoString
+	return fmt.Sprintf("plant,  : %dt,  : #%06x", p.Age, p.Colour)
 }
 
 // Material returns the plant's material

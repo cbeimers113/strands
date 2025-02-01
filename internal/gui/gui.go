@@ -51,6 +51,7 @@ type Gui struct {
 
 	// Main menu components
 	menuLogo       *gui.Image
+	versionLabel   *gui.Label
 	startButton    *gui.Button
 	newButton      *gui.Button
 	settingsButton *gui.Button
@@ -71,9 +72,14 @@ type Gui struct {
 	saveButton        *gui.Button
 
 	// Simulation view components
-	simCursor   *gui.Image
-	infoLabel   *gui.Label
-	pausedLabel *gui.Label
+	simCursor       *gui.Image
+	topPanel        *gui.Panel
+	moveIcon        *gui.Image
+	playerLabel     *gui.Label
+	clockLabel      *gui.Label
+	wailaLabel      *gui.Label
+	quantitiesLabel *gui.Label
+	helpLabel       *gui.Label
 
 	// Tile context menu components
 	tileInfoLabel   *gui.Label

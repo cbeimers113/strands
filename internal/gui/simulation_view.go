@@ -2,6 +2,7 @@ package gui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/texture"
@@ -38,88 +39,136 @@ func (g *Gui) registerSimulationView() {
 				g.Scene.Add(g.simCursor)
 			}
 
-			g.infoLabel = gui.NewLabel(g.infoText())
-			g.infoLabel.SetColor(color.Black)
-			g.infoLabel.SetBgColor4(color.Opaque)
-			g.infoLabel.SetPosition(5, 5)
-			g.infoLabel.SetUserData(SimulationView)
-			g.infoLabel.SetPaddings(5, 5, 5, 5)
-			g.Scene.Add(g.infoLabel)
+			g.topPanel = gui.NewPanel(float32(width), 20)
+			g.topPanel.SetColor4(color.Translucent)
+			g.topPanel.SetUserData(SimulationView)
+			g.Scene.Add(g.topPanel)
 
-			g.pausedLabel = gui.NewLabel(g.pausedStatus())
-			g.pausedLabel.SetColor(color.Black)
-			g.pausedLabel.SetBgColor4(color.Opaque)
-			g.pausedLabel.SetPosition((float32(width)-g.pausedLabel.Width())/2, 5)
-			g.pausedLabel.SetUserData(SimulationView)
-			g.pausedLabel.SetPaddings(5, 5, 5, 5)
-			g.Scene.Add(g.pausedLabel)
+			g.moveIcon = gui.NewImageFromTex(graphics.Textures[graphics.TexWalk])
+			g.moveIcon.SetUserData(SimulationView)
+			g.Scene.Add(g.moveIcon)
+
+			g.playerLabel = gui.NewLabel(g.playerPos())
+			g.playerLabel.SetColor(color.Black)
+			g.playerLabel.SetUserData(SimulationView)
+			g.Scene.Add(g.playerLabel)
+
+			g.clockLabel = gui.NewLabel(g.getClock())
+			g.clockLabel.SetColor(color.Black)
+			g.clockLabel.SetUserData(SimulationView)
+			g.Scene.Add(g.clockLabel)
+
+			g.wailaLabel = gui.NewLabel(g.getWaila())
+			g.wailaLabel.SetColor(color.Black)
+			g.wailaLabel.SetUserData(SimulationView)
+			g.Scene.Add(g.wailaLabel)
+
+			g.helpLabel = gui.NewLabel(helpText())
+			g.helpLabel.SetColor(color.Black)
+			g.helpLabel.SetBgColor4(color.Translucent)
+			g.helpLabel.SetPosition(5, 25)
+			g.helpLabel.SetUserData(SimulationView)
+			g.helpLabel.SetPaddings(5, 5, 5, 5)
+			g.Scene.Add(g.helpLabel)
+
+			g.quantitiesLabel = gui.NewLabel(g.getQuantities())
+			g.quantitiesLabel.SetColor(color.Black)
+			g.quantitiesLabel.SetBgColor4(color.Translucent)
+			g.quantitiesLabel.SetPosition(5, 25)
+			g.quantitiesLabel.SetUserData(SimulationView)
+			g.quantitiesLabel.SetPaddings(5, 5, 5, 5)
+			g.Scene.Add(g.quantitiesLabel)
 
 			g.State.SetInMenu(false)
 		},
 
 		close: func() {
 			g.Scene.Remove(g.simCursor)
-			g.Scene.Remove(g.infoLabel)
-			g.Scene.Remove(g.pausedLabel)
+			g.Scene.Remove(g.topPanel)
+			g.Scene.Remove(g.moveIcon)
+			g.Scene.Remove(g.playerLabel)
+			g.Scene.Remove(g.clockLabel)
+			g.Scene.Remove(g.wailaLabel)
+			g.Scene.Remove(g.helpLabel)
+			g.Scene.Remove(g.quantitiesLabel)
 		},
 
 		refresh: func() {
 			width, _ := g.App.GetSize()
-			g.infoLabel.SetText(g.infoText())
-			g.pausedLabel.SetText(g.pausedStatus())
-			g.pausedLabel.SetPosition((float32(width)-g.pausedLabel.Width())/2, 5)
+
+			g.moveIcon.SetPosition(0, 0)
+			g.playerLabel.SetText(g.playerPos())
+			g.playerLabel.SetPosition(g.moveIcon.Width(), 1)
+
+			g.clockLabel.SetText(g.getClock())
+			g.clockLabel.SetPosition((float32(width)-g.clockLabel.Width())/2, 1)
+
+			g.wailaLabel.SetText(g.getWaila())
+			g.wailaLabel.SetPosition(float32(width)-g.wailaLabel.Width()-4, 1)
+
+			g.helpLabel.SetVisible(g.Cfg.ShowHelp)
+
+			g.quantitiesLabel.SetVisible(g.State.ShowChems())
+			g.quantitiesLabel.SetText(g.getQuantities())
+			g.quantitiesLabel.SetPosition(float32(width)-g.quantitiesLabel.Width()-5, 25)
+
+			if g.State.FastMovement() {
+				g.moveIcon.SetTexture(graphics.Textures[graphics.TexRun])
+			} else {
+				g.moveIcon.SetTexture(graphics.Textures[graphics.TexWalk])
+			}
 		},
 	}
 }
 
-// Load the info text
-func (g *Gui) infoText() string {
-	txt := fmt.Sprintf("Version %s\n", g.Version)
-	txt += fmt.Sprintf("TPS: %d\n", g.State.TPS())
-	txt += fmt.Sprintf("%s\n", g.State.Clock)
-	txt += "\n"
-
-	if g.Cfg.ShowHelp {
-		txt += "Controls:\n"
-		txt += "WASD to move\n"
-		txt += "Hold shift to move faster\n"
-		txt += "Caps lock to toggle fast movement\n"
-		txt += "Space and CTRL to go up and down\n"
-		txt += "ESC to open menu\n"
-		txt += "Tab to play/pause simulation\n"
-		txt += "Left click a tile to add 10 L of water\n"
-		txt += "Right click a tile to open the tile menu\n"
-	}
-
-	// Append info about simulation
-	txt += "\nChemical Levels:\n"
-	for name, amnt := range g.State.Quantities {
-		txt += fmt.Sprintf("%s: %s\n", name, amnt.String())
-	}
-
-	// Append player info
+// Get the player's position
+func (g *Gui) playerPos() string {
 	p := g.Cam.Position()
-	if g.State.FastMovement() {
-		txt += "\nFast Move"
+	return fmt.Sprintf("(%d, %d, %d)", int32(p.X), int32(p.Y), int32(p.Z))
+}
+
+// Get the in-game clock
+func (g *Gui) getClock() string {
+	playPause := ""
+	if g.State.Paused() {
+		playPause = ""
 	}
 
-	txt += fmt.Sprintf("\n(%d, %d, %d)", int32(p.X), int32(p.Y), int32(p.Z))
+	return fmt.Sprintf("  %s | %d t/s | %s ", g.State.Clock, g.State.TPS(), playPause)
+}
 
-	// Append the WAILA (what am I looking at?) data
+// Get the WAILA info
+func (g *Gui) getWaila() string {
 	if g.State.LookingAt != nil {
-		txt += "\n\nLooking At:\n"
-		txt += g.State.LookingAt.InfoString()
+		return g.State.LookingAt.InfoString()
 	}
+
+	return ""
+}
+
+// Get the help text
+func helpText() string {
+	txt := "Controls:\n"
+	txt += " WASD to move\n"
+	txt += " Hold shift to move faster\n"
+	txt += " Caps lock to toggle fast movement\n"
+	txt += " Space and CTRL to go up and down\n"
+	txt += " ESC to open menu\n"
+	txt += " Tab to play/pause simulation\n"
+	txt += " Q to toggle chemical quantities panel\n"
+	txt += " Left click a tile to add 10 L of water\n"
+	txt += " Right click a tile to open the tile menu\n"
+	txt += "\nThis message can be toggled in the settings menu!"
 
 	return txt
 }
 
-// Update the "Simulation Running/Paused" status
-func (g *Gui) pausedStatus() string {
-	suffix := "Running"
-	if g.State.Paused() {
-		suffix = "Paused"
+// Get chemical quantities
+func (g *Gui) getQuantities() string {
+	txt := "Chemical Levels:\n"
+	for name, amnt := range g.State.Quantities {
+		txt += fmt.Sprintf("%s: %s\n", name, amnt.String())
 	}
 
-	return fmt.Sprintf("Simulation %s", suffix)
+	return strings.TrimSpace(txt)
 }

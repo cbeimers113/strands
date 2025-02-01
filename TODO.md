@@ -1,16 +1,22 @@
 ### v0.2.1:
 
-- [x] Space & control to go vertically up and down
-- [x] Limit how far from map we can go
-- [ ] Tab to play/pause
-- [ ] Toolbar instead of info panel
+- [ ] Reset position on new sim
+- [ ] Fix autosave bug/persistent plants issue
 - [ ] Fullscreen option in config
+- [ ] GUI scale option in config
 - [ ] Fix mouse jittering bug when going in and out of menus
 - [ ] Pipeline improvements / build & release binaries / auto-tagging
 - [ ] Auto updates
 - [ ] Skybox
 - [ ] Shadows
 - [ ] Revisit tile highlighting
+- [ ] Fix bug with conservation of mass (water)
+- [x] Toggle info panel for chemical quantities in top right
+- [x] Notifications appear in bottom left
+- [x] Topbar instead of info panel
+- [x] Space & control to go vertically up and down
+- [x] Limit how far from map we can go
+- [x] Tab to play/pause
 
 ### v0.3.0 - Plants Upgrade:
 

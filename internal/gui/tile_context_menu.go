@@ -32,7 +32,7 @@ func (g *Gui) registerTileContextMenu() {
 			g.tileInfoLabel.SetPosition((float32(width)-w)/2, (float32(height)-h)/2)
 			g.tileInfoLabel.SetUserData(TileContextMenu)
 			g.tileInfoLabel.SetColor(color.Black)
-			g.tileInfoLabel.SetBgColor4(color.Opaque)
+			g.tileInfoLabel.SetBgColor4(color.Translucent)
 			g.tileInfoLabel.SetPaddings(5, 5, 5, 5)
 			g.Scene.Add(g.tileInfoLabel)
 			nextY = g.tileInfoLabel.Position().Y + g.tileInfoLabel.Height() + 5

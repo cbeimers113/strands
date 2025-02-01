@@ -64,6 +64,12 @@ func (g *Gui) registerMainMenu() {
 				g.menuLogo.SetPosition((float32(width)-lw)/2, (g.startButton.Position().Y-lh)/2)
 				g.menuLogo.SetUserData(MainMenu)
 				g.Scene.Add(g.menuLogo)
+
+				g.versionLabel = gui.NewLabel(fmt.Sprintf("Version %s", g.Version))
+				g.versionLabel.SetColor(color.Green)
+				g.versionLabel.SetUserData(MainMenu)
+				g.versionLabel.SetPosition((float32(width)-g.versionLabel.Width())/2, g.menuLogo.Position().Y+g.menuLogo.Height()+5)
+				g.Scene.Add(g.versionLabel)
 			}
 
 			g.newButton = gui.NewButton("New Simulation")
@@ -159,6 +165,7 @@ func (g *Gui) registerMainMenu() {
 			g.closeBrowseDialog()
 
 			g.Scene.Remove(g.menuLogo)
+			g.Scene.Remove(g.versionLabel)
 			g.Scene.Remove(g.startButton)
 			g.Scene.Remove(g.newButton)
 			g.Scene.Remove(g.saveButton)

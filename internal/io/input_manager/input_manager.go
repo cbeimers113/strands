@@ -84,6 +84,10 @@ func (i *InputManager) KeyDown(evname string, ev interface{}) {
 		i.dx = 0.01
 	case window.KeyA:
 		i.dx = -0.01
+	case window.KeyQ:
+		if !i.State.InMenu() {
+			i.State.SetShowChems(!i.State.ShowChems())
+		}
 	case window.KeyLeftShift:
 		i.shift = true
 	case window.KeyCapsLock:

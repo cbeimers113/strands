@@ -292,14 +292,14 @@ func (t *Tile) AddPlant(entities map[int]Entity, scene *core.Node) bool {
 
 // Infostring returns a string representation of the tile
 func (t Tile) InfoString() string {
-	infoString := "Tile:\n"
-	infoString += fmt.Sprintf("type=%s\n", t.Type.Name)
-	infoString += fmt.Sprintf("temperature=%s\n", t.Temperature)
-	infoString += fmt.Sprintf("water level=%s\n", t.WaterLevel)
-	infoString += fmt.Sprintf("elevation=%s\n", t.getElevation())
-	infoString += fmt.Sprintf("planted=%t", len(t.Plants) > 0)
-
-	return infoString
+	return fmt.Sprintf(
+		"%s, : %s,  : %s,  : %s,  : %d", 
+		t.Type.Name,
+		t.Temperature,
+		t.WaterLevel,
+		t.getElevation(),
+		len(t.Plants),
+	)
 }
 
 // Material returns the tile's material

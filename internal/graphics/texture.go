@@ -12,35 +12,45 @@ import (
 )
 
 const (
+	// Gui
 	TexMenuLogo = "menuLogo"
 	TexCursor   = "cursor"
-	TexDirt     = "dirt"
-	TexGrass    = "grass"
-	TexSand     = "sand"
-	TexSeed     = "seed"
-	TexStalk    = "stalk"
-	TexStone    = "stone"
-	TexWater    = "water"
+	TexWalk     = "walk"
+	TexRun      = "run"
+
+	// World
+	TexDirt  = "dirt"
+	TexGrass = "grass"
+	TexSand  = "sand"
+	TexSeed  = "seed"
+	TexStalk = "stalk"
+	TexStone = "stone"
+	TexWater = "water"
 )
 
 var (
-	//go:embed textures/menuLogo.png
+	//go:embed textures/gui/menuLogo.png
 	bytesMenuLogo []byte
-	//go:embed textures/cursor.png
+	//go:embed textures/gui/cursor.png
 	bytesCursor []byte
-	//go:embed textures/dirt.png
+	//go:embed textures/gui/walk.png
+	bytesWalk []byte
+	//go:embed textures/gui/run.png
+	bytesRun []byte
+
+	//go:embed textures/world/dirt.png
 	bytesDirt []byte
-	//go:embed textures/grass.png
+	//go:embed textures/world/grass.png
 	bytesGrass []byte
-	//go:embed textures/sand.png
+	//go:embed textures/world/sand.png
 	bytesSand []byte
-	//go:embed textures/seed.png
+	//go:embed textures/world/seed.png
 	bytesSeed []byte
-	//go:embed textures/stalk.png
+	//go:embed textures/world/stalk.png
 	bytesStalk []byte
-	//go:embed textures/stone.png
+	//go:embed textures/world/stone.png
 	bytesStone []byte
-	//go:embed textures/water.png
+	//go:embed textures/world/water.png
 	bytesWater []byte
 )
 
@@ -55,6 +65,9 @@ func init() {
 	}{
 		{id: TexMenuLogo, data: bytesMenuLogo},
 		{id: TexCursor, data: bytesCursor},
+		{id: TexWalk, data: bytesWalk},
+		{id: TexRun, data: bytesRun},
+
 		{id: TexDirt, data: bytesDirt},
 		{id: TexGrass, data: bytesGrass},
 		{id: TexSand, data: bytesSand},

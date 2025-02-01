@@ -11,5 +11,5 @@ var (
 	White      = &math32.Color{R: 1.00, G: 1.00, B: 1.00}
 	Black      = &math32.Color{R: 0.00, G: 0.00, B: 0.00}
 
-	Opaque = &math32.Color4{R: 1.00, G: 1.00, B: 1.00, A: 0.75}
+	Translucent = &math32.Color4{R: 1.00, G: 1.00, B: 1.00, A: 0.50}
 )
