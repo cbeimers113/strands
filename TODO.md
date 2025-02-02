@@ -1,7 +1,5 @@
 ### v0.2.1:
 
-- [ ] Reset position on new sim
-- [ ] Fix autosave bug/persistent plants issue
 - [ ] Fullscreen option in config
 - [ ] GUI scale option in config
 - [ ] Fix mouse jittering bug when going in and out of menus
@@ -11,6 +9,9 @@
 - [ ] Shadows
 - [ ] Revisit tile highlighting
 - [ ] Fix bug with conservation of mass (water)
+- [x] Fix memory leak bug between opening saves
+- [x] Reset position on new sim
+- [x] Fix autosave bug/persistent plants issue
 - [x] Toggle info panel for chemical quantities in top right
 - [x] Notifications appear in bottom left
 - [x] Topbar instead of info panel

@@ -34,7 +34,7 @@ type Plant struct {
 	LeafSpawnHeight  float32 `json:"leaf_spawn_height"`  // [0.1, 1], How far up the stem the leaves will appear (from top), ie: value of 0.25 means leaves will spawn on the top quarter of the stem
 	AvgLeafSize      float32 `json:"avg_leaf_size"`      // (0, ..), Average size of leaf, ie: value of 1 equals the default size
 	LeafSizeVariance float32 `json:"leaf_size_variance"` // [0, 1], How much the leaf sizes can vary, ie: a value of 0.5 means the leaves can be up to 50% bigger or smaller than AvgSize
-	leaves           []*graphic.Mesh
+	Leaves           []*graphic.Mesh
 }
 
 // Create a new plant
@@ -108,7 +108,6 @@ func (p *Plant) Refresh(entities map[int]Entity, scene *core.Node) {
 		p.Mesh = mesh
 		AddEntity(p, entities, scene)
 	} else {
-
 		// Make sure the entities map is pointing to this plant at the specified index
 		if i, err := strconv.Atoi(p.Name()); err == nil {
 			entities[i] = p
@@ -119,21 +118,21 @@ func (p *Plant) Refresh(entities map[int]Entity, scene *core.Node) {
 	p.SetRotation(p.RotX, p.RotY, 0)
 
 	// Make sure each leaf exists
-	if p.leaves == nil || len(p.leaves) != p.NumLeaves {
-		p.leaves = make([]*graphic.Mesh, p.NumLeaves)
+	if p.Leaves == nil || len(p.Leaves) != p.NumLeaves {
+		p.Leaves = make([]*graphic.Mesh, p.NumLeaves)
 	}
 
 	for i := 0; i < p.NumLeaves; i++ {
-		if p.leaves[i] == nil {
+		if p.Leaves[i] == nil {
 			leaf := NewLeaf()
 			leaf.SetName(p.Name())
 			p.Add(leaf)
-			p.leaves[i] = leaf
+			p.Leaves[i] = leaf
 		}
 
 		// TODO: store leaf positions and rotation in genetics and make reloadable
-		p.leaves[i].SetScale(0.1, 0.1, 0.1)
-		p.leaves[i].SetRotation(p.Rand.Float32()*math32.Pi/12, p.Rand.Float32()*2*math32.Pi, p.Rand.Float32()*math32.Pi/12)
+		p.Leaves[i].SetScale(0.1, 0.1, 0.1)
+		p.Leaves[i].SetRotation(p.Rand.Float32()*math32.Pi/12, p.Rand.Float32()*2*math32.Pi, p.Rand.Float32()*math32.Pi/12)
 	}
 }
 

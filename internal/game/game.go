@@ -17,6 +17,7 @@ import (
 
 	"cbeimers113/strands/internal/config"
 	"cbeimers113/strands/internal/context"
+	"cbeimers113/strands/internal/graphics"
 	"cbeimers113/strands/internal/gui"
 	"cbeimers113/strands/internal/io/file"
 	"cbeimers113/strands/internal/io/input_manager"
@@ -54,6 +55,7 @@ func New(cfg *config.Config, version string) (*Game, error) {
 		Keyboard: keyboard.New(),
 	}
 	ctx.Notifications = context.NewNotificationManager(func() *core.Node { return ctx.Scene }, ctx.App)
+	graphics.LoadTextures()
 
 	g := &Game{
 		Context: ctx,
@@ -93,11 +95,18 @@ func New(cfg *config.Config, version string) (*Game, error) {
 
 // Create a new sim
 func (g *Game) CreateNewSim() {
+	g.Scene.DisposeChildren(true)
 	g.Scene = core.NewNode()
+	graphics.LoadTextures()
+
 	g.State = state.New(g.Cfg, time.Now().UnixNano())
 	g.gui = gui.New(g.Context)
 	g.world = world.New(g.Context)
 	g.player = player.New(g.Context)
+
+	g.Cam.SetPosition(float32(g.Cfg.Simulation.Width)/2, 10, float32(g.Cfg.Simulation.Depth)/2)
+	g.Cam.SetRotation(0, 0, 0)
+
 	g.RefreshSim = false
 	gui.Open(gui.SimulationView, true)
 	g.Notifications.Push("Created new simulation")
@@ -107,16 +116,25 @@ func (g *Game) CreateNewSim() {
 func (g *Game) LoadGame(filename string) {
 	g.Win.SetTitle(fmt.Sprintf("Loading Simulation [%s]", filename))
 	st, cells, tiles, camData, err := state.LoadSave(g.Cfg, filename)
+
 	if err != nil {
 		g.gui.Popup(fmt.Sprintf("Couldn't load save file [%s]:\n%s\n", filename, err), "", nil)
 	} else {
-		st.Entities = g.State.Entities
+		// Teardown old state
+		g.Scene.DisposeChildren(true)
+		g.Scene = core.NewNode()
+		graphics.LoadTextures()
+
+		// Build new state
 		g.State = st
-		g.world.SetAtmosphere(cells)
-		g.world.SetTiles(tiles)
+		g.gui = gui.New(g.Context)
+		g.world = world.Load(g.Context, tiles, cells)
 		g.Cam.SetPosition(camData.PosX, camData.PosY, camData.PosZ)
 		g.Cam.SetRotation(camData.RotX, camData.RotY, 0)
 		g.CurrentSave = filename
+
+		// Refresh GUI
+		gui.Open(gui.SimulationView, true)
 	}
 
 	g.Notifications.Push(fmt.Sprintf("Loaded simulation from %s", filename))
@@ -260,14 +278,15 @@ func (g *Game) Start() {
 }
 
 // Callback for when the app is closed
-func (g Game) onExit(string, interface{}) {
+func (g *Game) onExit(string, interface{}) {
 	g.Cfg.Save()
 
 	if g.Cfg.ExitSave {
 		g.SaveGame(state.ExitSaveFile)
 	}
 
-	g.world.Dispose()
+	g.Scene.DisposeChildren(true)
+	g.Scene.Dispose()
 }
 
 // Callback for when the window is resized, update camera and gui to match

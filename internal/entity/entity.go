@@ -15,8 +15,6 @@ type Entity interface {
 	Material() *material.Material
 	SetName(string)
 	GetINode() core.INode
-	Dispose()
-	DisposeChildren(bool)
 }
 
 // Add an entity to the entities map
@@ -24,7 +22,6 @@ func AddEntity(entity Entity, entities map[int]Entity, scene *core.Node) {
 	// Store the index of this entity in its name so that the entity can be found by a game object
 	entity.SetName(fmt.Sprintf("%d", len(entities)))
 	entities[len(entities)] = entity
-
 	scene.Add(entity.GetINode())
 }
 
@@ -37,8 +34,6 @@ func RemoveEntity(entity Entity, entities map[int]Entity, scene *core.Node) {
 			entities[i-1].SetName(fmt.Sprintf("%d", i-1))
 		}
 
-		entity.DisposeChildren(true)
-		entity.Dispose()
 		scene.Remove(entity.GetINode())
 		delete(entities, len(entities)-1)
 	}

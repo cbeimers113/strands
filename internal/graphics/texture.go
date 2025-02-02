@@ -56,7 +56,7 @@ var (
 
 var Textures map[string]*texture.Texture2D
 
-func init() {
+func LoadTextures() {
 	Textures = make(map[string]*texture.Texture2D)
 
 	for _, texLoader := range []struct {

@@ -156,7 +156,7 @@ func helpText() string {
 	txt += " ESC to open menu\n"
 	txt += " Tab to play/pause simulation\n"
 	txt += " Q to toggle chemical quantities panel\n"
-	txt += " Left click a tile to add 10 L of water\n"
+	txt += " Left click a tile to add 1000 L of water\n"
 	txt += " Right click a tile to open the tile menu\n"
 	txt += "\nThis message can be toggled in the settings menu!"
 

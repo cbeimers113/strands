@@ -42,6 +42,27 @@ func New(ctx *context.Context) *Atmosphere {
 	return a
 }
 
+func Load(ctx *context.Context, cells []*state.Cell) *Atmosphere {
+	a := &Atmosphere{Context: ctx}
+	a.cells = make([][][]*state.Cell, a.Cfg.Simulation.Width)
+
+	w := a.Cfg.Simulation.Width
+	h := a.Cfg.Simulation.Height
+	d := a.Cfg.Simulation.Depth
+
+	for x := 0; x < w; x++ {
+		a.cells[x] = make([][]*state.Cell, a.Cfg.Simulation.Height)
+		for y := 0; y < h; y++ {
+			a.cells[x][y] = make([]*state.Cell, a.Cfg.Simulation.Depth)
+			for z := 0; z < d; z++ {
+				a.cells[x][y][z] = cells[x+w*(y+h*z)]
+			}
+		}
+	}
+
+	return a
+}
+
 // Update the atmosphere
 func (a *Atmosphere) Update(deltaTime float32) {
 	for x := 0; x < a.Cfg.Simulation.Width; x++ {

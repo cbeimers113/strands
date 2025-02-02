@@ -49,6 +49,44 @@ func New(ctx *context.Context) *World {
 	return w
 }
 
+func Load(ctx *context.Context, tiles []*entity.Tile, cells []*state.Cell) *World {
+	w := &World{
+		Context: ctx,
+
+		light:      light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 0),
+		atmosphere: atmosphere.Load(ctx, cells),
+	}
+
+	geom := geometry.NewSphere(6, 12, 12)
+	mat := material.NewStandard(&math32.Color{
+		R: 0.2,
+		G: 0.2,
+		B: 0.06,
+	})
+	w.sun = graphic.NewMesh(geom, mat)
+
+	w.Scene.Add(w.light)
+	w.Scene.Add(w.sun)
+	
+	width := w.Cfg.Simulation.Width
+	depth := w.Cfg.Simulation.Depth
+
+	w.tilemap = make([][]*entity.Tile, width)
+	for x := 0; x < width; x++ {
+		w.tilemap[x] = make([]*entity.Tile, depth)
+
+		for z := 0; z < depth; z++ {
+			tile := tiles[x+z*depth]
+			tile.Rand = w.State.Rand
+			w.tilemap[x][z] = tile
+			tile.Refresh(w.State.Entities, w.Scene)
+		}
+	}
+
+	w.AssignTileNeighbourhoods()
+	return w
+}
+
 // Create the tilemap
 func (w *World) createMap() {
 	heightmap, min, max := w.makeHeightmap()
@@ -214,7 +252,7 @@ func (w *World) updateSun() {
 	}
 }
 
-// Update the game world, deltaTime is time since last update in ms, return total water vol for info text
+// Update the game world, deltaTime is time since last update in ms
 func (w *World) Update(deltaTime float32) {
 	// Track quantities of various substances in the world
 	waterLevel := chem.Quantity{Units: chem.Litre}
@@ -279,39 +317,4 @@ func (w World) GetTiles() []*entity.Tile {
 // GetTile returns the tile at x, z
 func (w World) GetTile(x, z int) *entity.Tile {
 	return w.tilemap[x][z]
-}
-
-// SetTiles loads a linear slice of Tiles into the map
-func (w *World) SetTiles(tiles []*entity.Tile) {
-	width := w.Cfg.Simulation.Width
-	depth := w.Cfg.Simulation.Depth
-
-	for x := 0; x < width; x++ {
-		for z := 0; z < depth; z++ {
-			tile := tiles[x+z*depth]
-			tile.Rand = w.State.Rand
-			tile.Mesh = w.tilemap[x][z].Mesh
-			tile.Water = w.tilemap[x][z].Water
-			w.tilemap[x][z] = tile
-			tile.Refresh(w.State.Entities, w.Scene)
-		}
-	}
-
-	w.AssignTileNeighbourhoods()
-}
-
-func (w *World) Dispose() {
-	width := w.Cfg.Simulation.Width
-	depth := w.Cfg.Simulation.Depth
-
-	// Destroy tiles and their water and plants
-	for x := 0; x < width; x++ {
-		for z := 0; z < depth; z++ {
-			entity.RemoveEntity(w.tilemap[x][z], w.State.Entities, w.Scene)
-		}
-	}
-
-	// Destroy the sun and its light
-	w.sun.Dispose()
-	w.light.Dispose()
 }

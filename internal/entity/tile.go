@@ -293,7 +293,7 @@ func (t *Tile) AddPlant(entities map[int]Entity, scene *core.Node) bool {
 // Infostring returns a string representation of the tile
 func (t Tile) InfoString() string {
 	return fmt.Sprintf(
-		"%s, : %s,  : %s,  : %s,  : %d", 
+		"%s, : %s,  : %s,  : %s,  : %d",
 		t.Type.Name,
 		t.Temperature,
 		t.WaterLevel,
