@@ -70,7 +70,9 @@ func New(cfg *config.Config, version string) (*Game, error) {
 	if g.Win, ok = g.App.IWindow.(*window.GlfwWindow); !ok {
 		return nil, errors.New("cannot instantiate window")
 	}
-	g.Win.SetSize(g.Cfg.Window.Width, g.Cfg.Window.Height)
+
+	g.Win.Maximize()
+	g.Win.SetFullscreen(g.Cfg.Fullscreen)
 	g.Win.SetTitle(g.Cfg.Name)
 	g.gui.SetIcon()
 
@@ -199,7 +201,7 @@ func (g *Game) Start() {
 			deltaTimeWorld = 0
 			g.gui.Refresh()
 
-			// Spin camera in main menu
+			// Spin camera in main menu and any sub-views in the main menu
 			if g.State.InMainMenu() {
 				if !g.camSpin {
 					p := g.Cam.Position()

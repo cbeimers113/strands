@@ -39,16 +39,12 @@ func (g *Gui) registerSimulationView() {
 				g.Scene.Add(g.simCursor)
 			}
 
-			g.topPanel = gui.NewPanel(float32(width), 20)
+			g.topPanel = gui.NewPanel(float32(width), 0)
 			g.topPanel.SetColor4(color.Translucent)
 			g.topPanel.SetUserData(SimulationView)
 			g.Scene.Add(g.topPanel)
 
-			g.moveIcon = gui.NewImageFromTex(graphics.Textures[graphics.TexWalk])
-			g.moveIcon.SetUserData(SimulationView)
-			g.Scene.Add(g.moveIcon)
-
-			g.playerLabel = gui.NewLabel(g.playerPos())
+			g.playerLabel = gui.NewLabel(g.getPlayerInfo())
 			g.playerLabel.SetColor(color.Black)
 			g.playerLabel.SetUserData(SimulationView)
 			g.Scene.Add(g.playerLabel)
@@ -66,7 +62,6 @@ func (g *Gui) registerSimulationView() {
 			g.helpLabel = gui.NewLabel(helpText())
 			g.helpLabel.SetColor(color.Black)
 			g.helpLabel.SetBgColor4(color.Translucent)
-			g.helpLabel.SetPosition(5, 25)
 			g.helpLabel.SetUserData(SimulationView)
 			g.helpLabel.SetPaddings(5, 5, 5, 5)
 			g.Scene.Add(g.helpLabel)
@@ -85,7 +80,6 @@ func (g *Gui) registerSimulationView() {
 		close: func() {
 			g.Scene.Remove(g.simCursor)
 			g.Scene.Remove(g.topPanel)
-			g.Scene.Remove(g.moveIcon)
 			g.Scene.Remove(g.playerLabel)
 			g.Scene.Remove(g.clockLabel)
 			g.Scene.Remove(g.wailaLabel)
@@ -96,35 +90,37 @@ func (g *Gui) registerSimulationView() {
 		refresh: func() {
 			width, _ := g.App.GetSize()
 
-			g.moveIcon.SetPosition(0, 0)
-			g.playerLabel.SetText(g.playerPos())
-			g.playerLabel.SetPosition(g.moveIcon.Width(), 1)
+			g.playerLabel.SetText(g.getPlayerInfo())
+			g.playerLabel.SetPosition(10, 2)
 
 			g.clockLabel.SetText(g.getClock())
-			g.clockLabel.SetPosition((float32(width)-g.clockLabel.Width())/2, 1)
+			g.clockLabel.SetPosition((float32(width)-g.clockLabel.Width())/2, 2)
 
 			g.wailaLabel.SetText(g.getWaila())
-			g.wailaLabel.SetPosition(float32(width)-g.wailaLabel.Width()-4, 1)
+			g.wailaLabel.SetPosition(float32(width)-g.wailaLabel.Width()-4, 2)
 
+			g.topPanel.SetHeight(g.playerLabel.Height() + 2)
 			g.helpLabel.SetVisible(g.Cfg.ShowHelp)
+			g.helpLabel.SetPosition(5, g.topPanel.Height()+5)
 
 			g.quantitiesLabel.SetVisible(g.State.ShowChems())
 			g.quantitiesLabel.SetText(g.getQuantities())
-			g.quantitiesLabel.SetPosition(float32(width)-g.quantitiesLabel.Width()-5, 25)
-
-			if g.State.FastMovement() {
-				g.moveIcon.SetTexture(graphics.Textures[graphics.TexRun])
-			} else {
-				g.moveIcon.SetTexture(graphics.Textures[graphics.TexWalk])
-			}
+			g.quantitiesLabel.SetPosition(float32(width)-g.quantitiesLabel.Width()-5, g.topPanel.Height()+5)
 		},
 	}
 }
 
-// Get the player's position
-func (g *Gui) playerPos() string {
+// Get the player's position and move state
+func (g *Gui) getPlayerInfo() string {
+	mv := ""
+	if g.State.FastMovement() {
+		mv = ""
+	} else if g.State.Moving() {
+		mv = ""
+	}
+
 	p := g.Cam.Position()
-	return fmt.Sprintf("(%d, %d, %d)", int32(p.X), int32(p.Y), int32(p.Z))
+	return fmt.Sprintf("%s (%d, %d, %d)", mv, int32(p.X), int32(p.Y), int32(p.Z))
 }
 
 // Get the in-game clock

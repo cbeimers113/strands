@@ -46,7 +46,18 @@ func (g *Gui) registerConfigMenu() {
 				g.Cfg.ExitSave = g.exitSaveCheck.Value()
 			})
 			g.Scene.Add(g.exitSaveCheck)
-			nextY = g.exitSaveCheck.Position().Y + g.exitSaveCheck.Height() + 10
+			nextY = g.exitSaveCheck.Position().Y + g.exitSaveCheck.Height() + 5
+
+			g.fullscreenCheck = gui.NewCheckBox("Fullscreen")
+			w = g.fullscreenCheck.Width()
+			g.fullscreenCheck.SetPosition((float32(width)-w)/2, nextY)
+			g.fullscreenCheck.SetUserData(ConfigMenu)
+			g.fullscreenCheck.SetValue(g.Cfg.Fullscreen)
+			g.fullscreenCheck.Subscribe(gui.OnChange, func(name string, ev interface{}) {
+				g.Cfg.Fullscreen = g.fullscreenCheck.Value()
+			})
+			g.Scene.Add(g.fullscreenCheck)
+			nextY = g.fullscreenCheck.Position().Y + g.fullscreenCheck.Height() + 10
 
 			g.mouseXSenSlider = gui.NewHSlider(175, 12.5)
 			w = g.mouseXSenSlider.Width()
@@ -126,6 +137,7 @@ func (g *Gui) registerConfigMenu() {
 					g.Notifications.Push("Settings saved")
 				}
 
+				g.Win.SetFullscreen(g.Cfg.Fullscreen)
 				Open(MainMenu, true)
 			})
 			g.saveButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
@@ -159,12 +171,13 @@ func (g *Gui) registerConfigMenu() {
 			})
 			g.Scene.Add(g.exitButton)
 
-			g.State.SetInMenu(true)
+			g.State.SetInMainMenu(true)
 		},
 
 		close: func() {
 			g.Scene.Remove(g.showControlsCheck)
 			g.Scene.Remove(g.exitSaveCheck)
+			g.Scene.Remove(g.fullscreenCheck)
 			g.Scene.Remove(g.mouseXSenSlider)
 			g.Scene.Remove(g.mouseYSenSlider)
 			g.Scene.Remove(g.moveSpeedSlider)

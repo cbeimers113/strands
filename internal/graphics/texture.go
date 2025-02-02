@@ -15,8 +15,6 @@ const (
 	// Gui
 	TexMenuLogo = "menuLogo"
 	TexCursor   = "cursor"
-	TexWalk     = "walk"
-	TexRun      = "run"
 
 	// World
 	TexDirt  = "dirt"
@@ -33,10 +31,6 @@ var (
 	bytesMenuLogo []byte
 	//go:embed textures/gui/cursor.png
 	bytesCursor []byte
-	//go:embed textures/gui/walk.png
-	bytesWalk []byte
-	//go:embed textures/gui/run.png
-	bytesRun []byte
 
 	//go:embed textures/world/dirt.png
 	bytesDirt []byte
@@ -65,8 +59,6 @@ func LoadTextures() {
 	}{
 		{id: TexMenuLogo, data: bytesMenuLogo},
 		{id: TexCursor, data: bytesCursor},
-		{id: TexWalk, data: bytesWalk},
-		{id: TexRun, data: bytesRun},
 
 		{id: TexDirt, data: bytesDirt},
 		{id: TexGrass, data: bytesGrass},

@@ -11,13 +11,10 @@ import (
 )
 
 type Config struct {
-	Name     string `json:"name"`
-	ShowHelp bool   `json:"show_controls"`
-	ExitSave bool   `json:"save_on_exit"`
-	Window   struct {
-		Width  int `json:"width"`
-		Height int `json:"height"`
-	} `json:"window"`
+	Name       string `json:"name"`
+	ShowHelp   bool   `json:"show_controls"`
+	ExitSave   bool   `json:"save_on_exit"`
+	Fullscreen bool   `json:"fullscreen"`
 
 	Simulation struct {
 		Width     int `json:"-"`
@@ -96,13 +93,6 @@ func (c Config) Save() error {
 func (c Config) validate() error {
 	if c.Name == "" {
 		return fmt.Errorf("%sapplication name empty", errInvalidCfg)
-	}
-
-	if c.Window.Width <= 0 {
-		return fmt.Errorf("%swindow width [%d] too small", errInvalidCfg, c.Window.Width)
-	}
-	if c.Window.Height <= 0 {
-		return fmt.Errorf("%swindow height [%d] too small", errInvalidCfg, c.Window.Height)
 	}
 
 	if c.Simulation.Width <= 0 {

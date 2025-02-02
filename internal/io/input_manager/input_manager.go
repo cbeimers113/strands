@@ -59,6 +59,7 @@ func (i *InputManager) Update(player *player.Player) {
 	player.MoveVertical(dy * mf * 2)
 	player.Look(i.lx, i.ly)
 
+	i.State.SetMovement(i.dx != 0 || i.dz != 0 || dy != 0)
 	i.State.SetFastMovement(i.shift)
 
 	i.lx = 0

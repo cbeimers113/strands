@@ -4,13 +4,6 @@ var defaultConfig = &Config{
 	Name:     "Strands | Ecosystem Simulator",
 	ShowHelp: false,
 	ExitSave: true,
-	Window: struct {
-		Width  int `json:"width"`
-		Height int `json:"height"`
-	}{
-		Width:  1200,
-		Height: 800,
-	},
 	Simulation: struct {
 		Width     int `json:"-"`
 		Height    int `json:"-"`

@@ -17,6 +17,7 @@ type State struct {
 	inMenu     bool // Whether the player is in a menu and everything in the simulation is frozen, including the player
 	inMainMenu bool // Whether the main menu is open
 	paused     bool // Whether the simulation physics are paused, but the player can still interact with the simulation
+	moving     bool // Whether the player is moving
 	fastMove   bool // Whether the player is using fast movement
 	showChems  bool // Whether to show the levels of each chemical in the simulation
 
@@ -63,6 +64,11 @@ func (s *State) SetPaused(paused bool) {
 	s.paused = paused
 }
 
+// Set the movement flag
+func (s *State) SetMovement(moving bool) {
+	s.moving = moving
+}
+
 // Set the fast movement flag
 func (s *State) SetFastMovement(fast bool) {
 	s.fastMove = fast
@@ -93,6 +99,11 @@ func (s State) InMainMenu() bool {
 // Get the paused state
 func (s State) Paused() bool {
 	return s.paused
+}
+
+// Get the movement flag
+func (s State) Moving() bool {
+	return s.moving
 }
 
 // Get the fast movement flag

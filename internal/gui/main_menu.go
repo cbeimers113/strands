@@ -67,7 +67,9 @@ func (g *Gui) registerMainMenu() {
 
 				g.versionLabel = gui.NewLabel(fmt.Sprintf("Version %s", g.Version))
 				g.versionLabel.SetColor(color.Green)
+				g.versionLabel.SetBgColor(color.White)
 				g.versionLabel.SetUserData(MainMenu)
+				g.versionLabel.SetPaddings(0, 2, 0, 2)
 				g.versionLabel.SetPosition((float32(width)-g.versionLabel.Width())/2, g.menuLogo.Position().Y+g.menuLogo.Height()+5)
 				g.Scene.Add(g.versionLabel)
 			}

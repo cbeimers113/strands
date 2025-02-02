@@ -21,6 +21,21 @@ Check out the [Releases](https://github.com/cbeimers113/strands/releases) page f
 <details>
     <summary>Changelog</summary>
 
+### v0.2.1 - Bugfixes & GUI Enhancements
+- Increase GUI scale
+- Improve player icon in top bar
+- Maximize by default
+- Fullscreen/windowed option in config
+- Fix memory leak bug between opening saves
+- Reset position on new sim
+- Fix autosave bug/persistent plants issue
+- Toggle info panel for chemical quantities in top right
+- Notifications appear in bottom left
+- Topbar instead of info panel
+- Space & control to go vertically up and down
+- Limit how far from map we can go
+- Tab to play/pause
+
 ### v0.2.0 - Application & Engine Features
 - Spin the camera slowly when in menu
 - GUI style improvements

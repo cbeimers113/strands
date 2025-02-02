@@ -64,6 +64,7 @@ type Gui struct {
 	// Config menu components
 	showControlsCheck *gui.CheckRadio
 	exitSaveCheck     *gui.CheckRadio
+	fullscreenCheck   *gui.CheckRadio
 	mouseXSenSlider   *gui.Slider
 	mouseYSenSlider   *gui.Slider
 	moveSpeedSlider   *gui.Slider
@@ -74,7 +75,6 @@ type Gui struct {
 	// Simulation view components
 	simCursor       *gui.Image
 	topPanel        *gui.Panel
-	moveIcon        *gui.Image
 	playerLabel     *gui.Label
 	clockLabel      *gui.Label
 	wailaLabel      *gui.Label
@@ -196,6 +196,18 @@ func getStyle() *gui.Style {
 		Focus:    gb.Focus,
 		Pressed:  gb.Over,
 		Disabled: gb.Pressed,
+	}
+
+	gl := g.Label
+	g.Label = gui.LabelStyle{
+		PanelStyle: gl.PanelStyle,
+		FgColor:    gl.FgColor,
+		FontAttributes: text.FontAttributes{
+			PointSize:   24,
+			LineSpacing: gl.FontAttributes.LineSpacing,
+			DPI:         gl.FontAttributes.DPI,
+			Hinting:     gl.FontAttributes.Hinting,
+		},
 	}
 
 	if g.Font, err = text.NewFontFromData(fontData); err != nil {

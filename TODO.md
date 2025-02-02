@@ -1,23 +1,11 @@
-### v0.2.1:
+### v0.2.2:
 
-- [ ] Fullscreen option in config
-- [ ] GUI scale option in config
+- [ ] Fix bug with conservation of mass (water)
 - [ ] Fix mouse jittering bug when going in and out of menus
+- [ ] Revisit tile highlighting
 - [ ] Pipeline improvements / build & release binaries / auto-tagging
-- [ ] Auto updates
 - [ ] Skybox
 - [ ] Shadows
-- [ ] Revisit tile highlighting
-- [ ] Fix bug with conservation of mass (water)
-- [x] Fix memory leak bug between opening saves
-- [x] Reset position on new sim
-- [x] Fix autosave bug/persistent plants issue
-- [x] Toggle info panel for chemical quantities in top right
-- [x] Notifications appear in bottom left
-- [x] Topbar instead of info panel
-- [x] Space & control to go vertically up and down
-- [x] Limit how far from map we can go
-- [x] Tab to play/pause
 
 ### v0.3.0 - Plants Upgrade:
 
@@ -65,3 +53,4 @@
 - Sample and save DNA of plants and animals
 - DNA editor for plants and animals
 - Re-investigate allowing saves to have different map dimensions
+- Auto updates
