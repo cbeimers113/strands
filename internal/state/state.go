@@ -15,18 +15,18 @@ import (
 type State struct {
 	tps        int  // Record the number of world ticks per second
 	inMenu     bool // Whether the player is in a menu and everything in the simulation is frozen, including the player
-	inMainMenu bool // Whether the main menu is open
+	inSpinMenu bool // Whether we're in a menu where we want the camera to spin
 	paused     bool // Whether the simulation physics are paused, but the player can still interact with the simulation
 	moving     bool // Whether the player is moving
 	fastMove   bool // Whether the player is using fast movement
 	showChems  bool // Whether to show the levels of each chemical in the simulation
 
-	Seed       int64                              // The world's random seed value
-	Rand       *rand.Rand                         // The simulation's psuedo random number generator
-	Clock      *Clock                             // Keep track of in-game time
-	LookingAt  entity.Entity                      // What the camera/player is looking at
-	Entities   map[int]entity.Entity              // List of entities in the game world
-	Quantities map[chem.ElementType]chem.Quantity // Map of quantities for tracking various substances in the simulation
+	Seed       int64                               // The world's random seed value
+	Rand       *rand.Rand                          // The simulation's psuedo random number generator
+	Clock      *Clock                              // Keep track of in-game time
+	LookingAt  entity.Entity                       // What the camera/player is looking at
+	Entities   map[int]entity.Entity               // List of entities in the game world
+	Quantities map[chem.ElementType]*chem.Quantity // Map of quantities for tracking various substances in the simulation
 }
 
 func New(cfg *config.Config, seed int64) *State {
@@ -37,7 +37,7 @@ func New(cfg *config.Config, seed int64) *State {
 		Rand:       rand.New(rand.NewSource(seed)),
 		Clock:      NewClock(cfg, 9, 00, true),
 		Entities:   make(map[int]entity.Entity),
-		Quantities: make(map[string]chem.Quantity),
+		Quantities: make(map[string]*chem.Quantity),
 	}
 }
 
@@ -53,10 +53,10 @@ func (s *State) SetInMenu(inMenu bool) {
 	s.inMenu = inMenu
 }
 
-// Set the inMainMenu state
-func (s *State) SetInMainMenu(inMainMenu bool) {
-	s.inMainMenu = inMainMenu
-	s.SetInMenu(inMainMenu)
+// Set the inSpinMenu state
+func (s *State) SetInSpinMenu(inSpinMenu bool) {
+	s.inSpinMenu = inSpinMenu
+	s.SetInMenu(inSpinMenu)
 }
 
 // Set the paused state
@@ -91,9 +91,9 @@ func (s State) InMenu() bool {
 	return s.inMenu
 }
 
-// Get the inMainMenu state
-func (s State) InMainMenu() bool {
-	return s.inMainMenu
+// Get the inSpinMenu state
+func (s State) InSpinMenu() bool {
+	return s.inSpinMenu
 }
 
 // Get the paused state

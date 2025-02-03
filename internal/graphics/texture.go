@@ -17,13 +17,14 @@ const (
 	TexCursor   = "cursor"
 
 	// World
-	TexDirt  = "dirt"
-	TexGrass = "grass"
-	TexSand  = "sand"
-	TexSeed  = "seed"
-	TexStalk = "stalk"
-	TexStone = "stone"
-	TexWater = "water"
+	TexHighlight = "highlight"
+	TexDirt      = "dirt"
+	TexGrass     = "grass"
+	TexSand      = "sand"
+	TexSeed      = "seed"
+	TexStalk     = "stalk"
+	TexStone     = "stone"
+	TexWater     = "water"
 )
 
 var (
@@ -32,6 +33,8 @@ var (
 	//go:embed textures/gui/cursor.png
 	bytesCursor []byte
 
+	//go:embed textures/world/highlight.png
+	bytesHighlight []byte
 	//go:embed textures/world/dirt.png
 	bytesDirt []byte
 	//go:embed textures/world/grass.png
@@ -60,6 +63,7 @@ func LoadTextures() {
 		{id: TexMenuLogo, data: bytesMenuLogo},
 		{id: TexCursor, data: bytesCursor},
 
+		{id: TexHighlight, data: bytesHighlight},
 		{id: TexDirt, data: bytesDirt},
 		{id: TexGrass, data: bytesGrass},
 		{id: TexSand, data: bytesSand},

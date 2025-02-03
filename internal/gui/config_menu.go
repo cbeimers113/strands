@@ -171,7 +171,7 @@ func (g *Gui) registerConfigMenu() {
 			})
 			g.Scene.Add(g.exitButton)
 
-			g.State.SetInMainMenu(true)
+			g.State.SetInSpinMenu(true)
 		},
 
 		close: func() {

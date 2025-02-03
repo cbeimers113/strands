@@ -123,11 +123,6 @@ func (t *Tile) doWaterSpread() {
 			}
 		}
 
-		// Shuffle the lower neighbours to give some randomness to flow direction
-		t.Rand.Shuffle(len(lowerNeighbours), func(i, j int) {
-			lowerNeighbours[i], lowerNeighbours[j] = lowerNeighbours[j], lowerNeighbours[i]
-		})
-
 		// Distribute water to lower neighbours
 		for len(lowerNeighbours) > 0 {
 			var neighbour *Tile
@@ -144,12 +139,9 @@ func (t *Tile) doWaterSpread() {
 				break
 			}
 
+			// Add d/n litres of water to the neighbour, where d is the elevation difference and n is the number of lower neighbours
 			delta := chem.CubicMetresToLitres(t.getElevation().Value-neighbour.getElevation().Value) / float32(len(lowerNeighbours))
-
-			if δ := neighbour.AddWater(delta - t.AddWater(-delta)); δ != 0 {
-				// TODO: This shouldn't ever be 0, but do something if it is
-				println(δ)
-			}
+			neighbour.AddWater(delta - t.AddWater(-delta))
 
 			// Remove neighbour from lowerNeighbours
 			for i, nb := range lowerNeighbours {

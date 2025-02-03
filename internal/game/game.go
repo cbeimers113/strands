@@ -202,7 +202,7 @@ func (g *Game) Start() {
 			g.gui.Refresh()
 
 			// Spin camera in main menu and any sub-views in the main menu
-			if g.State.InMainMenu() {
+			if g.State.InSpinMenu() {
 				if !g.camSpin {
 					p := g.Cam.Position()
 					g.camSpin = true

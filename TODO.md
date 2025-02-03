@@ -1,11 +1,10 @@
 ### v0.2.2:
 
-- [ ] Fix bug with conservation of mass (water)
-- [ ] Fix mouse jittering bug when going in and out of menus
-- [ ] Revisit tile highlighting
-- [ ] Pipeline improvements / build & release binaries / auto-tagging
-- [ ] Skybox
 - [ ] Shadows
+- [ ] Skybox
+- [ ] Pipeline improvements / build & release binaries / auto-tagging
+- [x] Real object highlighting instead of wireframe
+- [x] Optimize chemical quantities tracker
 
 ### v0.3.0 - Plants Upgrade:
 

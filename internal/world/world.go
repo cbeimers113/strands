@@ -67,11 +67,13 @@ func Load(ctx *context.Context, tiles []*entity.Tile, cells []*state.Cell) *Worl
 
 	w.Scene.Add(w.light)
 	w.Scene.Add(w.sun)
-	
+
 	width := w.Cfg.Simulation.Width
 	depth := w.Cfg.Simulation.Depth
 
+	w.State.Quantities[chem.Water] = &chem.Quantity{Units: chem.Litre}
 	w.tilemap = make([][]*entity.Tile, width)
+
 	for x := 0; x < width; x++ {
 		w.tilemap[x] = make([]*entity.Tile, depth)
 
@@ -80,10 +82,12 @@ func Load(ctx *context.Context, tiles []*entity.Tile, cells []*state.Cell) *Worl
 			tile.Rand = w.State.Rand
 			w.tilemap[x][z] = tile
 			tile.Refresh(w.State.Entities, w.Scene)
+
+			w.State.Quantities[chem.Water].Value += tile.WaterLevel.Value
 		}
 	}
 
-	w.AssignTileNeighbourhoods()
+	w.assignTileNeighbourhoods()
 	return w
 }
 
@@ -91,7 +95,7 @@ func Load(ctx *context.Context, tiles []*entity.Tile, cells []*state.Cell) *Worl
 func (w *World) createMap() {
 	heightmap, min, max := w.makeHeightmap()
 	w.makeTilemap(heightmap, min, max)
-	w.AssignTileNeighbourhoods()
+	w.assignTileNeighbourhoods()
 }
 
 // Check if a given coordinate is within the tilemap boundaries
@@ -132,7 +136,9 @@ func (w *World) makeTilemap(heightmap [][]float32, min, max float32) {
 	width := w.Cfg.Simulation.Width
 	depth := w.Cfg.Simulation.Depth
 
+	w.State.Quantities[chem.Water] = &chem.Quantity{Units: chem.Litre}
 	w.tilemap = make([][]*entity.Tile, width)
+
 	for x := 0; x < width; x++ {
 
 		w.tilemap[x] = make([]*entity.Tile, depth)
@@ -151,12 +157,14 @@ func (w *World) makeTilemap(heightmap [][]float32, min, max float32) {
 			tile := entity.NewTile(x, z, height, 22.0, 10, tType, w.State.Rand)
 			tile.Refresh(w.State.Entities, w.Scene)
 			w.tilemap[x][z] = tile
+
+			w.State.Quantities[chem.Water].Value += tile.WaterLevel.Value
 		}
 	}
 }
 
 // Give each tile in a tilemap a list of pointers to its neighbours
-func (w *World) AssignTileNeighbourhoods() {
+func (w *World) assignTileNeighbourhoods() {
 	// Base hexmap neighbourhood offsets
 	nbOffsets := [][]int{
 		{1, 0},  // Right
@@ -254,21 +262,22 @@ func (w *World) updateSun() {
 
 // Update the game world, deltaTime is time since last update in ms
 func (w *World) Update(deltaTime float32) {
-	// Track quantities of various substances in the world
-	waterLevel := chem.Quantity{Units: chem.Litre}
-
 	if !w.State.Paused() {
 		w.updateSun()
 		w.atmosphere.Update(deltaTime)
 
 		// Update plants and creatures
 		for _, e := range w.State.Entities {
+			if _, isTile := e.(*entity.Tile); isTile {
+				continue
+			}
+
 			e.Update()
 			entity.Highlight(e, w.State.LookingAt == e)
 		}
 	}
 
-	// Update the tilemap independant of paused state so that things like tile highlighting will still work when physics paused
+	// Update the tilemap
 	for x := 0; x < w.Cfg.Simulation.Width; x++ {
 		for z := 0; z < w.Cfg.Simulation.Depth; z++ {
 			tile := w.tilemap[x][z]
@@ -277,16 +286,6 @@ func (w *World) Update(deltaTime float32) {
 			entity.Highlight(tile, w.State.LookingAt == tile)
 		}
 	}
-
-	// Update water level count after updating tiles and atmosphere
-	for x := 0; x < w.Cfg.Simulation.Width; x++ {
-		for z := 0; z < w.Cfg.Simulation.Depth; z++ {
-			tile := w.tilemap[x][z]
-			waterLevel.Value += tile.WaterLevel.Value
-		}
-	}
-
-	w.State.Quantities[chem.Water] = waterLevel
 }
 
 // GetAtmosphere returns a linear slice of Cells representing the atmosphere

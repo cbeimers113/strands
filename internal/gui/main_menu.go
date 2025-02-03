@@ -159,7 +159,7 @@ func (g *Gui) registerMainMenu() {
 			})
 			g.Scene.Add(g.exitButton)
 
-			g.State.SetInMainMenu(true)
+			g.State.SetInSpinMenu(true)
 		},
 
 		close: func() {
@@ -177,7 +177,7 @@ func (g *Gui) registerMainMenu() {
 			g.Scene.Remove(g.exitButton)
 			g.Scene.Remove(g.popup)
 
-			g.State.SetInMainMenu(false)
+			g.State.SetInSpinMenu(false)
 		},
 
 		refresh: func() {

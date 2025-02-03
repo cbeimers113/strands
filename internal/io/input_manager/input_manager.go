@@ -149,6 +149,7 @@ func (i *InputManager) MouseDown(evname string, ev interface{}) {
 			switch me.Button {
 			case window.MouseButton1:
 				tile.AddWater(chem.CubicMetresToLitres(1))
+				i.State.Quantities[chem.Water].Value += 1
 			case window.MouseButton2:
 				gui.Open(gui.TileContextMenu, false)
 			}

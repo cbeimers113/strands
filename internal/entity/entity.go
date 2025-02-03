@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"cbeimers113/strands/internal/graphics"
 	"fmt"
 	"strconv"
 
@@ -42,6 +43,12 @@ func RemoveEntity(entity Entity, entities map[int]Entity, scene *core.Node) {
 // Highlight or unhighlight an entity
 func Highlight(entity Entity, highlight bool) {
 	if mat := entity.Material(); mat != nil {
-		mat.SetWireframe(highlight)
+		tex := graphics.Textures[graphics.TexHighlight]
+
+		if highlight && !mat.HasTexture(tex) {
+			mat.AddTexture(tex)
+		} else if !highlight && mat.HasTexture(tex) {
+			mat.RemoveTexture(tex)
+		}
 	}
 }
