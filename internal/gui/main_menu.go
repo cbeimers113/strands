@@ -213,7 +213,7 @@ func (g *Gui) registerMainMenu() {
 func (g *Gui) openSaveDialog() {
 	x := 5 + g.saveButton.Position().X + g.saveButton.Width()
 	y := g.startButton.Position().Y + g.startButton.Height() + 5
-	w := float32(150)
+	w := float32(300)
 	h := g.startButton.Height()
 
 	// Load input field for save name if the save button is pressed
@@ -292,8 +292,8 @@ func (g *Gui) openBrowseDialog() {
 
 	// Load savefile list so we can select one to open
 	filepaths := state.GetSavesList()
-	g.savesList = component.NewFileList(filepaths, 250, h, int(MainMenu))
-	g.savesList.SetPosition(5+g.saveButton.Position().X+g.saveButton.Width(), y)
+	g.savesList = component.NewFileList(filepaths, 500, h, int(MainMenu))
+	g.savesList.SetPosition(5+g.startButton.Position().X+g.startButton.Width(), y)
 	g.savesList.SetUserData(MainMenu)
 	g.Scene.Add(g.savesList)
 

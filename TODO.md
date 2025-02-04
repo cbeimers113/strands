@@ -1,9 +1,10 @@
 ### v0.2.2 - Skybox & Better Highlighting:
 
-- [ ] Fix GUI scaling in menus
+- [ ] Render world in menu on app load
 - [ ] Notifications appear bottom up
 - [ ] Horizon
 - [ ] Pipeline improvements / build & release binaries / auto-tagging
+- [x] Fix GUI scaling in menus
 - [x] Sky & stars
 - [x] Real object highlighting instead of wireframe
 - [x] Optimize chemical quantities tracker

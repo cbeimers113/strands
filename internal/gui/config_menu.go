@@ -24,6 +24,7 @@ func (g *Gui) registerConfigMenu() {
 				saveMouseSensX float32 = g.Cfg.Controls.MouseSensitivityX
 				saveMouseSensY float32 = g.Cfg.Controls.MouseSensitivityY
 				saveTickSpeed  int     = g.Cfg.Simulation.Speed
+				saveDayLength  int     = g.Cfg.Simulation.DayLength
 			)
 
 			g.showControlsCheck = gui.NewCheckBox("Show Controls")
@@ -59,7 +60,7 @@ func (g *Gui) registerConfigMenu() {
 			g.Scene.Add(g.fullscreenCheck)
 			nextY = g.fullscreenCheck.Position().Y + g.fullscreenCheck.Height() + 10
 
-			g.mouseXSenSlider = gui.NewHSlider(175, 12.5)
+			g.mouseXSenSlider = gui.NewHSlider(350, 12.5)
 			w = g.mouseXSenSlider.Width()
 			g.mouseXSenSlider.SetPosition((float32(width)-w)/2, nextY)
 			g.mouseXSenSlider.SetUserData(ConfigMenu)
@@ -72,7 +73,7 @@ func (g *Gui) registerConfigMenu() {
 			g.Scene.Add(g.mouseXSenSlider)
 			nextY = g.mouseXSenSlider.Position().Y + g.mouseXSenSlider.Height() + 5
 
-			g.mouseYSenSlider = gui.NewHSlider(175, 12.5)
+			g.mouseYSenSlider = gui.NewHSlider(350, 12.5)
 			w = g.mouseYSenSlider.Width()
 			g.mouseYSenSlider.SetPosition((float32(width)-w)/2, nextY)
 			g.mouseYSenSlider.SetUserData(ConfigMenu)
@@ -85,7 +86,7 @@ func (g *Gui) registerConfigMenu() {
 			g.Scene.Add(g.mouseYSenSlider)
 			nextY = g.mouseYSenSlider.Position().Y + g.mouseYSenSlider.Height() + 5
 
-			g.moveSpeedSlider = gui.NewHSlider(175, 12.5)
+			g.moveSpeedSlider = gui.NewHSlider(350, 12.5)
 			w = g.moveSpeedSlider.Width()
 			g.moveSpeedSlider.SetPosition((float32(width)-w)/2, nextY)
 			g.moveSpeedSlider.SetUserData(ConfigMenu)
@@ -98,7 +99,7 @@ func (g *Gui) registerConfigMenu() {
 			g.Scene.Add(g.moveSpeedSlider)
 			nextY = g.moveSpeedSlider.Position().Y + g.moveSpeedSlider.Height() + 5
 
-			g.tickSpeedSlider = gui.NewHSlider(175, 12.5)
+			g.tickSpeedSlider = gui.NewHSlider(350, 12.5)
 			w = g.tickSpeedSlider.Width()
 			g.tickSpeedSlider.SetPosition((float32(width)-w)/2, nextY)
 			g.tickSpeedSlider.SetUserData(ConfigMenu)
@@ -111,7 +112,7 @@ func (g *Gui) registerConfigMenu() {
 			g.Scene.Add(g.tickSpeedSlider)
 			nextY = g.tickSpeedSlider.Position().Y + g.tickSpeedSlider.Height() + 5
 
-			g.dayLengthSlider = gui.NewHSlider(175, 12.5)
+			g.dayLengthSlider = gui.NewHSlider(350, 12.5)
 			w = g.dayLengthSlider.Width()
 			g.dayLengthSlider.SetPosition((float32(width)-w)/2, nextY)
 			g.dayLengthSlider.SetUserData(ConfigMenu)
@@ -159,6 +160,7 @@ func (g *Gui) registerConfigMenu() {
 				g.Cfg.Controls.MouseSensitivityX = saveMouseSensX
 				g.Cfg.Controls.MouseSensitivityY = saveMouseSensY
 				g.Cfg.Simulation.Speed = saveTickSpeed
+				g.Cfg.Simulation.DayLength = saveDayLength
 				Open(MainMenu, true)
 			})
 			g.exitButton.Subscribe(gui.OnCursor, func(s string, i interface{}) {
@@ -204,7 +206,7 @@ func (g *Gui) moveSpeedLabel() string {
 }
 
 func (g *Gui) tickSpeedLabel() string {
-	return fmt.Sprintf("Ticks Per Second: %d", g.Cfg.Simulation.Speed)
+	return fmt.Sprintf("Target Sim Speed: %d t/s", g.Cfg.Simulation.Speed)
 }
 
 func (g *Gui) dayLengthLabel() string {
