@@ -1,8 +1,10 @@
-### v0.2.2:
+### v0.2.2 - Skybox & Better Highlighting:
 
-- [ ] Shadows
-- [ ] Skybox
+- [ ] Fix GUI scaling in menus
+- [ ] Notifications appear bottom up
+- [ ] Horizon
 - [ ] Pipeline improvements / build & release binaries / auto-tagging
+- [x] Sky & stars
 - [x] Real object highlighting instead of wireframe
 - [x] Optimize chemical quantities tracker
 

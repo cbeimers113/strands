@@ -14,6 +14,7 @@ import (
 	"cbeimers113/strands/internal/chem"
 	"cbeimers113/strands/internal/context"
 	"cbeimers113/strands/internal/entity"
+	"cbeimers113/strands/internal/graphics"
 	"cbeimers113/strands/internal/state"
 )
 
@@ -22,51 +23,33 @@ type World struct {
 
 	light      *light.Ambient
 	sun        *graphic.Mesh
+	sky        *graphic.Mesh
+	starfield  *material.Standard
 	tilemap    [][]*entity.Tile
 	atmosphere *atmosphere.Atmosphere
 }
 
+// Create a fresh world
 func New(ctx *context.Context) *World {
 	w := &World{
-		Context: ctx,
-
-		light:      light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 0),
+		Context:    ctx,
 		atmosphere: atmosphere.New(ctx),
 	}
 
-	geom := geometry.NewSphere(6, 12, 12)
-	mat := material.NewStandard(&math32.Color{
-		R: 0.2,
-		G: 0.2,
-		B: 0.06,
-	})
-	w.sun = graphic.NewMesh(geom, mat)
-
-	w.Scene.Add(w.light)
-	w.Scene.Add(w.sun)
+	w.createSunAndSky()
 	w.createMap()
 
 	return w
 }
 
+// Load a world from saved tiles and atmosphere
 func Load(ctx *context.Context, tiles []*entity.Tile, cells []*state.Cell) *World {
 	w := &World{
-		Context: ctx,
-
-		light:      light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 0),
+		Context:    ctx,
 		atmosphere: atmosphere.Load(ctx, cells),
 	}
 
-	geom := geometry.NewSphere(6, 12, 12)
-	mat := material.NewStandard(&math32.Color{
-		R: 0.2,
-		G: 0.2,
-		B: 0.06,
-	})
-	w.sun = graphic.NewMesh(geom, mat)
-
-	w.Scene.Add(w.light)
-	w.Scene.Add(w.sun)
+	w.createSunAndSky()
 
 	width := w.Cfg.Simulation.Width
 	depth := w.Cfg.Simulation.Depth
@@ -89,6 +72,42 @@ func Load(ctx *context.Context, tiles []*entity.Tile, cells []*state.Cell) *Worl
 
 	w.assignTileNeighbourhoods()
 	return w
+}
+
+// Create the sun and sky
+func (w *World) createSunAndSky() {
+	w.light = light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 0)
+	geom := geometry.NewSphere(6, 12, 12)
+	mat := material.NewStandard(&math32.Color{
+		R: 0.2,
+		G: 0.2,
+		B: 0.06,
+	})
+	w.sun = graphic.NewMesh(geom, mat)
+
+	r := float32(w.Cfg.Simulation.Height * 4)
+	skyGeom := geometry.NewSphere(float64(r), 32, 32)
+	skyMat := material.NewStandard(math32.NewColorHex(0x111111))
+	skyMat.AddTexture(graphics.Textures[graphics.TexSky])
+	skyMat.SetSide(material.SideBack)
+	w.sky = graphic.NewMesh(skyGeom, skyMat)
+	w.sky.SetRenderOrder(-2)
+
+	starGeom := geometry.NewSphere(float64(r-1), 32, 32)
+	w.starfield = material.NewStandard(math32.NewColorHex(0x111111))
+	w.starfield.AddTexture(graphics.Textures[graphics.TexStars])
+	w.starfield.SetSide(material.SideBack)
+	w.starfield.SetTransparent(true)
+	w.starfield.SetEmissiveColor(math32.NewColorHex(0xffffff))
+	stars := graphic.NewMesh(starGeom, w.starfield)
+	stars.SetRenderOrder(-1)
+	stars.SetRotationZ(math32.Pi)
+	w.updateSunAndSky(true)
+
+	w.Scene.Add(w.light)
+	w.Scene.Add(w.sun)
+	w.Scene.Add(w.sky)
+	w.Scene.Add(stars)
 }
 
 // Create the tilemap
@@ -200,8 +219,8 @@ func (w *World) assignTileNeighbourhoods() {
 	}
 }
 
-// updateSun adjusts the sun's light intensity and position based on the internal clock
-func (w *World) updateSun() {
+// updateSunAndSky adjusts the sun's light intensity and position and adjusts the sky and stars based on the internal clock
+func (w *World) updateSunAndSky(firstTick bool) {
 	p := w.State.Clock.Progress(w.Cfg.Simulation.DayLength)
 
 	// Update sunlight using a fine tuned sine wave function
@@ -218,11 +237,14 @@ func (w *World) updateSun() {
 	w.sun.SetPosition(ox+dx, dy, oz)
 	w.light.SetPosition(ox+dx, dy, oz)
 
+	// Rotate the sky
+	w.sky.SetRotationZ(2 * math32.Pi * p)
+
 	// Set opacity of the sun so we can't see it at night and shift into red at dusk/dawn
 	// opacity scales up from 4am to 6 am (sunrise)
 	// opacity scales down from 6pm to 8pm (sunset)
 	var change bool
-	var o float32
+	var o float32 = 1
 
 	// sunrise
 	srMin := float32(4) / 24
@@ -246,7 +268,7 @@ func (w *World) updateSun() {
 		change = true
 	}
 
-	if change {
+	if change || firstTick {
 		if imat := w.sun.GetMaterial(0); imat != nil {
 			if ms, ok := imat.(*material.Standard); ok {
 				ms.SetOpacity(o)
@@ -257,13 +279,15 @@ func (w *World) updateSun() {
 				})
 			}
 		}
+
+		w.starfield.SetOpacity(1.0 - o)
 	}
 }
 
 // Update the game world, deltaTime is time since last update in ms
 func (w *World) Update(deltaTime float32) {
 	if !w.State.Paused() {
-		w.updateSun()
+		w.updateSunAndSky(false)
 		w.atmosphere.Update(deltaTime)
 
 		// Update plants and creatures

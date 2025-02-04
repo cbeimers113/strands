@@ -18,6 +18,8 @@ const (
 
 	// World
 	TexHighlight = "highlight"
+	TexSky       = "sky"
+	TexStars     = "stars"
 	TexDirt      = "dirt"
 	TexGrass     = "grass"
 	TexSand      = "sand"
@@ -35,6 +37,10 @@ var (
 
 	//go:embed textures/world/highlight.png
 	bytesHighlight []byte
+	//go:embed textures/world/sky.png
+	bytesSky []byte
+	//go:embed textures/world/stars.png
+	bytesStars []byte
 	//go:embed textures/world/dirt.png
 	bytesDirt []byte
 	//go:embed textures/world/grass.png
@@ -64,6 +70,8 @@ func LoadTextures() {
 		{id: TexCursor, data: bytesCursor},
 
 		{id: TexHighlight, data: bytesHighlight},
+		{id: TexSky, data: bytesSky},
+		{id: TexStars, data: bytesStars},
 		{id: TexDirt, data: bytesDirt},
 		{id: TexGrass, data: bytesGrass},
 		{id: TexSand, data: bytesSand},
