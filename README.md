@@ -22,7 +22,6 @@ Check out the [Releases](https://github.com/cbeimers113/strands/releases) page f
     <summary>Changelog</summary>
 
 ### v0.2.2 - Ambience Enhancements:
-
 - Pipeline to automate building binaries on new release
 - Add a surrounding ocean and horizon
 - Notifications appear bottom up

@@ -4,6 +4,11 @@ on:
   release:
     types:
       - created
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "Commit SHA to build (leave empty for latest)"
+        required: false
 
 jobs:
   build:
@@ -35,7 +40,7 @@ jobs:
 
       - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt update && sudo apt install -y build-essential xorg-dev libgl1-mesa-dev
+        run: sudo apt-get update && sudo apt-get install xorg-dev libgl1-mesa-dev libopenal1 libopenal-dev libvorbis0a libvorbis-dev libvorbisfile3
 
       - name: Install dependencies (Windows)
         if: matrix.os == 'windows-latest'
