@@ -70,14 +70,14 @@ func (n *NotificationManager) Render() {
 
 	// Add labels to screen for notifications
 	for i, note := range n.notifications {
+		j := float32(len(n.notifications) - i)
 		alpha := color.Translucent.A * min(note.timer, LIMIT/2) / (LIMIT / 2)
-		fgCol := &math32.Color4{R: 0.0, G: 0.0, B: 0.0, A: alpha}
 		bgCol := &math32.Color4{R: 1.0, G: 1.0, B: 1.0, A: alpha}
 		obj := gui.NewLabel(note.message)
-		y := float32(height) - float32(i+1) * (obj.Height() + 10)
+		y := float32(height) - j*(obj.Height()+10)
 		obj.SetPosition(5, y)
 		obj.SetPaddings(0, 5, 0, 5)
-		obj.SetColor4(fgCol)
+		obj.SetColor(color.Black)
 		obj.SetBgColor4(bgCol)
 		scene.Add(obj)
 		n.noteObjects = append(n.noteObjects, obj)

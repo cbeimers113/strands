@@ -220,6 +220,7 @@ func (t *Tile) Refresh(entities map[int]Entity, scene *core.Node) {
 		t.Water = createTileMesh(graphics.TexWater)
 		t.Water.SetName(t.Name())
 		t.Add(t.Water)
+		t.updateWaterLevel()
 	}
 
 	t.SetPosition(x, t.WorldY, z)

@@ -25,8 +25,12 @@ type World struct {
 	sun        *graphic.Mesh
 	sky        *graphic.Mesh
 	starfield  *material.Standard
+	stars      *graphic.Mesh
+	horizon    *graphic.Mesh
 	tilemap    [][]*entity.Tile
 	atmosphere *atmosphere.Atmosphere
+
+	r float32 // Sky radius
 }
 
 // Create a fresh world
@@ -36,8 +40,8 @@ func New(ctx *context.Context) *World {
 		atmosphere: atmosphere.New(ctx),
 	}
 
-	w.createSunAndSky()
 	w.createMap()
+	w.createSunAndSky()
 
 	return w
 }
@@ -49,32 +53,13 @@ func Load(ctx *context.Context, tiles []*entity.Tile, cells []*state.Cell) *Worl
 		atmosphere: atmosphere.Load(ctx, cells),
 	}
 
+	w.loadMap(tiles)
 	w.createSunAndSky()
 
-	width := w.Cfg.Simulation.Width
-	depth := w.Cfg.Simulation.Depth
-
-	w.State.Quantities[chem.Water] = &chem.Quantity{Units: chem.Litre}
-	w.tilemap = make([][]*entity.Tile, width)
-
-	for x := 0; x < width; x++ {
-		w.tilemap[x] = make([]*entity.Tile, depth)
-
-		for z := 0; z < depth; z++ {
-			tile := tiles[x+z*depth]
-			tile.Rand = w.State.Rand
-			w.tilemap[x][z] = tile
-			tile.Refresh(w.State.Entities, w.Scene)
-
-			w.State.Quantities[chem.Water].Value += tile.WaterLevel.Value
-		}
-	}
-
-	w.assignTileNeighbourhoods()
 	return w
 }
 
-// Create the sun and sky
+// Create the sun, sky and horizon
 func (w *World) createSunAndSky() {
 	w.light = light.NewAmbient(&math32.Color{R: 1.0, G: 1.0, B: 1.0}, 0)
 	geom := geometry.NewSphere(6, 12, 12)
@@ -85,29 +70,37 @@ func (w *World) createSunAndSky() {
 	})
 	w.sun = graphic.NewMesh(geom, mat)
 
-	r := float32(w.Cfg.Simulation.Height * 4)
-	skyGeom := geometry.NewSphere(float64(r), 32, 32)
+	w.r = float32(w.Cfg.Simulation.Height * 2)
+	skyGeom := geometry.NewSphere(float64(w.r), 32, 32)
 	skyMat := material.NewStandard(math32.NewColorHex(0x111111))
 	skyMat.AddTexture(graphics.Textures[graphics.TexSky])
 	skyMat.SetSide(material.SideBack)
 	w.sky = graphic.NewMesh(skyGeom, skyMat)
-	w.sky.SetRenderOrder(-2)
+	w.sky.SetRenderOrder(-3)
 
-	starGeom := geometry.NewSphere(float64(r-1), 32, 32)
+	starGeom := geometry.NewSphere(float64(w.r-1), 32, 32)
 	w.starfield = material.NewStandard(math32.NewColorHex(0x111111))
 	w.starfield.AddTexture(graphics.Textures[graphics.TexStars])
 	w.starfield.SetSide(material.SideBack)
 	w.starfield.SetTransparent(true)
 	w.starfield.SetEmissiveColor(math32.NewColorHex(0xffffff))
-	stars := graphic.NewMesh(starGeom, w.starfield)
-	stars.SetRenderOrder(-1)
-	stars.SetRotationZ(math32.Pi)
-	w.updateSunAndSky(true)
+	w.stars = graphic.NewMesh(starGeom, w.starfield)
+	w.stars.SetRenderOrder(-2)
+	w.stars.SetRotationZ(math32.Pi)
+
+	horizonGeom := geometry.NewPlane(2*w.r, 2*w.r)
+	horizonMat := material.NewStandard(math32.NewColorHex(0x111111))
+	horizonMat.AddTexture(graphics.Textures[graphics.TexHorizon])
+	w.horizon = graphic.NewMesh(horizonGeom, horizonMat)
+	w.horizon.SetRotationX(-math32.Pi / 2)
+	w.horizon.SetRenderOrder(-1)
 
 	w.Scene.Add(w.light)
 	w.Scene.Add(w.sun)
 	w.Scene.Add(w.sky)
-	w.Scene.Add(stars)
+	w.Scene.Add(w.stars)
+	w.Scene.Add(w.horizon)
+	w.updateSunAndSky(true)
 }
 
 // Create the tilemap
@@ -182,6 +175,30 @@ func (w *World) makeTilemap(heightmap [][]float32, min, max float32) {
 	}
 }
 
+// Load a tilemap from serialized tiles
+func (w *World) loadMap(tiles []*entity.Tile) {
+	width := w.Cfg.Simulation.Width
+	depth := w.Cfg.Simulation.Depth
+
+	w.State.Quantities[chem.Water] = &chem.Quantity{Units: chem.Litre}
+	w.tilemap = make([][]*entity.Tile, width)
+
+	for x := 0; x < width; x++ {
+		w.tilemap[x] = make([]*entity.Tile, depth)
+
+		for z := 0; z < depth; z++ {
+			tile := tiles[x+z*depth]
+			tile.Rand = w.State.Rand
+			w.tilemap[x][z] = tile
+			tile.Refresh(w.State.Entities, w.Scene)
+
+			w.State.Quantities[chem.Water].Value += tile.WaterLevel.Value
+		}
+	}
+
+	w.assignTileNeighbourhoods()
+}
+
 // Give each tile in a tilemap a list of pointers to its neighbours
 func (w *World) assignTileNeighbourhoods() {
 	// Base hexmap neighbourhood offsets
@@ -228,14 +245,22 @@ func (w *World) updateSunAndSky(firstTick bool) {
 	w.light.SetIntensity(i)
 
 	// Move sun object based on time of day
-	ox, oz := float32(w.Cfg.Simulation.Width)/2-6, float32(w.Cfg.Simulation.Depth)/2-6 // Centre of map
+	centre := w.tilemap[w.Cfg.Simulation.Width/2][w.Cfg.Simulation.Depth/2].Position() // Centre of map
+	ox := centre.X
+	oz := centre.Z
 	d := 2 * math32.Pi * (p - 0.25)
 	dx := math32.Cos(d)
-	dx *= float32(w.Cfg.Simulation.Width) * 1.5
+	dx *= w.r
 	dy := math32.Sin(d)
-	dy *= float32(w.Cfg.Simulation.Height) * 1.5
+	dy *= w.r
 	w.sun.SetPosition(ox+dx, dy, oz)
 	w.light.SetPosition(ox+dx, dy, oz)
+	w.sky.SetPositionX(ox)
+	w.sky.SetPositionZ(oz)
+	w.stars.SetPositionX(ox)
+	w.stars.SetPositionZ(oz)
+	w.horizon.SetPositionX(ox)
+	w.horizon.SetPositionZ(oz)
 
 	// Rotate the sky
 	w.sky.SetRotationZ(2 * math32.Pi * p)
