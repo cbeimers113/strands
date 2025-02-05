@@ -1,37 +1,77 @@
-# This workflow will attempt to build strands on changes to main
-
-name: GoBuild
+name: Release Strands
 
 on:
-  push:
-    branches:
-    - main
-  pull_request:
-    branches:
-    - main
+  release:
+    types:
+      - created
 
 jobs:
   build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            cc: gcc
+            cxx: g++
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            cc: x86_64-w64-mingw32-gcc
+            cxx: x86_64-w64-mingw32-g++
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt update && sudo apt install -y build-essential xorg-dev libgl1-mesa-dev
+
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: choco install mingw
+
+      - name: Build
+        run: |
+          go env -w CGO_ENABLED=1 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }}
+          go build -o strands-${{ matrix.goos }}-${{ matrix.goarch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: strands-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: strands-${{ matrix.goos }}-${{ matrix.goarch }}
+
+  release:
+    name: Create Release Artifacts
+    needs: build
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.21.5'
-    
-    - name: Install Dependencies
-      run: |
-        sudo apt install xorg-dev libgl1-mesa-dev libopenal1 libopenal-dev libvorbis0a libvorbis-dev libvorbisfile3
-        go install honnef.co/go/tools/cmd/staticcheck@latest
-        go mod tidy
-        
-    - name: Lint & Vet
-      run: |
-       go vet .
-       staticcheck .
-        
-    - name: Build Strands
-      run: go build . 
-  
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Archive binaries
+        run: |
+          cd artifacts
+          tar -czf strands-linux-amd64.tar.gz strands-linux-amd64
+          zip strands-windows-amd64.zip strands-windows-amd64
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/strands-linux-amd64.tar.gz
+            artifacts/strands-windows-amd64.zip

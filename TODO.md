@@ -1,14 +1,3 @@
-### v0.2.2 - Skybox & Better Highlighting:
-
-- [ ] Pipeline improvements / build & release binaries / auto-tagging
-- [x] Horizon
-- [x] Notifications appear bottom up
-- [x] Render world in menu on app load
-- [x] Fix GUI scaling in menus
-- [x] Sky & stars
-- [x] Real object highlighting instead of wireframe
-- [x] Optimize chemical quantities tracker
-
 ### v0.3.0 - Plants Upgrade:
 
 - Plants: they look silly as they grow; improve structure

@@ -21,6 +21,17 @@ Check out the [Releases](https://github.com/cbeimers113/strands/releases) page f
 <details>
     <summary>Changelog</summary>
 
+### v0.2.2 - Ambience Enhancements:
+
+- Pipeline to automate building binaries on new release
+- Add a surrounding ocean and horizon
+- Notifications appear bottom up
+- Render world in menu on app load
+- Fix GUI scaling in menus
+- Add sky & stars
+- Real object highlighting instead of wireframe
+- Optimize chemical quantities tracker
+
 ### v0.2.1 - Bugfixes & GUI Enhancements
 - Increase GUI scale
 - Improve player icon in top bar
